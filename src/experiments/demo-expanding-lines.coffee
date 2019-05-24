@@ -5,7 +5,7 @@
 ############################################################################################################
 CND                       = require 'cnd'
 rpr                       = CND.rpr
-badge                     = 'MKTS-MIRAGE/EXPERIMENTS/EXPANDING-LINES'
+badge                     = 'DATAMILL/EXPERIMENTS/EXPANDING-LINES'
 debug                     = CND.get_logger 'debug',     badge
 warn                      = CND.get_logger 'warn',      badge
 info                      = CND.get_logger 'info',      badge
@@ -34,95 +34,181 @@ types                     = require '../types'
   size_of
   type_of }               = types
 #...........................................................................................................
-{ assign
-  abspath
-  relpath }               = require '../helpers'
+{ assign }                = require '../helpers'
 #...........................................................................................................
 require                   '../exception-handler'
-ICE                       = require 'icepick'
-MIRAGE                    = require '../..'
+MIRAGE                    = require 'mkts-mirage'
 do_validate               = true
+DATAMILL                  = require '../..'
 
-###
-
-TAINT consider to backport these flags to PipeDreams:
-
-* [ ] `dirty`—whether any property of a datom has beem modified;
-* [ ] `fresh`—whether a datom originated from within the stream, not from the source;
-* [X] `stamped`—whether a datom has been processed.
-
-###
+#-----------------------------------------------------------------------------------------------------------
+format_object = ( d ) ->
+  R = {}
+  R[ k ] = d[ k ] for k in ( k for k of d ).sort()
+  return jr R
 
 #-----------------------------------------------------------------------------------------------------------
 @new_datom = ( P ... ) ->
-  R                 = PD.new_event P...
-  R.value.vlnr_txt  = ( jr R.value.vlnr ) if ( not R.value?.vlnr_txt )? and ( R.value?.vlnr? )
-  R.fresh           = true
-  return ICE.freeze R
+  R           = PD.thaw PD.new_datom P...
+  R.vnr_txt   = ( jr R.$vnr ) if ( not R.vnr_txt )? and ( R.$vnr? )
+  R.$fresh    = true
+  return PD.freeze R
 
 #-----------------------------------------------------------------------------------------------------------
-@stamp = ( d ) ->
-  ### NOTE we could use `icepick`'s 'copy-on-write'/structural sharing features here but that is probably
-  of little effect given how small our objects are; we therefore use the much simpler 'copy-on-thaw' and
-  re-freezing while enjoying the simplicity and clarity of intermittent (and contained) old-fashioned data
-  mutation. ###
-  R         = ICE.thaw d
-  R.stamped = true
-  R.dirty   = true
-  return ICE.freeze R
-
-#-----------------------------------------------------------------------------------------------------------
-@new_vlnr_level = ( S, vlnr ) ->
-  ### Given a `mirage` instance and a vectorial line number `vlnr`, return a copy of `vlnr`, call it
-  `vlnr0`, which has an index of `0` appended, thus representing the pre-first `vlnr` for a level of lines
-  derived from the one that the original `vlnr` pointed to. ###
-  validate.nonempty_list vlnr
-  R = assign [], vlnr
-  R.push 0
+@new_vnr_level = ( vnr, nr = 1 ) ->
+  ### Given a `mirage` instance and a vectorial line number `vnr`, return a copy of `vnr`, call it
+  `vnr0`, which has an index of `0` appended, thus representing the pre-first `vnr` for a level of lines
+  derived from the one that the original `vnr` pointed to. ###
+  validate.nonempty_list vnr
+  R = assign [], vnr
+  R.push nr
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@advance_vlnr = ( S, vlnr ) ->
-  ### Given a `mirage` instance and a vectorial line number `vlnr`, return a copy of `vlnr`, call it
-  `vlnr0`, which has its last index incremented by `1`, thus representing the vectorial line number of the
+@advance_vnr = ( vnr ) ->
+  ### Given a `mirage` instance and a vectorial line number `vnr`, return a copy of `vnr`, call it
+  `vnr0`, which has its last index incremented by `1`, thus representing the vectorial line number of the
   next line in the same level that is derived from the same line as its predecessor. ###
-  validate.nonempty_list vlnr
-  R                     = assign [], vlnr
-  R[ vlnr.length - 1 ] += +1
+  validate.nonempty_list vnr
+  R                    = assign [], vnr
+  R[ vnr.length - 1 ] += +1
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$split_words = ( S ) -> $ ( d, send ) =>
   return send d unless select d, '^mktscript'
   #.........................................................................................................
-  send @stamp d
-  text      = d.value.text
-  prv_vlnr  = d.value.vlnr
-  nxt_vlnr  = @new_vlnr_level S, prv_vlnr
+  send stamp d
+  text      = d.value
+  prv_vnr   = d.$vnr
+  nxt_vnr  = @new_vnr_level prv_vnr
   #.........................................................................................................
     # unless isa.blank_text row.value
   for word in text.split /\s+/
     continue if word is ''
-    nxt_vlnr = @advance_vlnr S, nxt_vlnr
-    send @new_datom '^word', { text: word, vlnr: nxt_vlnr, }
+    nxt_vnr = @advance_vnr nxt_vnr
+    send @new_datom '^word', { text: word, $vnr: nxt_vnr, }
   #.........................................................................................................
   return null
 
 #-----------------------------------------------------------------------------------------------------------
+@$blank_lines = ( S ) ->
+  prv_vnr       = null
+  linecount     = 0
+  send          = null
+  within_blank  = false
+  # is_first      = true
+  #.........................................................................................................
+  flush = ( n ) =>
+    within_blank  = false
+    $vnr          = @new_vnr_level prv_vnr
+    send PD.new_datom '^blank', { value: { linecount, }, $vnr, $fresh: true, }
+    linecount     = 0
+  #.........................................................................................................
+  return $ { last, }, ( d, send_ ) =>
+    send = send_
+    #.......................................................................................................
+    if d is last
+      flush()# if within_blank
+      return null
+    #.......................................................................................................
+    return send d unless select d, '^mktscript'
+    #.......................................................................................................
+    unless isa.blank_text d.value
+      flush() if within_blank
+      prv_vnr       = d.$vnr
+      return send d
+    #.......................................................................................................
+    send stamp d
+    prv_vnr       = d.$vnr
+    linecount     = 0 unless within_blank
+    linecount    += +1
+    within_blank  = true
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$headlines = ( S ) ->
+  pattern = /// ^ \#+ ///
+  #.........................................................................................................
+  return $ ( d, send ) =>
+    return send d unless select d, '^mktscript'
+    return send d unless ( d.value.match pattern )?
+    debug 'µ33099', d
+    info 'µ33099', @previous_line_is_blank  S, d.$vnr
+    info 'µ33099', @next_line_is_blank      S, d.$vnr
+    send d
+    # info 'µ33344', row for row from S.mirage.db.followup { vnr: d.$vnr, }
+
+#-----------------------------------------------------------------------------------------------------------
+@previous_line_is_blank = ( S, vnr ) ->
+  return true unless ( d = @get_previous_datom S, vnr )?
+  return ( d.value.match /^\s*$/ )?
+
+#-----------------------------------------------------------------------------------------------------------
+@next_line_is_blank = ( S, vnr ) ->
+  return true unless ( d = @get_next_datom S, vnr )?
+  return ( d.value.match /^\s*$/ )?
+
+#-----------------------------------------------------------------------------------------------------------
+@get_previous_datom = ( S, vnr ) ->
+  ### TAINT consider to use types ###
+  unless vnr.length is 1
+    throw new Error "µ33442 `get_next_datom()` not supported for nested vnrs, got #{rpr vnr}"
+  ### TAINT need inverse to advance ###
+  return null unless vnr[ 0 ] > 1
+  vnr_txt = jr [ vnr[ 0 ] - 1 ]
+  return @datom_from_vnr S, S, vnr
+
+#-----------------------------------------------------------------------------------------------------------
+@get_next_datom = ( S, vnr ) ->
+  ### TAINT consider to use types ###
+  unless vnr.length is 1
+    throw new Error "µ33442 `get_next_datom()` not supported for nested vnrs, got #{rpr vnr}"
+  return @datom_from_vnr S, @advance_vnr vnr
+
+#-----------------------------------------------------------------------------------------------------------
+@datom_from_vnr = ( S, vnr ) ->
+  sql = """
+    select *
+    from main
+    where vnr_txt = $vnr_txt
+    """
+  vnr_txt = jr vnr
+  dbr     = S.mirage.db
+  return null unless ( row = dbr.$.first_row dbr.$.query sql, { vnr_txt, } )
+  return @datom_from_row S, row
+
+#-----------------------------------------------------------------------------------------------------------
+@$phase_100 = ( S ) ->
+  pipeline = []
+  pipeline.push @$blank_lines S
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@$phase_200 = ( S ) ->
+  pipeline = []
+  pipeline.push @$headlines S
+  return PD.pull pipeline...
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
 @datom_from_row = ( S, row ) ->
-  ### TAINT how to convert vlnr in ICQL? ###
-  vlnr_txt  = row.vlnr_txt
-  vlnr      = JSON.parse vlnr_txt
-  return ICE.freeze PD.new_event row.key, { text: row.value, vlnr, vlnr_txt, }
+  ### TAINT how to convert vnr in ICQL? ###
+  vnr_txt     = row.vnr_txt
+  $vnr        = JSON.parse vnr_txt
+  R           = PD.new_datom row.key, { value: row.value, $vnr, }
+  R           = PD.set R, '$stamped', true if row.stamped
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
 @row_from_datom = ( S, d ) ->
-  v       = d.value
-  stamped = d.stamped ? false
   ### TAINT how to convert booleans in ICQL? ###
-  stamped = if stamped then 1 else 0
-  R       = ICE.freeze { key: d.key, vlnr_txt: v.vlnr_txt, value: v.text, stamped, }
-  validate.mirage_main_row R if do_validate
+  stamped   = if d.$stamped then 1 else 0
+  vnr_txt   = jr d.$vnr
+  value     = if ( isa.text d.value ) then d.value else jr d.value
+  R         = { key: d.key, vnr_txt, value, stamped, }
+  # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -131,7 +217,7 @@ TAINT consider to backport these flags to PipeDreams:
   nr  = 0
   #.........................................................................................................
   for row from dbr.read_unstamped_lines()
-    nr   += +1
+    nr += +1
     break if nr > limit
     source.send @datom_from_row S, row
   #.........................................................................................................
@@ -141,14 +227,14 @@ TAINT consider to backport these flags to PipeDreams:
 #-----------------------------------------------------------------------------------------------------------
 @$feed_db = ( S ) ->
   ### TAINT stopgap measure; should be implemented in ICQL ###
-  db2 = ( MIRAGE.new_settings S.mirage ).db
+  db2 = ( MIRAGE.new_mirage S.mirage ).db
   return $watch ( d ) =>
-    ### TAINT how to convert vlnr in ICQL? ###
+    ### TAINT how to convert vnr in ICQL? ###
     row = @row_from_datom S, d
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
-      if      d.fresh then db2.insert row
-      else if d.dirty then db2.update row
+      if      d.$fresh then db2.insert row
+      else if d.$dirty then db2.update row
     catch error
       warn "µ12133 when trying to insert or update row #{jr row}"
       warn "µ12133 an error occurred:"
@@ -158,7 +244,7 @@ TAINT consider to backport these flags to PipeDreams:
 
 #-----------------------------------------------------------------------------------------------------------
 @_$show = ( S ) -> $watch ( d ) =>
-  if d.stamped then color = CND.grey
+  if d.$stamped then color = CND.grey
   else
     switch d.key
       when '^word' then color = CND.gold
@@ -166,53 +252,63 @@ TAINT consider to backport these flags to PipeDreams:
   info color jr d
 
 #-----------------------------------------------------------------------------------------------------------
-@_$on_finish = ( S ) ->
+@show_overview = ( S ) ->
   dbr = S.mirage.db
   #.........................................................................................................
-  return $watch { last, }, ( d ) =>
-    return null unless d is last
-    #.......................................................................................................
-    for row from dbr.read_lines()
-      color = if row.stamped then CND.grey else CND.green
-      key   = row.key.padEnd      12
-      vlnr  = row.vlnr_txt.padEnd 12
-      info color "#{vlnr} #{( if row.stamped then 'S' else ' ' )} #{key} #{rpr row.value[ .. 40 ]}"
-    #.......................................................................................................
-    for row from dbr.get_stats()
-      info "#{row.key}: #{row.count}"
-    #.......................................................................................................
-    return null
+  for row from dbr.read_lines { limit: 30, }
+    # debug 'µ10001', rpr row
+    if row.stamped
+      color = CND.grey
+    else
+      color = switch row.key
+        when '^mktscript' then CND.red
+        when '^blank'     then ( P... ) -> CND.reverse CND.grey P...
+        else CND.white
+    key   = row.key.padEnd      12
+    vnr   = row.vnr_txt.padEnd  12
+    info color "#{vnr} #{( if row.stamped then 'S' else ' ' )} #{key} #{rpr row.value[ .. 40 ]}"
+  #.........................................................................................................
+  for row from dbr.get_stats()
+    info "#{row.key}: #{row.count}"
+  #.........................................................................................................
+  return null
 
 #-----------------------------------------------------------------------------------------------------------
-@translate_document = ( me ) -> new Promise ( resolve, reject ) =>
-  ### TAINT add suitable types ###
-  validate.object me
-  S         = { mirage: me, }
+@run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
   source    = PD.new_push_source()
-  limit     = Infinity
-  #.........................................................................................................
   pipeline  = []
   pipeline.push source
-  pipeline.push @$split_words S
-  pipeline.push @$feed_db     S
-  # pipeline.push PD.$show()
-  # pipeline.push @_$show()
-  pipeline.push @_$on_finish  S
+  pipeline.push transform
+  pipeline.push @$feed_db S
   pipeline.push PD.$drain => resolve()
-  #.........................................................................................................
   PD.pull pipeline...
-  @feed_source S, source, limit
+  @feed_source S, source
+
+#-----------------------------------------------------------------------------------------------------------
+@translate_document = -> new Promise ( resolve, reject ) =>
+  mirage    = MIRAGE.new_mirage { source_path: './src/tests/demo.md', db_path: '/tmp/mirage.db', }
+  await MIRAGE.acquire      mirage
+  S         = { mirage, }
+  limit     = Infinity
+  phases    = [
+    '$phase_100'
+    '$phase_200'
+    ]
+  #.........................................................................................................
+  for phase in phases
+    transform = @[ phase ] S
+    help "phase #{rpr phase}"
+    await @run_phase S, transform
+  @show_overview S
+  resolve()
+  #.........................................................................................................
   return null
 
 
 ############################################################################################################
 unless module.parent?
-  testing = true
   do =>
-    #.......................................................................................................
-    mirage = MIRAGE.new_settings '../README.md'
-    await MIRAGE.acquire      mirage
-    await @translate_document mirage
+    await @translate_document()
     help 'ok'
 
 
