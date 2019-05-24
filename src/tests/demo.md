@@ -11,7 +11,7 @@ lines in code blocks that look like headlines are just lines.
 
 
 Another paragraph
-# not a headline
+# Headline with Warning
 Another paragraph
 that extends
 over several lines of text.

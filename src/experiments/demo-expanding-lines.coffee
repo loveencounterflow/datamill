@@ -5,7 +5,7 @@
 ############################################################################################################
 CND                       = require 'cnd'
 rpr                       = CND.rpr
-badge                     = 'DATAMILL/EXPERIMENTS/EXPANDING-LINES'
+badge                     = 'DTML/EXP/EXPAND'
 debug                     = CND.get_logger 'debug',     badge
 warn                      = CND.get_logger 'warn',      badge
 info                      = CND.get_logger 'info',      badge
@@ -95,6 +95,11 @@ format_object = ( d ) ->
   return null
 
 #-----------------------------------------------------------------------------------------------------------
+### TAINT to be written; observe this will simplify `$blank_lines()`. ###
+@$trim = ( S ) ->
+  return $ ( d, send ) => send d
+
+#-----------------------------------------------------------------------------------------------------------
 @$blank_lines = ( S ) ->
   prv_vnr       = null
   linecount     = 0
@@ -130,17 +135,60 @@ format_object = ( d ) ->
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$headlines = ( S ) ->
-  pattern = /// ^ \#+ ///
+@$codeblocks = ( S ) ->
+  ### Recognize codeblocks as regions delimited by triple backticks. Possible extensions include
+  markup for source code category and double service as pre-formatted blocks. ###
+  pattern           = /// ^ (?<backticks> ``` ) $ ///
+  within_codeblock  = false
   #.........................................................................................................
   return $ ( d, send ) =>
     return send d unless select d, '^mktscript'
-    return send d unless ( d.value.match pattern )?
-    debug 'µ33099', d
-    info 'µ33099', @previous_line_is_blank  S, d.$vnr
-    info 'µ33099', @next_line_is_blank      S, d.$vnr
-    send d
-    # info 'µ33344', row for row from S.mirage.db.followup { vnr: d.$vnr, }
+    ### TAINT should send `<codeblock` datom ###
+    if ( match = d.value.match pattern )?
+      within_codeblock = not within_codeblock
+      send stamp d
+    else
+      if within_codeblock
+        ### TAINT should somehow make sure properties are OK for a `^literal` ###
+        $vnr  = @new_vnr_level d.$vnr, 1
+        d     = PD.set d, 'key',    '^literal'
+        d     = PD.set d, '$vnr',   $vnr
+        d     = PD.set d, '$fresh', true
+      send d
+    # $vnr  = @new_vnr_level d.$vnr, 0
+    # $vnr  = @advance_vnr $vnr; send PD.new_datom '<codeblock',        { level, $vnr, $fresh: true, }
+    # $vnr  = @advance_vnr $vnr; send PD.new_datom '>codeblock',        { level, $vnr, $fresh: true, }
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$heading = ( S ) ->
+  ### Recognize heading as any line that starts with a `#` (hash). Current behavior is to
+  check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
+  in the future. ###
+  pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
+  #.........................................................................................................
+  return $ ( d, send ) =>
+    return send d unless select d, '^mktscript'
+    return send d unless ( match = d.value.match pattern )?
+    prv_line_is_blank = @previous_line_is_blank S, d.$vnr
+    nxt_line_is_blank = @next_line_is_blank     S, d.$vnr
+    $vnr              = @new_vnr_level d.$vnr, 0
+    unless prv_line_is_blank and nxt_line_is_blank
+      ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
+      ### TAINT update PipeDreams: warnings always marked fresh ###
+      # warning = PD.new_warning d.$vnr, message, d, { $fresh: true, }
+      message = "µ09082 heading should have blank lines above and below"
+      $vnr    = @advance_vnr $vnr; send PD.new_datom '~warning', message, { $vnr, $fresh: true, }
+      ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
+    send stamp d
+    level = match.groups.hashes.length
+    text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
+    # debug 'µ88764', rpr match.groups.text
+    # debug 'µ88764', rpr text
+    $vnr  = @advance_vnr $vnr; send PD.new_datom '<h',                { level, $vnr, $fresh: true, }
+    $vnr  = @advance_vnr $vnr; send PD.new_datom '^mktscript', text,  { $vnr, $fresh: true, }
+    $vnr  = @advance_vnr $vnr; send PD.new_datom '>h',                { level, $vnr, $fresh: true, }
+    return null
 
 #-----------------------------------------------------------------------------------------------------------
 @previous_line_is_blank = ( S, vnr ) ->
@@ -179,13 +227,15 @@ format_object = ( d ) ->
 #-----------------------------------------------------------------------------------------------------------
 @$phase_100 = ( S ) ->
   pipeline = []
+  pipeline.push @$trim S
   pipeline.push @$blank_lines S
   return PD.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$phase_200 = ( S ) ->
   pipeline = []
-  pipeline.push @$headlines S
+  pipeline.push @$codeblocks  S
+  pipeline.push @$heading     S
   return PD.pull pipeline...
 
 #===========================================================================================================
@@ -258,12 +308,15 @@ format_object = ( d ) ->
       color = CND.grey
     else
       color = switch row.key
-        when '^mktscript' then CND.red
-        when '^blank'     then ( P... ) -> CND.reverse CND.grey P...
+        when '^mktscript' then CND.yellow
+        when '^blank'     then ( P... ) -> CND.grey P...
+        when '~warning'   then ( P... ) -> CND.reverse CND.red P...
         else CND.white
     key   = row.key.padEnd      12
     vnr   = row.vnr_txt.padEnd  12
-    info color "#{vnr} #{( if row.stamped then 'S' else ' ' )} #{key} #{rpr row.value[ .. 40 ]}"
+    value = if ( isa.text row.value ) then row.value else rpr row.value
+    value = value[ .. 80 ]
+    info color "#{vnr} #{( if row.stamped then 'S' else ' ' )} #{key} #{rpr value}"
   #.........................................................................................................
   for row from dbr.get_stats()
     info "#{row.key}: #{row.count}"
