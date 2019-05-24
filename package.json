@@ -4,13 +4,12 @@
   "description": "A DB-backed text document processor built on pipedreams, icql and mkts-mirage.",
   "main": "lib/main.js",
   "dependencies": {
-    "mkts-mirage": "^0.0.2",
-    "cnd": "^4.5.0",
+    "cnd": "^4.6.0",
     "icepick": "^2.3.1",
-    "icql": "^2.0.0",
-    "intertype": "^2.3.0",
-    "mkdirp": "^0.5.1",
-    "pipedreams": "^7.6.1"
+    "icql": "^2.1.0",
+    "intertype": "^2.4.0",
+    "mkts-mirage": "^2.0.0",
+    "pipedreams": "^8.1.2"
   },
   "devDependencies": {},
   "scripts": {
