@@ -171,14 +171,9 @@ format_object = ( d ) ->
 
 #-----------------------------------------------------------------------------------------------------------
 @datom_from_vnr = ( S, vnr ) ->
-  sql = """
-    select *
-    from main
-    where vnr_txt = $vnr_txt
-    """
+  dbr     = S.mirage.dbr
   vnr_txt = jr vnr
-  dbr     = S.mirage.db
-  return null unless ( row = dbr.$.first_row dbr.$.query sql, { vnr_txt, } )
+  return null unless ( row = dbr.$.first_row dbr.datom_from_vnr { vnr_txt, } )?
   return @datom_from_row S, row
 
 #-----------------------------------------------------------------------------------------------------------
@@ -312,7 +307,7 @@ unless module.parent?
     settings =
       file_path:  project_abspath './src/tests/demo.md'
       db_path:    '/tmp/mirage.db'
-      icql_path:  project_abspath './db/mkts.icql'
+      icql_path:  project_abspath './db/datamill.icql'
     mirage = await MIRAGE.create settings
     await @translate_document mirage
     help 'ok'

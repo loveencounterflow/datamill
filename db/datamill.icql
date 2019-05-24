@@ -76,61 +76,7 @@ procedure stamp_line( rowid ): update main set stamped = true where rowid = $row
 procedure stamp_line( vnr_txt  ): update main set stamped = true where vnr_txt  = e( 'µ44333', $vnr_txt);
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure vidx_create_and_populate_tables():
-  drop table if exists vidx_1;
-  drop table if exists vidx_2;
-  -- .......................................................................................................
-  create table vidx_1 (
-    vidx          json,
-    vidx_encoded  blob );
-  -- .......................................................................................................
-  create trigger vidx_1_on_after_insert after insert on vidx_1 begin
-    update vidx_1
-      set vidx_encoded = vnr_encode( new.vidx )
-      where rowid = new.rowid;
-    end;
-  -- .......................................................................................................
-  create table vidx_2 (
-    vidx          json,
-    vidx_bin      blob );
-  -- .......................................................................................................
-  insert into vidx_1 ( vidx ) values
-    ( "[42,10,10]"   ),
-    ( "[42,10,1]"    ),
-    ( "[42,10,11]"   ),
-    ( "[42,3]"       ),
-    ( "[42,2]"       ),
-    ( "[120]"        ),
-    ( "[12]"         ),
-    ( "[1]"          ),
-    ( "[2]"          ),
-    ( "[10]"         ),
-    ( "[11]"         ),
-    ( "[42,0]"       ),
-    ( "[42]"         ),
-    ( "[42,null]"    ),
-    ( "[42,10]"      ),
-    ( "[42,1]"       ),
-    ( "[42,1,1]"       ),
-    ( "[42,1,1,1]"       ),
-    ( "[42,1,1,100,1]"       ),
-    ( "[42,1,1,-1,1]"       ),
-    ( "[42,11]"      ),
-    ( "[42,1,10]"    ),
-    ( "[42,1,1]"     ),
-    ( "[42,1,11]"    );
-
--- ---------------------------------------------------------------------------------------------------------
-query vidx_list_unordered():
-  select * from vidx_1;
-
--- ---------------------------------------------------------------------------------------------------------
-query vidx_list_ordered_with_call():
-  select * from vidx_1 order by vnr_encode( vidx );
-
--- ---------------------------------------------------------------------------------------------------------
-query vidx_list_ordered_with_cached():
-  select * from vidx_1 order by vidx_encoded;
-
-
-
+query datom_from_vnr( vnr_txt ):
+  select *
+    from main
+    where vnr_txt = $vnr_txt;
