@@ -7,7 +7,7 @@
 ############################################################################################################
 CND                       = require 'cnd'
 rpr                       = CND.rpr
-badge                     = '明快打字机/HELPERS'
+badge                     = 'DATAMILL/HELPERS'
 log                       = CND.get_logger 'plain',     badge
 debug                     = CND.get_logger 'debug',     badge
 info                      = CND.get_logger 'info',      badge
@@ -20,14 +20,10 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 PATH 											= require 'path'
 #...........................................................................................................
-@assign                   = Object.assign
-@abspath                  = ( P... ) -> PATH.resolve PATH.join __dirname, '..', P...
-@relpath 									= ( P... ) -> PATH.relative process.cwd(), PATH.join P...
-
-#-----------------------------------------------------------------------------------------------------------
-@ensure_directory = ( path ) -> new Promise ( resolve, reject ) =>
-  ( require 'mkdirp' ) path, ( error ) =>
-    throw error if error?
-    resolve()
+@cwd_abspath              = CND.cwd_abspath
+@cwd_relpath              = CND.cwd_relpath
+@here_abspath             = CND.here_abspath
+@_drop_extension          = ( path ) -> path[ ... path.length - ( PATH.extname path ).length ]
+@project_abspath          = ( P... ) -> CND.here_abspath __dirname, '..', P...
 
 

@@ -26,20 +26,23 @@ PD                        = require 'pipedreams'
   jr }                    = CND
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-types                     = require '../types'
 #...........................................................................................................
+types                     = require '../types'
 { isa
   validate
   declare
   size_of
   type_of }               = types
 #...........................................................................................................
-{ assign }                = require '../helpers'
-#...........................................................................................................
 require                   '../exception-handler'
 MIRAGE                    = require 'mkts-mirage'
 do_validate               = true
 DATAMILL                  = require '../..'
+{ cwd_abspath
+  cwd_relpath
+  here_abspath
+  _drop_extension
+  project_abspath }       = require '../helpers'
 
 #-----------------------------------------------------------------------------------------------------------
 format_object = ( d ) ->
@@ -226,15 +229,14 @@ format_object = ( d ) ->
 
 #-----------------------------------------------------------------------------------------------------------
 @$feed_db = ( S ) ->
-  ### TAINT stopgap measure; should be implemented in ICQL ###
-  db2 = ( MIRAGE.new_mirage S.mirage ).db
+  dbw = S.mirage.dbw
   return $watch ( d ) =>
     ### TAINT how to convert vnr in ICQL? ###
     row = @row_from_datom S, d
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
-      if      d.$fresh then db2.insert row
-      else if d.$dirty then db2.update row
+      if      d.$fresh then dbw.insert row
+      else if d.$dirty then dbw.update row
     catch error
       warn "µ12133 when trying to insert or update row #{jr row}"
       warn "µ12133 an error occurred:"
@@ -285,9 +287,7 @@ format_object = ( d ) ->
   @feed_source S, source
 
 #-----------------------------------------------------------------------------------------------------------
-@translate_document = -> new Promise ( resolve, reject ) =>
-  mirage    = MIRAGE.new_mirage { source_path: './src/tests/demo.md', db_path: '/tmp/mirage.db', }
-  await MIRAGE.acquire      mirage
+@translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
   S         = { mirage, }
   limit     = Infinity
   phases    = [
@@ -308,7 +308,12 @@ format_object = ( d ) ->
 ############################################################################################################
 unless module.parent?
   do =>
-    await @translate_document()
+    #.......................................................................................................
+    settings =
+      file_path:  project_abspath './src/tests/demo.md'
+      db_path:    '/tmp/mirage.db'
+      icql_path:  project_abspath './db/mkts.icql'
+    mirage = await MIRAGE.create settings
+    await @translate_document mirage
     help 'ok'
-
 
