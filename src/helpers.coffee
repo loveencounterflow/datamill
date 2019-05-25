@@ -36,13 +36,27 @@ types                     = require './types'
   declare
   size_of
   type_of }               = types
-#...........................................................................................................
+
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
 @cwd_abspath              = CND.cwd_abspath
 @cwd_relpath              = CND.cwd_relpath
 @here_abspath             = CND.here_abspath
 @_drop_extension          = ( path ) => path[ ... path.length - ( PATH.extname path ).length ]
 @project_abspath          = ( P... ) => CND.here_abspath __dirname, '..', P...
 
+#-----------------------------------------------------------------------------------------------------------
+@badge_from_filename = ( filename ) ->
+  basename  = PATH.basename filename
+  return 'DATAMILL/' + ( basename .replace /^(.*?)\.[^.]+$/, '$1' ).toUpperCase()
+
+
+
+
+#===========================================================================================================
+#
 #-----------------------------------------------------------------------------------------------------------
 @format_object = ( d ) =>
   R = {}
@@ -202,3 +216,5 @@ types                     = require './types'
       warn "µ12133 #{error.message}"
       throw error
     return null
+
+

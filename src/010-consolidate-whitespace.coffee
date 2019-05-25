@@ -1,14 +1,11 @@
 
-
-
-
-
 'use strict'
 
 ############################################################################################################
+H                         = require './helpers'
 CND                       = require 'cnd'
 rpr                       = CND.rpr
-badge                     = 'DATAMILL/MAIN'
+badge                     = H.badge_from_filename __filename
 debug                     = CND.get_logger 'debug',     badge
 warn                      = CND.get_logger 'warn',      badge
 info                      = CND.get_logger 'info',      badge
@@ -20,10 +17,8 @@ echo                      = CND.echo.bind CND
   assign }                = CND
 #...........................................................................................................
 require                   './exception-handler'
-@SF                       = require './special-forms'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-MIRAGE                    = require 'mkts-mirage'
 VNR                       = require './vnr'
 #...........................................................................................................
 PD                        = require 'pipedreams'
@@ -33,68 +28,60 @@ PD                        = require 'pipedreams'
   select
   stamp }                 = PD
 #...........................................................................................................
-@types                    = require './types'
+types                     = require './types'
 { isa
   validate
   declare
   size_of
-  type_of }               = @types
-#...........................................................................................................
-H                         = require './helpers'
-{ cwd_abspath
-  cwd_relpath
-  here_abspath
-  project_abspath }       = H
+  type_of }               = types
 
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT to be written; observe this will simplify `$blank_lines()`. ###
+@$trim = ( S ) ->
+  return $ ( d, send ) => send d
+
+#-----------------------------------------------------------------------------------------------------------
+@$blank_lines = ( S ) ->
+  prv_vnr       = null
+  linecount     = 0
+  send          = null
+  within_blank  = false
+  # is_first      = true
+  #.........................................................................................................
+  flush = ( n ) =>
+    within_blank  = false
+    $vnr          = VNR.new_level prv_vnr
+    send H.fresh_datom '^blank', { value: { linecount, }, $vnr, }
+    linecount     = 0
+  #.........................................................................................................
+  return $ { last, }, ( d, send_ ) =>
+    send = send_
+    #.......................................................................................................
+    if d is last
+      flush()# if within_blank
+      return null
+    #.......................................................................................................
+    return send d unless select d, '^mktscript'
+    #.......................................................................................................
+    unless isa.blank_text d.value
+      flush() if within_blank
+      prv_vnr       = d.$vnr
+      return send d
+    #.......................................................................................................
+    send stamp d
+    prv_vnr       = d.$vnr
+    linecount     = 0 unless within_blank
+    linecount    += +1
+    within_blank  = true
+    return null
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
-  source    = PD.new_push_source()
-  pipeline  = []
-  pipeline.push source
-  pipeline.push transform
-  # pipeline.push H.$show S
-  pipeline.push H.$feed_db S
-  pipeline.push PD.$drain => resolve()
-  PD.pull pipeline...
-  H.feed_source S, source
-
-#-----------------------------------------------------------------------------------------------------------
-@translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
-  S         = { mirage, }
-  limit     = Infinity
-  phases    = [
-    ### TAINT use globbing ###
-    ( require './010-consolidate-whitespace' )
-    ( require './020-blocks' )
-    # ( require './030-special-forms' )
-    ]
-  #.........................................................................................................
-  for phase in phases
-    help "phase #{rpr ( k for k of phase )}"
-    # help "phase #{rpr phase}"
-    await @run_phase S, phase.$transform S
-  H.show_overview S
-  resolve()
-  #.........................................................................................................
-  return null
-
-
-############################################################################################################
-unless module.parent?
-  do =>
-    #.......................................................................................................
-    settings =
-      file_path:  project_abspath './src/tests/demo.md'
-      db_path:    '/tmp/mirage.db'
-      icql_path:  project_abspath './db/datamill.icql'
-    mirage = await MIRAGE.create settings
-    await @translate_document mirage
-    help 'ok'
-
-
-
-
+@$transform = ( S ) ->
+  pipeline = []
+  pipeline.push @$trim S
+  pipeline.push @$blank_lines S
+  return PD.pull pipeline...
 
