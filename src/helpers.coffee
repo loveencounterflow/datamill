@@ -18,8 +18,10 @@ echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
 #...........................................................................................................
-PATH 											= require 'path'
-VNR 											= require './vnr'
+PATH                      = require 'path'
+VNR                       = require './vnr'
+{ to_width
+  width_of }              = require 'to-width'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -50,14 +52,14 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @new_datom = ( P ... ) =>
   R = PD.new_datom P...
-  # R = PD.set R, 'vnr_txt', 	( jr R.$vnr ) if R.$vnr?
+  # R = PD.set R, 'vnr_txt',  ( jr R.$vnr ) if R.$vnr?
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @fresh_datom = ( P ... ) =>
   R = PD.new_datom P...
-  # R = PD.set R, 'vnr_txt', 	( jr R.$vnr ) if R.$vnr?
-  R = PD.set R, '$fresh',		 true
+  # R = PD.set R, 'vnr_txt',  ( jr R.$vnr ) if R.$vnr?
+  R = PD.set R, '$fresh',    true
   return R
 
 
@@ -74,26 +76,42 @@ types                     = require './types'
 
 #-----------------------------------------------------------------------------------------------------------
 @show_overview = ( S ) =>
-  dbr = S.mirage.db
+  dbr   = S.mirage.db
+  level = 0
   #.........................................................................................................
-  for row from dbr.read_lines { limit: 30, }
+  for row from dbr.read_lines() # { limit: 30, }
     # debug 'µ10001', rpr row
-    if row.stamped
-      color = CND.grey
-    else
-      color = switch row.key
-        when '^mktscript' then CND.yellow
-        when '^blank'     then ( P... ) => CND.grey P...
-        when '~warning'   then ( P... ) => CND.reverse CND.red P...
-        else CND.white
+    if ( row.key is '^mktscript' ) and ( row.value is '' )
+      continue
+    if ( row.key is '^blank' )
+      echo CND.white '-'.repeat 100
+      continue
+    switch row.key
+      when '^mktscript' then  _color  = CND.YELLOW
+      when '^blank'     then  _color  = CND.grey
+      when '~warning'   then  _color  = CND.RED
+      when '^literal'   then  _color  = CND.GREEN
+      when '<h'         then  _color  = CND.VIOLET
+      when '>h'         then  _color  = CND.VIOLET
+      else                    _color  = CND.white
     key   = row.key.padEnd      12
     vnr   = row.vnr_txt.padEnd  12
     value = if ( isa.text row.value ) then row.value else rpr row.value
     value = value[ .. 80 ]
-    info color "#{vnr} #{( if row.stamped then 'S' else ' ' )} #{key} #{rpr value}"
+    stamp = if row.stamped then 'S' else ' '
+    line  = "#{vnr} #{stamp} #{key} #{rpr value}"
+    line  = to_width line, 100
+    dent  = '  '.repeat level
+    level = switch row.key[ 0 ]
+      when '<' then level + 1
+      when '>' then level - 1
+      else          level
+    color = if row.stamped then CND.grey else ( P... ) -> CND.reverse _color P...
+    # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
+    echo dent + color line
   #.........................................................................................................
   for row from dbr.get_stats()
-    info "#{row.key}: #{row.count}"
+    echo "#{row.key}: #{row.count}"
   #.........................................................................................................
   return null
 
