@@ -9,7 +9,8 @@
     "icql": "^2.1.0",
     "intertype": "^2.4.0",
     "mkts-mirage": "^2.0.0",
-    "pipedreams": "^8.1.2"
+    "pipedreams": "^8.1.2",
+    "to-width": "^1.0.3"
   },
   "devDependencies": {},
   "scripts": {
