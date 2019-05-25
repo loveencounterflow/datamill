@@ -104,12 +104,16 @@ H                         = require './helpers'
       send stamp d
     else
       if within_codeblock
-        ### TAINT should somehow make sure properties are OK for a `^literal` ###
+        send stamp d
         $vnr  = VNR.new_level d.$vnr, 1
-        d     = PD.set d, 'key',    '^literal'
-        d     = PD.set d, '$vnr',   $vnr
-        d     = PD.set d, '$fresh', true
-      send d
+        ### TAINT should somehow make sure properties are OK for a `^literal` ###
+        d1    = d
+        d1    = PD.set d1, 'key',    '^literal'
+        d1    = PD.set d1, '$vnr',   $vnr
+        d1    = PD.set d1, '$fresh', true
+        send d1
+      else
+        send d
     # $vnr  = VNR.new_level d.$vnr, 0
     # $vnr  = VNR.advance $vnr; send H.fresh_datom '<codeblock',        { level, $vnr, }
     # $vnr  = VNR.advance $vnr; send H.fresh_datom '>codeblock',        { level, $vnr, }
