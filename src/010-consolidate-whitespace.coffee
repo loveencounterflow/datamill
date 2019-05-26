@@ -37,6 +37,24 @@ types                     = require './types'
 
 
 #-----------------------------------------------------------------------------------------------------------
+@$stop = ( S ) ->
+  pattern     = /// ^ < stop \/? > $ ///
+  has_stopped = false
+  return $ ( d, send ) =>
+    # debug 'µ09012', d, stamp d
+    return send stamp d if has_stopped
+    return send d unless select d, '^mktscript'
+    return send d unless ( d.text.match pattern )?
+    send stamp d
+    has_stopped = true
+    $vnr        = VNR.new_level d.$vnr, 0
+    message     = "µ09011 encountered `<stop>` tag; discarding rest of document"
+    ### TAINT use API call ###
+    $vnr        = VNR.advance $vnr; send H.fresh_datom '~notice', { message, $vnr, }
+    debug 'µ09012', $vnr
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
 ### TAINT to be written; observe this will simplify `$blank_lines()`. ###
 @$trim = ( S ) ->
   return $ ( d, send ) => send d
@@ -81,6 +99,7 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
+  pipeline.push @$stop S
   pipeline.push @$trim S
   pipeline.push @$blank_lines S
   return PD.pull pipeline...
