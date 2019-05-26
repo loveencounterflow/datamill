@@ -264,8 +264,8 @@ Special Forms:
   # pipeline.push @$ins                               S
   # pipeline.push @$strike                            S
   # pipeline.push @$em_and_strong                     S
-  # pipeline.push @$em                                S
-  # pipeline.push @$strong                            S
+  pipeline.push @$em                                S
+  pipeline.push @$strong                            S
   # # pipeline.push @$recycle_untouched_texts           S
   # pipeline.push @$filter_empty_texts                S
   # pipeline.push @$handle_remaining_achrs            S
