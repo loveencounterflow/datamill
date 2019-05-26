@@ -76,58 +76,18 @@ types                     = require './types'
   R = PD.set R, '$fresh',    true
   return R
 
-
-#===========================================================================================================
-#
 #-----------------------------------------------------------------------------------------------------------
-@$show = ( S ) => $watch ( d ) =>
-  if d.$stamped then color = CND.grey
-  else
-    switch d.key
-      when '^word' then color = CND.gold
-      else color = CND.white
-  info color jr d
-
-#-----------------------------------------------------------------------------------------------------------
-@show_overview = ( S ) =>
-  dbr   = S.mirage.db
-  level = 0
-  #.........................................................................................................
-  for row from dbr.read_lines() # { limit: 30, }
-    # debug 'µ10001', rpr row
-    if ( row.key is '^mktscript' ) and ( row.value is '' )
-      continue
-    if ( row.key is '^blank' )
-      echo CND.white '-'.repeat 100
-      continue
-    switch row.key
-      when '^mktscript' then  _color  = CND.YELLOW
-      when '^blank'     then  _color  = CND.grey
-      when '~warning'   then  _color  = CND.RED
-      when '^literal'   then  _color  = CND.GREEN
-      when '<h'         then  _color  = CND.VIOLET
-      when '>h'         then  _color  = CND.VIOLET
-      else                    _color  = CND.white
-    key   = row.key.padEnd      12
-    vnr   = row.vnr_txt.padEnd  12
-    value = if ( isa.text row.value ) then row.value else rpr row.value
-    value = value[ .. 80 ]
-    stamp = if row.stamped then 'S' else ' '
-    line  = "#{vnr} #{stamp} #{key} #{rpr value}"
-    line  = to_width line, 100
-    dent  = '  '.repeat level
-    level = switch row.key[ 0 ]
-      when '<' then level + 1
-      when '>' then level - 1
-      else          level
-    color = if row.stamped then CND.grey else ( P... ) -> CND.reverse _color P...
-    # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
-    echo dent + color line
-  #.........................................................................................................
-  for row from dbr.get_stats()
-    echo "#{row.key}: #{row.count}"
-  #.........................................................................................................
-  return null
+@swap_key = ( d, key, $vnr = null ) ->
+  ### Given a datom `d`, compute the first `$vnr` for the next level (or use the optional `$vnr` argument)
+  and set the `key` on a copy. Make sure `$fresh` is set and `$dirty` is unset.
+  ###
+  $vnr ?= VNR.new_level d.$vnr, 1
+  R     = d
+  R     = PD.set    R, 'key',    key
+  R     = PD.set    R, '$vnr',   $vnr
+  R     = PD.set    R, '$fresh', true
+  R     = PD.unset  R, '$dirty'
+  return R
 
 
 #===========================================================================================================
@@ -135,12 +95,12 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @previous_line_is_blank = ( S, vnr ) =>
   return true unless ( d = @get_previous_datom S, vnr )?
-  return ( d.value.match /^\s*$/ )?
+  return ( d.text? and d.text.match /^\s*$/ )?
 
 #-----------------------------------------------------------------------------------------------------------
 @next_line_is_blank = ( S, vnr ) =>
   return true unless ( d = @get_next_datom S, vnr )?
-  return ( d.value.match /^\s*$/ )?
+  return ( d.text? and d.text.match /^\s*$/ )?
 
 #-----------------------------------------------------------------------------------------------------------
 @get_previous_datom = ( S, vnr ) =>
@@ -160,10 +120,14 @@ types                     = require './types'
   return @datom_from_vnr S, VNR.advance vnr
 
 #-----------------------------------------------------------------------------------------------------------
-@datom_from_vnr = ( S, vnr ) =>
+@row_from_vnr = ( S, vnr ) =>
   dbr     = S.mirage.dbr
   vnr_txt = jr vnr
-  return null unless ( row = dbr.$.first_row dbr.datom_from_vnr { vnr_txt, } )?
+  return dbr.$.first_row dbr.datom_from_vnr { vnr_txt, }
+
+#-----------------------------------------------------------------------------------------------------------
+@datom_from_vnr = ( S, vnr ) =>
+  return null unless ( row = @row_from_vnr S, vnr )?
   return @datom_from_row S, row
 
 #===========================================================================================================
@@ -173,17 +137,36 @@ types                     = require './types'
   ### TAINT how to convert vnr in ICQL? ###
   vnr_txt     = row.vnr_txt
   $vnr        = JSON.parse vnr_txt
-  R           = PD.new_datom row.key, { value: row.value, $vnr, }
-  R           = PD.set R, '$stamped', true if row.stamped
-  return R
+  p           = JSON.parse row.p
+  R           = PD.thaw PD.new_datom row.key, { $vnr, }
+  R.text      = row.text  if row.text?
+  R.$stamped  = true      if ( row.stamped ? false )
+  R[ k ]      = p[ k ] for k of p when p[ k ]?
+  return PD.freeze R
+
+#-----------------------------------------------------------------------------------------------------------
+@p_from_datom = ( S, d ) =>
+  R     = {}
+  count = 0
+  for k, v of d
+    continue if k is 'key'
+    continue if k is 'text'
+    continue if k.startsWith '$'
+    continue unless v?
+    count  += 1
+    R[ k ]  = v
+  R = null if count is 0
+  return JSON.stringify R
 
 #-----------------------------------------------------------------------------------------------------------
 @row_from_datom = ( S, d ) =>
   ### TAINT how to convert booleans in ICQL? ###
+  key       = d.key
   stamped   = if ( PD.is_stamped d ) then 1 else 0
-  vnr_txt   = jr d.$vnr
-  value     = if ( isa.text d.value ) then d.value else jr d.value
-  R         = { key: d.key, vnr_txt, value, stamped, }
+  vnr_txt   = JSON.stringify d.$vnr
+  text      = d.text ? null
+  p         = @p_from_datom S, d
+  R         = { key, vnr_txt, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
 
@@ -208,13 +191,84 @@ types                     = require './types'
     row = @row_from_datom S, d
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
+      ### NOTE Make sure to test first for `$fresh`/inserts, then for `$dirty`/updates, since a `$fresh`
+      datom may have undergone changes (which doesn't make the correct opertion an update). ###
       if      d.$fresh then dbw.insert row
       else if d.$dirty then dbw.update row
     catch error
-      warn "µ12133 when trying to insert or update row #{jr row}"
-      warn "µ12133 an error occurred:"
-      warn "µ12133 #{error.message}"
+      warn 'µ12133', "when trying to insert or update row"
+      warn 'µ12133', jr row
+      warn 'µ12133', "an error occurred:"
+      warn 'µ12133', "#{error.message}"
+      if error.message.startsWith 'UNIQUE constraint failed'
+        urge 'µ88768', "conflict occurred because"
+        urge 'µ88768', jr @row_from_vnr S, d.$vnr
+        urge 'µ88768', "is already in DB"
       throw error
     return null
+
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
+@$show = ( S ) => $watch ( d ) =>
+  if d.$stamped then color = CND.grey
+  else
+    switch d.key
+      when '^word' then color = CND.gold
+      else color = CND.white
+  info color jr d
+
+#-----------------------------------------------------------------------------------------------------------
+@show_overview = ( S, raw = false ) =>
+  ### TAINT consider to convert row to datom before display ###
+  line_width  = 100
+  dbr         = S.mirage.db
+  level       = 0
+  omit_count  = 0
+  #.........................................................................................................
+  for row from dbr.read_lines() # { limit: 30, }
+    if raw
+      info @format_object row
+      continue
+    if ( row.key is '^mktscript' ) and ( row.value is '' )
+      omit_count += +1
+      continue
+    if ( row.key is '^blank' )
+      echo CND.white '-'.repeat line_width
+      continue
+    switch row.key
+      when '^mktscript' then  _color  = CND.YELLOW
+      when '^blank'     then  _color  = CND.grey
+      when '~warning'   then  _color  = CND.RED
+      when '~notice'    then  _color  = CND.cyan
+      when '^literal'   then  _color  = CND.GREEN
+      when '<h'         then  _color  = CND.VIOLET
+      when '>h'         then  _color  = CND.VIOLET
+      else                    _color  = CND.white
+    key   = row.key.padEnd      12
+    vnr   = row.vnr_txt.padEnd  12
+    text  = if row.text?  then ( jr row.text      ) else ''
+    p     = if row.p?     then row.p                else ''
+    p     = '' if ( not p? ) or ( p is 'null' )
+    value = text + ' ' + p
+    value = value[ .. 80 ]
+    stamp = if row.stamped then 'S' else ' '
+    line  = "#{vnr} #{stamp} #{key} #{value}"
+    line  = to_width line, line_width
+    dent  = '  '.repeat level
+    level = switch row.key[ 0 ]
+      when '<' then level + 1
+      when '>' then level - 1
+      else          level
+    color = if row.stamped then CND.grey else ( P... ) -> CND.reverse _color P...
+    # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
+    echo dent + color line
+  #.........................................................................................................
+  echo "#{omit_count} rows omitted from this view"
+  for row from dbr.get_stats()
+    echo "#{row.key}: #{row.count}"
+  #.........................................................................................................
+  return null
 
 
