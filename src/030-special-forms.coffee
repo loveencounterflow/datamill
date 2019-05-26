@@ -1,33 +1,43 @@
 
+
+
+
+
 'use strict'
 
-
 ############################################################################################################
+H                         = require './helpers'
 CND                       = require 'cnd'
 rpr                       = CND.rpr
-badge                     = 'DATAMILL/SPECIAL-FORMS'
-log                       = CND.get_logger 'plain',     badge
-info                      = CND.get_logger 'info',      badge
-whisper                   = CND.get_logger 'whisper',   badge
-alert                     = CND.get_logger 'alert',     badge
+badge                     = H.badge_from_filename __filename
 debug                     = CND.get_logger 'debug',     badge
 warn                      = CND.get_logger 'warn',      badge
-help                      = CND.get_logger 'help',      badge
+info                      = CND.get_logger 'info',      badge
 urge                      = CND.get_logger 'urge',      badge
+help                      = CND.get_logger 'help',      badge
+whisper                   = CND.get_logger 'whisper',   badge
 echo                      = CND.echo.bind CND
+{ jr
+  assign }                = CND
+#...........................................................................................................
+require                   './exception-handler'
+first                     = Symbol 'first'
+last                      = Symbol 'last'
+VNR                       = require './vnr'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
+  $watch
   $async
   select
   stamp }                 = PD
 #...........................................................................................................
-{ jr
-  copy
-  is_empty
-  assign }                = CND
-join                      = ( x, joiner = '' ) -> x.join joiner
-rprx                      = ( d ) -> "#{d.mark} #{d.type}:: #{jr d.value} #{jr d.stamped ? false}"
+types                     = require './types'
+{ isa
+  validate
+  declare
+  size_of
+  type_of }               = types
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -77,29 +87,34 @@ rprx                      = ( d ) -> "#{d.mark} #{d.type}:: #{jr d.value} #{jr d
 #-----------------------------------------------------------------------------------------------------------
 @$split_on_first_active_chr = ( S ) ->
   return $ ( d, send ) =>
-    ### using ad-hoc `clean` attribute to indicate that text does not contain active characters ###
-    return send d unless ( select d, '^text' ) and ( not d.clean )
-    if ( parts = @split_on_first_active_chr d.value )?
+    return send d unless select d, '^mktscript'
+    return send d if d.text is '' ### empty lines are normally stamped out by WS consolidation ###
+    # debug 'µ88732', d
+    if ( parts = @split_on_first_active_chr d.text )?
       { achr, achrs, left, right, } = parts
-      send PD.new_single_event 'achr-split', achrs, { achr, left, right, }, $: d
+      send stamp d
+      $vnr = VNR.new_level d.$vnr, 0
+      if left? and left isnt ''
+        $vnr = VNR.advance $vnr; send H.fresh_datom '^literal', { text: left, $vnr, }
+      $vnr = VNR.advance $vnr; send H.fresh_datom '^achr-split', { achrs, achr, right, $vnr, }
     else
-      d.clean = true
-      send d
+      send stamp d
+      send H.swap_key d, '^literal'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
 @$recycle_untouched_texts = ( S ) -> $ ( d, send ) =>
-  if ( select d, '^text' ) and ( not d.clean )
+  if ( select d, '^mktscript' ) and ( not d.clean )
     send PD.R.recycling d
   else if ( select d, '^achr-split' )
-    send PD.new_text_event d.left + d.value, { clean: true, $: d } unless is_empty d.left
+    send PD.new_text_event d.left + d.text, { clean: true, $: d } unless isa.empty d.left
     send PD.R.recycling PD.new_text_event d.right, $: d
   else
     send d
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$filter_empty_texts = ( S ) -> PD.$filter ( d ) => not ( ( select d, '^text' ) and ( d.value is '' ) )
+@$filter_empty_texts = ( S ) -> PD.$filter ( d ) => not ( ( select d, '^mktscript' ) and ( d.text is '' ) )
 
 #-----------------------------------------------------------------------------------------------------------
 @$consolidate_texts = ( S ) ->
@@ -107,17 +122,17 @@ rprx                      = ( d ) -> "#{d.mark} #{d.type}:: #{jr d.value} #{jr d
   return $ { last: null, }, ( d, send ) =>
     # debug '93093-1', jr d
     if d?
-      if ( select d, '^text' )
-        buffer.push d.value
+      if ( select d, '^mktscript' )
+        buffer.push d.text
         # whisper '93093-2', buffer
       else
-        unless is_empty buffer
+        unless isa.empty buffer
           send PD.new_text_event ( buffer.join '' )
           buffer.length = 0
         send d
     else
       # whisper '93093-3', buffer
-      unless is_empty buffer
+      unless isa.empty buffer
         send PD.new_text_event ( buffer.join '' )
         buffer.length = 0
     return null
@@ -127,10 +142,10 @@ rprx                      = ( d ) -> "#{d.mark} #{d.type}:: #{jr d.value} #{jr d
     if ( select d, '^achr-split' )
       lnr     = d.$?.lnr  ? '?'
       text    = if d.$?.text? then ( rpr d.$.text ) else '?'
-      message = "unhandled active characters #{rpr d.value} on line #{lnr} in #{text}"
-      send PD.new_text_event d.left, { clean: true, $: d } unless is_empty d.left
+      message = "unhandled active characters #{rpr d.text} on line #{lnr} in #{text}"
+      send PD.new_text_event d.left, { clean: true, $: d } unless isa.empty d.left
       send PD.new_warning 'µ99823', message, d, $: d
-      # send PD.new_text_event d.left + d.value + d.right, $: d
+      # send PD.new_text_event d.left + d.text + d.right, $: d
       # send d
     else
       send d
@@ -143,16 +158,16 @@ rprx                      = ( d ) -> "#{d.mark} #{d.type}:: #{jr d.value} #{jr d
   closing_key = ">#{name}"
   #.........................................................................................................
   return $ ( d, send ) =>
-    if ( select d, '^achr-split' ) and ( d.value is start_stop )
+    if ( select d, '^achr-split' ) and ( d.text is start_stop )
       ### using ad-hoc `clean` attribute to indicate that text does not contain active characters ###
       send PD.new_text_event d.left, { clean: true, $: d }
       #.....................................................................................................
       if within
-        send PD.new_event closing_key, null, $: d
+        send H.fresh_datom closing_key, null, $: d
         within = false
       #.....................................................................................................
       else
-        send PD.new_event opening_key, null, $: d
+        send H.fresh_datom opening_key, null, $: d
         within = true
       #.....................................................................................................
       send PD.new_text_event d.right, $: d
@@ -193,42 +208,83 @@ Special Forms:
 @$em            = ( S ) -> @_get_symmetric_achr_transform S, '*',     'em'
 
 
+
+# #-----------------------------------------------------------------------------------------------------------
+# @$codeblocks = ( S ) ->
+#   ### Recognize codeblocks as regions delimited by triple backticks. Possible extensions include
+#   markup for source code category and double service as pre-formatted blocks. ###
+#   pattern           = /// ^ (?<backticks> ``` ) $ ///
+#   within_codeblock  = false
+#   #.........................................................................................................
+#   return $ ( d, send ) =>
+#     return send d unless select d, '^mktscript'
+#     ### TAINT should send `<codeblock` datom ###
+#     if ( match = d.text.match pattern )?
+#       within_codeblock = not within_codeblock
+#       send stamp d
+#     else
+#       if within_codeblock
+#         send stamp d
+#         $vnr  = VNR.new_level d.$vnr, 1
+#         ### TAINT should somehow make sure properties are OK for a `^literal` ###
+#         d1    = d
+#         d1    = PD.set d1, 'key',    '^literal'
+#         d1    = PD.set d1, '$vnr',   $vnr
+#         d1    = PD.set d1, '$fresh', true
+#         send d1
+#       else
+#         send d
+#     # $vnr  = VNR.new_level d.$vnr, 0
+#     # $vnr  = VNR.advance $vnr; send H.fresh_datom '<codeblock',        { level, $vnr, }
+#     # $vnr  = VNR.advance $vnr; send H.fresh_datom '>codeblock',        { level, $vnr, }
+#     return null
+
+# #-----------------------------------------------------------------------------------------------------------
+# @$heading = ( S ) ->
+#   ### Recognize heading as any line that starts with a `#` (hash). Current behavior is to
+#   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
+#   in the future. ###
+#   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
+#   #.........................................................................................................
+#   return $ ( d, send ) =>
+#     return send d unless select d, '^mktscript'
+#     return send d unless ( match = d.text.match pattern )?
+#     prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
+#     nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
+#     $vnr              = VNR.new_level d.$vnr, 0
+#     unless prv_line_is_blank and nxt_line_is_blank
+#       ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
+#       ### TAINT update PipeDreams: warnings always marked fresh ###
+#       # warning = PD.new_warning d.$vnr, message, d, { $fresh: true, }
+#       message = "µ09082 heading should have blank lines above and below"
+#       $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning', message, { $vnr, }
+#       ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
+#     send stamp d
+#     level = match.groups.hashes.length
+#     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
+#     # debug 'µ88764', rpr match.groups.text
+#     # debug 'µ88764', rpr text
+#     $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',                { level, $vnr, }
+#     $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', text,  { $vnr, }
+#     $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',                { level, $vnr, }
+#     return null
+
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@$parse_special_forms = ( S ) =>
-  refillable  = []
-  bysource    = PD.new_refillable_source refillable, { repeat: 5, show: true, }
-  byline      = []
-  byline.push bysource
-  byline.push PD.$show title: '(parse_special_forms bystream)'
-  bystream    = PD.pull byline...
-  #.......................................................................................................
-  pipeline    = []
-  pipeline.push PD.$pass() ### necessary so `$wye()` doesn't come on top of pipeline ###
-  pipeline.push PD.$wye bystream
-  # pipeline.push PD.R.$unwrap_recycled()
+@$transform = ( S ) ->
+  pipeline = []
   pipeline.push @$split_on_first_active_chr         S
-  pipeline.push @$mark                              S
-  pipeline.push @$ins                               S
-  pipeline.push @$strike                            S
-  pipeline.push @$em_and_strong                     S
-  pipeline.push @$em                                S
-  pipeline.push @$strong                            S
-  pipeline.push @$recycle_untouched_texts           S
-  pipeline.push @$filter_empty_texts                S
-  pipeline.push @$handle_remaining_achrs            S
-  # pipeline.push $ { last: PD.symbols.last, }, ( d, send ) ->
-  #   debug '33783', '---------------->', d
-  #   if d is PD.symbols.last
-  #     refillable.push PD.symbols.end
-  #   else
-  #     send d
-  #   return null
-  # pipeline.push PD.$watch ( d ) => if ( select d, '~end' ) then source.end()
-  # pipeline.push PD.R.$recycle ( d ) -> refillable.push d
-  pipeline.push @$consolidate_texts                 S
-  #.......................................................................................................
+  # pipeline.push @$mark                              S
+  # pipeline.push @$ins                               S
+  # pipeline.push @$strike                            S
+  # pipeline.push @$em_and_strong                     S
+  # pipeline.push @$em                                S
+  # pipeline.push @$strong                            S
+  # # pipeline.push @$recycle_untouched_texts           S
+  # pipeline.push @$filter_empty_texts                S
+  # pipeline.push @$handle_remaining_achrs            S
+  # pipeline.push @$consolidate_texts                 S
   return PD.pull pipeline...
-
 

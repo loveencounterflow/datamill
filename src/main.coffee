@@ -20,7 +20,6 @@ echo                      = CND.echo.bind CND
   assign }                = CND
 #...........................................................................................................
 require                   './exception-handler'
-@SF                       = require './special-forms'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
@@ -63,20 +62,21 @@ H                         = require './helpers'
 
 #-----------------------------------------------------------------------------------------------------------
 @translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
-  S         = { mirage, }
-  limit     = Infinity
-  phases    = [
-    ### TAINT use globbing ###
-    ( require './010-consolidate-whitespace' )
-    ( require './020-blocks' )
-    # ( require './030-special-forms' )
+  S           = { mirage, }
+  limit       = Infinity
+  phase_names = [
+    './010-consolidate-whitespace'
+    './020-blocks'
+    './030-special-forms'
     ]
   #.........................................................................................................
-  for phase in phases
-    help "phase #{rpr ( k for k of phase )}"
+  for phase_name in phase_names
+    phase = require phase_name
+    help "phase #{phase_name}"
     # help "phase #{rpr phase}"
     await @run_phase S, phase.$transform S
-  H.show_overview S
+  H.show_overview S, false
+  # H.show_overview S, true
   resolve()
   #.........................................................................................................
   return null
