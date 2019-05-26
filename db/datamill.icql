@@ -55,16 +55,16 @@ query get_stats():
     select null, null where false;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure insert( key, vnr_txt, value, stamped ):
+procedure insert( key, vnr_txt, text, p, stamped ):
   insert into
-    main    (  key,  vnr_txt,  value,  stamped )
-    values  ( $key, $vnr_txt, $value, $stamped );
+    main    (  key,  vnr_txt,  text,  p,  stamped )
+    values  ( $key, $vnr_txt, $text, $p, $stamped );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure update( key, vnr_txt, value, stamped ):
+procedure update( key, vnr_txt, text, p, stamped ):
   update main
-    set (  key,  value,  stamped ) =
-        ( $key, $value, $stamped )
+    set (  key,  text,  p,  stamped ) =
+        ( $key, $text, $p, $stamped )
     where vnr_txt = $vnr_txt;
 
 -- ---------------------------------------------------------------------------------------------------------
