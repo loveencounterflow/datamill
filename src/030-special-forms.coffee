@@ -147,19 +147,14 @@ types                     = require './types'
   closing_key = ">#{name}"
   #.........................................................................................................
   return $ ( d, send ) =>
-    if ( select d, '^achr-split' ) and ( d.text is start_stop )
-      ### using ad-hoc `clean` attribute to indicate that text does not contain active characters ###
-      send PD.new_text_event d.left, { clean: true, $: d }
+    if ( select d, '^achr-split' ) and ( d.achrs is start_stop )
+      $vnr    = VNR.new_level d.$vnr, 0
       #.....................................................................................................
-      if within
-        send H.fresh_datom closing_key, null, $: d
-        within = false
+      if within then  $vnr = VNR.advance $vnr; send H.fresh_datom closing_key, null, { $vnr, }
+      else            $vnr = VNR.advance $vnr; send H.fresh_datom opening_key, null, { $vnr, }
       #.....................................................................................................
-      else
-        send H.fresh_datom opening_key, null, $: d
-        within = true
-      #.....................................................................................................
-      send PD.new_text_event d.right, $: d
+      within  = not within
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text: d.right, $vnr, }
     else
       send d
     return null
