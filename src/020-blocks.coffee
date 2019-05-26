@@ -50,19 +50,15 @@ types                     = require './types'
   return $ ( d, send ) =>
     return send d unless select d, '^mktscript'
     ### TAINT should send `<codeblock` datom ###
-    if ( match = d.value.match pattern )?
+    if ( match = d.text.match pattern )?
       within_codeblock = not within_codeblock
       send stamp d
     else
       if within_codeblock
         send stamp d
-        $vnr  = VNR.new_level d.$vnr, 1
+        # $vnr  = VNR.new_level d.$vnr, 1
         ### TAINT should somehow make sure properties are OK for a `^literal` ###
-        d1    = d
-        d1    = PD.set d1, 'key',    '^literal'
-        d1    = PD.set d1, '$vnr',   $vnr
-        d1    = PD.set d1, '$fresh', true
-        send d1
+        send H.swap_key d, '^literal'
       else
         send d
     # $vnr  = VNR.new_level d.$vnr, 0
@@ -79,7 +75,7 @@ types                     = require './types'
   #.........................................................................................................
   return $ ( d, send ) =>
     return send d unless select d, '^mktscript'
-    return send d unless ( match = d.value.match pattern )?
+    return send d unless ( match = d.text.match pattern )?
     prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
     nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
     $vnr              = VNR.new_level d.$vnr, 0
@@ -88,16 +84,17 @@ types                     = require './types'
       ### TAINT update PipeDreams: warnings always marked fresh ###
       # warning = PD.new_warning d.$vnr, message, d, { $fresh: true, }
       message = "µ09082 heading should have blank lines above and below"
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning', message, { $vnr, }
+      ### TAINT use API call ###
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning', { message, $vnr, }
       ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
     send stamp d
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     # debug 'µ88764', rpr match.groups.text
     # debug 'µ88764', rpr text
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',                { level, $vnr, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', text,  { $vnr, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',                { level, $vnr, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',         { level, $vnr, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text, $vnr, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',         { level, $vnr, }
     return null
 
 
