@@ -67,31 +67,34 @@ types                     = require './types'
   within_blank  = false
   # is_first      = true
   #.........................................................................................................
-  flush = ( n ) =>
+  flush = ( advance = false ) =>
+    return null unless prv_vnr?
     within_blank  = false
-    $vnr          = VNR.new_level prv_vnr
-    send H.fresh_datom '^blank', { value: { linecount, }, $vnr, }
+    if advance  then  $vnr = VNR.new_level VNR.advance  prv_vnr
+    else              $vnr = VNR.new_level              prv_vnr
+    send H.fresh_datom '^blank', { linecount, $vnr, }
     linecount     = 0
   #.........................................................................................................
   return $ { last, }, ( d, send_ ) =>
     send = send_
     #.......................................................................................................
     if d is last
-      flush()# if within_blank
+      flush true
       return null
     #.......................................................................................................
-    return send d unless select d, '^mktscript'
-    #.......................................................................................................
-    unless isa.blank_text d.value
+    is_mktscript = select d, '^mktscript'
+    if is_mktscript and not isa.blank_text d.text
       flush() if within_blank
-      prv_vnr       = d.$vnr
+      prv_vnr = d.$vnr
       return send d
     #.......................................................................................................
-    send stamp d
+    if is_mktscript ### is a blank ###
+      send stamp d
+      linecount     = 0 unless within_blank
+      linecount    += +1
+      within_blank  = true
     prv_vnr       = d.$vnr
-    linecount     = 0 unless within_blank
-    linecount    += +1
-    within_blank  = true
+    send d
     return null
 
 #===========================================================================================================
