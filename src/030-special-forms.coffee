@@ -103,39 +103,28 @@ types                     = require './types'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$recycle_untouched_texts = ( S ) -> $ ( d, send ) =>
-  if ( select d, '^mktscript' ) and ( not d.clean )
-    send PD.R.recycling d
-  else if ( select d, '^achr-split' )
-    send PD.new_text_event d.left + d.text, { clean: true, $: d } unless isa.empty d.left
-    send PD.R.recycling PD.new_text_event d.right, $: d
-  else
-    send d
-  return null
-
-#-----------------------------------------------------------------------------------------------------------
 @$filter_empty_texts = ( S ) -> PD.$filter ( d ) => not ( ( select d, '^mktscript' ) and ( d.text is '' ) )
 
-#-----------------------------------------------------------------------------------------------------------
-@$consolidate_texts = ( S ) ->
-  buffer = []
-  return $ { last: null, }, ( d, send ) =>
-    # debug '93093-1', jr d
-    if d?
-      if ( select d, '^mktscript' )
-        buffer.push d.text
-        # whisper '93093-2', buffer
-      else
-        unless isa.empty buffer
-          send PD.new_text_event ( buffer.join '' )
-          buffer.length = 0
-        send d
-    else
-      # whisper '93093-3', buffer
-      unless isa.empty buffer
-        send PD.new_text_event ( buffer.join '' )
-        buffer.length = 0
-    return null
+# #-----------------------------------------------------------------------------------------------------------
+# @$consolidate_texts = ( S ) ->
+#   buffer = []
+#   return $ { last: null, }, ( d, send ) =>
+#     # debug '93093-1', jr d
+#     if d?
+#       if ( select d, '^mktscript' )
+#         buffer.push d.text
+#         # whisper '93093-2', buffer
+#       else
+#         unless isa.empty buffer
+#           send PD.new_text_event ( buffer.join '' )
+#           buffer.length = 0
+#         send d
+#     else
+#       # whisper '93093-3', buffer
+#       unless isa.empty buffer
+#         send PD.new_text_event ( buffer.join '' )
+#         buffer.length = 0
+#     return null
 
 #-----------------------------------------------------------------------------------------------------------
 @$handle_remaining_achrs = ( S ) -> $ ( d, send ) =>
