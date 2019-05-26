@@ -2,6 +2,8 @@
 
 A *short* **demonstration** of `MKTScript`.
 
+<stop/>
+
 ```
 # not a headline
 lines in code blocks that look like headlines are just lines.
@@ -11,8 +13,9 @@ lines in code blocks that look like headlines are just lines.
 Another paragraph
 # Headline with Warning
 Another paragraph
-that extends
+that \<i>extends</i>
 over several lines of text.
 
-# Another headline
+# Another **Headline**
+
 Text goes on *here*.
