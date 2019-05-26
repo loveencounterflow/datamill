@@ -71,10 +71,13 @@ H                         = require './helpers'
     ]
   #.........................................................................................................
   for phase_name in phase_names
-    phase = require phase_name
-    help "phase #{phase_name}"
-    # help "phase #{rpr phase}"
-    await @run_phase S, phase.$transform S
+    loop
+      phase = require phase_name
+      help "phase #{phase_name}"
+      # help "phase #{rpr phase}"
+      await @run_phase S, phase.$transform S
+      break unless H.repeat_phase S, phase
+  #.........................................................................................................
   H.show_overview S, false
   # H.show_overview S, true
   resolve()

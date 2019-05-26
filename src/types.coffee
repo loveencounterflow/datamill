@@ -19,9 +19,14 @@ jr                        = JSON.stringify
 Intertype                 = ( require 'intertype' ).Intertype
 intertype                 = new Intertype module.exports
 
-# #-----------------------------------------------------------------------------------------------------------
-# @declare 'mirage_main_row',
-#   tests:
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_phase_repeat', ( x ) ->
+	return true unless x?
+	return true if @isa.boolean x
+	return @isa.function x
+
+  # tests:
+  # 	"optional x is function or boolean":
 #     "x is a object":                          ( x ) -> @isa.object          x
 #     "x has key 'key'":                        ( x ) -> @has_key             x, 'key'
 #     "x has key 'vlnr_txt'":                   ( x ) -> @has_key             x, 'vlnr_txt'
