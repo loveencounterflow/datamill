@@ -230,9 +230,15 @@ types                     = require './types'
   info color jr d
 
 #-----------------------------------------------------------------------------------------------------------
+@get_tty_width = ( S ) =>
+  return R if ( R = process.stdout.columns )?
+  { execSync, } = require 'child_process'
+  return parseInt ( execSync "tput cols", { encoding: 'utf-8', } ), 10
+
+#-----------------------------------------------------------------------------------------------------------
 @show_overview = ( S, raw = false ) =>
   ### TAINT consider to convert row to datom before display ###
-  line_width  = 100
+  line_width  = @get_tty_width S
   dbr         = S.mirage.db
   level       = 0
   omit_count  = 0
