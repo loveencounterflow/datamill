@@ -110,7 +110,7 @@ types                     = require './types'
   ### TAINT need inverse to advance ###
   return null unless vnr[ 0 ] > 1
   vnr_txt = jr [ vnr[ 0 ] - 1 ]
-  return @datom_from_vnr S, S, vnr
+  return @datom_from_vnr S, vnr
 
 #-----------------------------------------------------------------------------------------------------------
 @get_next_datom = ( S, vnr ) =>
