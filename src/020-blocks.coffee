@@ -67,7 +67,7 @@ types                     = require './types'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$heading = ( S ) ->
+@$headings = ( S ) ->
   ### Recognize heading as any line that starts with a `#` (hash). Current behavior is to
   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
   in the future. ###
@@ -79,24 +79,35 @@ types                     = require './types'
     prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
     nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
     $vnr              = VNR.new_level d.$vnr, 0
-    unless prv_line_is_blank and nxt_line_is_blank
-      ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
-      ### TAINT update PipeDreams: warnings always marked fresh ###
-      # warning = PD.new_warning d.$vnr, message, d, { $fresh: true, }
-      message = "µ09082 heading should have blank lines above and below"
-      ### TAINT use API call ###
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning', { message, $vnr, }
-      ### !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ###
     send stamp d
+    #.......................................................................................................
+    unless prv_line_is_blank
+      message = "µ09082 heading should have blank lines above"
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, }
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, }
+    #.......................................................................................................
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
-    # debug 'µ88764', rpr match.groups.text
-    # debug 'µ88764', rpr text
     $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',         { level, $vnr, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text, $vnr, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text,  $vnr, }
     $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',         { level, $vnr, }
+    #.......................................................................................................
+    unless nxt_line_is_blank
+      message = "µ09083 heading should have blank lines below"
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, }
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, }
     return null
 
+#-----------------------------------------------------------------------------------------------------------
+@$paragraphs = ( S ) ->
+  ### TAINT avoid to send `^p` after block-level element ###
+  #.........................................................................................................
+  return $ ( d, send ) =>
+    send d
+    # return send d unless select d, '^blank'
+    # send stamp d
+    # $vnr    = VNR.new_level d.$vnr, 0
+    # $vnr    = VNR.advance $vnr; send H.fresh_datom '^p', { blanks: d.linecount, $vnr, }
 
 #===========================================================================================================
 #
@@ -104,6 +115,7 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$codeblocks  S
-  pipeline.push @$heading     S
+  pipeline.push @$headings    S
+  pipeline.push @$paragraphs  S
   return PD.pull pipeline...
 

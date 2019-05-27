@@ -51,7 +51,6 @@ types                     = require './types'
     message     = "µ09011 encountered `<stop>` tag; discarding rest of document"
     ### TAINT use API call ###
     $vnr        = VNR.advance $vnr; send H.fresh_datom '~notice', { message, $vnr, }
-    debug 'µ09012', $vnr
     return null
 
 #-----------------------------------------------------------------------------------------------------------

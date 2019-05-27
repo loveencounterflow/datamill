@@ -247,18 +247,19 @@ types                     = require './types'
     if raw
       info @format_object row
       continue
-    if ( row.key is '^mktscript' ) and ( row.value is '' )
-      omit_count += +1
-      continue
-    if ( row.key is '^blank' )
-      echo CND.white '-'.repeat line_width
-      continue
+    # if ( row.key is '^mktscript' ) and ( row.text is '' )
+    #   omit_count += +1
+    #   continue
+    # if ( row.key is '^blank' )
+    #   echo CND.white '-'.repeat line_width
+    #   continue
     switch row.key
       when '^mktscript' then  _color  = CND.YELLOW
       when '^blank'     then  _color  = CND.grey
       when '~warning'   then  _color  = CND.RED
       when '~notice'    then  _color  = CND.cyan
       when '^literal'   then  _color  = CND.GREEN
+      when '^p'         then  _color  = CND.BLUE
       when '<h'         then  _color  = CND.VIOLET
       when '>h'         then  _color  = CND.VIOLET
       else                    _color  = CND.white
@@ -279,7 +280,8 @@ types                     = require './types'
       else          level
     color = if row.stamped then CND.grey else ( P... ) -> CND.reverse _color P...
     # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
-    echo dent + color line
+    echo color line
+    # echo dent + color line
   #.........................................................................................................
   echo "#{omit_count} rows omitted from this view"
   for row from dbr.get_stats()
