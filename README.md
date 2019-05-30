@@ -33,9 +33,9 @@ I call 'data mills'), cannot do without them.
 
 <!--
 
-* recognize blocks
+* recognize paragraphs; must recognize block-level tags to do so
 
-* cloak
+* timetunnel
   * MKTScript / HTML tags
   * backslash-escaped literals
 
