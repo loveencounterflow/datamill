@@ -1,6 +1,41 @@
 # Headline
 
+Within code, `*stars*` and `<em>tags</em>` are just literals.
+
+That remains true for `<code>` tags, <code>without, `within` backticks.</code>.
+
+<tag
+x
+y=42
+y="42"
+z='42'
+>
+
 A *short* **demonstration** of `MKTScript`.
+
+A <em>short</em> <em><em>demonstration</em></em> of `MKTScript`.
+
+***em strong***
+
+<em><em><em>em strong</em></em></em>
+
+(1)—You can have ***left-anchored* triple** markup.
+
+(1)—You can have <em><em><em>left-anchored</em> triple</em></em> markup.
+
+(3)—You can have **right-anchored *triple*** markup.
+
+(3)—You can have **right-anchored *triple*** markup.
+
+(3)—You can have <strong>right-anchored <em>triple</strongem/> markup.
+
+*em***strong**
+
+dfsjkfh\*fsdfkj `*code`
+
+dfsjkfh<x123/>fsdfkj &#y123;
+
+<stop/>
 
 Some text above, then a
 
@@ -8,7 +43,13 @@ Some text above, then a
 
 and text below.
 
-<stop/>
+***em strong***
+
+***em strong* strong**
+
+**strong `*code` *em strong***
+
+**strong *em strong* strong**
 
 (1)—You can have ***left-anchored* triple** markup.
 
@@ -17,6 +58,8 @@ and text below.
 (3)—You can have **right-anchored *triple*** markup.
 
 (4)—You can have *right-anchored **triple*** markup.
+
+*em***strong**
 
 
 ```
@@ -34,3 +77,32 @@ over several lines of text.
 # Another **Headline**
 
 Text goes on *here*.
+
+
+<tag atr=* foo=*>xxx</tag>
+
+xx &#x123; y
+
+
+
+
+
+
+
+***X***
+
+***X* S**
+
+**S `*code` *X***
+
+**S *X* S**
+
+(1)—You can have ***left-anchored* triple** markup.
+
+(2)—You can have ***left-anchored** triple* markup.
+
+(3)—You can have **right-anchored *triple*** markup.
+
+(4)—You can have *right-anchored **triple*** markup.
+
+*E***S**
