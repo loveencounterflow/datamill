@@ -65,18 +65,26 @@ H                         = require './helpers'
   S           = { mirage, }
   limit       = Infinity
   phase_names = [
+    './005-stop'
     './010-consolidate-whitespace'
     './020-blocks'
-    # './030-special-forms'
+    # './030-escapes'
+    # './035-special-forms'
     ]
   #.........................................................................................................
   for phase_name in phase_names
+    phase     = require phase_name
+    pass_max  = 5
+    pass      = 0
     loop
-      phase = require phase_name
-      help "phase #{phase_name}"
-      # help "phase #{rpr phase}"
+      pass += +1
+      if pass >= pass_max
+        warn "µ44343 enforced break, pass_max is #{pass_max}"
+        break
+      help "µ55567 phase #{phase_name} pass #{CND.reverse CND.yellow pass}"
       await @run_phase S, phase.$transform S
       break unless H.repeat_phase S, phase
+      warn "µ33443 repeating phase #{phase_name}"
   #.........................................................................................................
   H.show_overview S, false
   # H.show_overview S, true
