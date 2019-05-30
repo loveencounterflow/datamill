@@ -11,6 +11,7 @@
     "markdown-it": "^8.4.2",
     "mkts-mirage": "^3.0.0",
     "pipedreams": "^8.1.4",
+    "timetunnel": "^1.0.1",
     "to-width": "^1.0.3"
   },
   "devDependencies": {
