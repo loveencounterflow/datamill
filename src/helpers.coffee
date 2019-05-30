@@ -135,9 +135,12 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @datom_from_row = ( S, row ) =>
   ### TAINT how to convert vnr in ICQL? ###
+  # debug 'µ22373', rpr row
+  # debug 'µ22373', rpr row.vnr_txt
+  # debug 'µ22373', rpr row.p
   vnr_txt     = row.vnr_txt
   $vnr        = JSON.parse vnr_txt
-  p           = JSON.parse row.p
+  p           = if row.p? then ( JSON.parse row.p ) else {}
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
