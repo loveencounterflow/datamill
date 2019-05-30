@@ -159,7 +159,6 @@ types                     = require './types'
       send d
     return null
 
-
 #===========================================================================================================
 ###
 
@@ -257,6 +256,17 @@ Special Forms:
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
+@repeat_phase = false
+@pass_max     = 5
+@pass         = 0
+@$repeat_phase = ( S ) ->
+  return $watch { last, }, ( d ) =>
+    return null unless d is last
+    @pass += +1
+    @repeat_phase = not ( @pass >= @pass_max )
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$split_on_first_active_chr         S
@@ -270,5 +280,6 @@ Special Forms:
   # pipeline.push @$filter_empty_texts                S
   # pipeline.push @$handle_remaining_achrs            S
   # pipeline.push @$consolidate_texts                 S
+  pipeline.push @$repeat_phase                      S
   return PD.pull pipeline...
 
