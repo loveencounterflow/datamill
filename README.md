@@ -31,3 +31,19 @@ I call 'data mills'), cannot do without them.
   2 ]` and so on.
 
 
+<!--
+
+* recognize blocks
+
+* cloak
+  * MKTScript / HTML tags
+  * backslash-escaped literals
+
+* parse special forms with markdown-it
+  * consider to use a fork of https://github.com/markdown-it/markdown-it/blob/master/lib/rules_inline/emphasis.js
+    so we don't parse underscores as emphasis, or cloak all underscores
+
+ -->
+
+
+
