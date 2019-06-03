@@ -5,11 +5,12 @@
   "main": "lib/main.js",
   "dependencies": {
     "cnd": "^4.6.0",
+    "color-convert": "^2.0.0",
     "icepick": "^2.4.0",
     "icql": "^2.1.0",
     "intertype": "^2.4.0",
     "markdown-it": "^8.4.2",
-    "mkts-mirage": "^3.0.0",
+    "mkts-mirage": "^3.0.1",
     "pipedreams": "^8.1.4",
     "timetunnel": "^1.0.1",
     "to-width": "^1.0.3"
