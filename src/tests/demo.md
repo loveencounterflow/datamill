@@ -1,15 +1,27 @@
 # Headline
 
+text with a <tag>DEMO</tag> to *wit*.
 Within code, `*stars*` and `<em>tags</em>` are just literals.
 
 That remains true for `<code>` tags, <code>without, `within` backticks.</code>.
 
-<tag
+***X***
+***X* S**
+**S `*code` *X***
+**S `*code` *X***
+**S *X* S**
+**S *X* <ding/> S**
+<div>**S *X* S**</div>
+<div x=foo>**S *X* S**</div>
+
+
+a tag that <tag
 x
 y=42
 y="42"
 z='42'
->
+> goes across lines
+<stop/>
 
 A *short* **demonstration** of `MKTScript`.
 
@@ -35,7 +47,6 @@ dfsjkfh\*fsdfkj `*code`
 
 dfsjkfh<x123/>fsdfkj &#y123;
 
-<stop/>
 
 Some text above, then a
 
