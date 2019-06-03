@@ -48,7 +48,7 @@ types                     = require './types'
   within_codeblock  = false
   #.........................................................................................................
   return $ ( d, send ) =>
-    return send d unless select d, '^mktscript'
+    return send d unless select d, '^line'
     ### TAINT should send `<codeblock` datom ###
     if ( match = d.text.match pattern )?
       within_codeblock = not within_codeblock
@@ -74,7 +74,7 @@ types                     = require './types'
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
   #.........................................................................................................
   return $ ( d, send ) =>
-    return send d unless select d, '^mktscript'
+    return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
     prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
     nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
@@ -89,7 +89,7 @@ types                     = require './types'
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',         { level, $vnr, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text,  $vnr, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '^line', { text,  $vnr, }
     $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',         { level, $vnr, }
     #.......................................................................................................
     unless nxt_line_is_blank

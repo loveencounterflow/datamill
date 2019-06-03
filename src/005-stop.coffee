@@ -44,7 +44,7 @@ types                     = require './types'
     # debug 'µ09012', d
     # debug 'µ09012', stamp d
     return send stamp d if has_stopped
-    return send d unless select d, '^mktscript'
+    return send d unless select d, '^line'
     return send d unless ( d.text.match pattern )?
     send stamp d
     has_stopped = true

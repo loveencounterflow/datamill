@@ -64,13 +64,13 @@ types                     = require './types'
       flush true
       return null
     #.......................................................................................................
-    is_mktscript = select d, '^mktscript'
-    if is_mktscript and not isa.blank_text d.text
+    is_line = select d, '^line'
+    if is_line and not isa.blank_text d.text
       flush() if within_blank
       prv_vnr = d.$vnr
       return send d
     #.......................................................................................................
-    if is_mktscript ### is a blank ###
+    if is_line ### is a blank ###
       send stamp d
       linecount     = 0 unless within_blank
       linecount    += +1
