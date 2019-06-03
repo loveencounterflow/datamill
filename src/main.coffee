@@ -68,6 +68,7 @@ H                         = require './helpers'
     './005-stop'
     './010-consolidate-whitespace'
     './020-blocks'
+    './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
     ]
@@ -98,9 +99,10 @@ unless module.parent?
   do =>
     #.......................................................................................................
     settings =
-      file_path:  project_abspath './src/tests/demo.md'
-      db_path:    '/tmp/mirage.db'
-      icql_path:  project_abspath './db/datamill.icql'
+      file_path:    project_abspath './src/tests/demo.md'
+      db_path:      '/tmp/mirage.db'
+      icql_path:    project_abspath './db/datamill.icql'
+      default_key:  '^line'
     mirage = await MIRAGE.create settings
     await @translate_document mirage
     help 'ok'
