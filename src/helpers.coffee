@@ -36,7 +36,7 @@ types                     = require './types'
   declare
   size_of
   type_of }               = types
-
+XXX_COLORIZER             = require './experiments/colorizer'
 
 #===========================================================================================================
 #
@@ -250,29 +250,32 @@ types                     = require './types'
     if raw
       info @format_object row
       continue
-    # if ( row.key is '^mktscript' ) and ( row.text is '' )
-    #   omit_count += +1
-    #   continue
-    # if ( row.key is '^blank' )
-    #   echo CND.white '-'.repeat line_width
-    #   continue
+    if ( row.key is '^mktscript' ) and ( row.text is '' )
+      omit_count += +1
+      continue
+    if ( row.key is '^blank' )
+      echo CND.white '-'.repeat line_width
+      continue
+    # _color  = @color_from_text row.key[ 1 .. ]
     switch row.key
-      when '^mktscript' then  _color  = CND.YELLOW
-      when '^blank'     then  _color  = CND.grey
-      when '~warning'   then  _color  = CND.RED
-      when '~notice'    then  _color  = CND.cyan
-      when '^literal'   then  _color  = CND.GREEN
-      when '^p'         then  _color  = CND.BLUE
-      when '<h'         then  _color  = CND.VIOLET
-      when '>h'         then  _color  = CND.VIOLET
-      else                    _color  = CND.white
+      when '^line'        then  _color  = CND.YELLOW
+      when '^block'       then  _color  = CND.gold
+      when '^mktscript'   then  _color  = CND.RED
+      when '^blank'       then  _color  = CND.grey
+      when '~warning'     then  _color  = CND.RED
+      when '~notice'      then  _color  = CND.cyan
+      when '^literal'     then  _color  = CND.GREEN
+      when '^p'           then  _color  = CND.BLUE
+      when '<h'           then  _color  = CND.VIOLET
+      when '>h'           then  _color  = CND.VIOLET
+      else                      _color  = @color_from_text row.key[ 1 .. ]
     key   = row.key.padEnd      12
     vnr   = row.vnr_txt.padEnd  12
     text  = if row.text?  then ( jr row.text      ) else ''
     p     = if row.p?     then row.p                else ''
     p     = '' if ( not p? ) or ( p is 'null' )
     value = text + ' ' + p
-    value = value[ .. 80 ]
+    # value = value[ .. 80 ]
     stamp = if row.stamped then 'S' else ' '
     line  = "#{vnr} #{stamp} #{key} #{value}"
     line  = to_width line, line_width
@@ -292,4 +295,12 @@ types                     = require './types'
   #.........................................................................................................
   return null
 
+#-----------------------------------------------------------------------------------------------------------
+_color_cache = {}
+@color_from_text = ( text ) ->
+  return R if ( R = _color_cache[ text ] )?
+  R = ( P... ) -> ( XXX_COLORIZER.ansi_code_from_text text ) + CND._pen P...
+  # R = ( P... ) -> CND.reverse ( XXX_COLORIZER.ansi_code_from_text text ) + CND._pen P...
+  _color_cache[ text ] = R
+  return R
 
