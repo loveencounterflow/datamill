@@ -51,6 +51,9 @@ types                     = require './types'
   within_codeblock  = false
   #.........................................................................................................
   return $ ( d, send ) =>
+    if within_codeblock and select d, '^blank'
+      return send PD.set d, 'key', '^literal-blank'
+    #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
     ### line starts or stops codeblock ###

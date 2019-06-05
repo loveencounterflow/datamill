@@ -257,18 +257,19 @@ XXX_COLORIZER             = require './experiments/colorizer'
       omit_count += +1
       continue
     switch row.key
-      when '^line'        then  _color  = CND.YELLOW
-      when '^block'       then  _color  = CND.gold
-      when '^mktscript'   then  _color  = CND.RED
-      when '~warning'     then  _color  = CND.RED
-      when '~notice'      then  _color  = CND.cyan
-      when '^literal'     then  _color  = CND.GREEN
-      when '^p'           then  _color  = CND.BLUE
-      when '<h'           then  _color  = CND.VIOLET
-      when '>h'           then  _color  = CND.VIOLET
-      else                      _color  = @color_from_text row.key[ 1 .. ]
+      when '^line'            then  _color  = CND.YELLOW
+      when '^block'           then  _color  = CND.gold
+      when '^mktscript'       then  _color  = CND.RED
+      when '~warning'         then  _color  = CND.RED
+      when '~notice'          then  _color  = CND.cyan
+      when '^literal'         then  _color  = CND.GREEN
+      when '^literal-blank'   then  _color  = CND.GREEN
+      when '^p'               then  _color  = CND.BLUE
+      when '<h'               then  _color  = CND.VIOLET
+      when '>h'               then  _color  = CND.VIOLET
+      else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
-    if ( row.key is '^blank' )
+    if false and ( row.key is '^blank' )
       key     = to_width '',          12
       vnr     = to_width '',          12
       region  = to_width '',          8

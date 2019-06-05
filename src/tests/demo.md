@@ -12,6 +12,7 @@ This content will be ignored
 
 ```
 # not a headline
+
 lines in code blocks that look like headlines are just lines.
 ```
 
@@ -21,6 +22,11 @@ Another paragraph
 that \<i>extends</i>
 over several lines of text.
 
+> A demonstration
+> of a blockquote
+> across several lines.
+>
+> Paragraphs within blockquotes are OK.
 # Another **Headline**
 
 Text goes on *here*.
@@ -41,11 +47,6 @@ A list of markup demos:
 * <div>**S *X* S**</div>
 * <div x=foo>**S *X* S**</div>
 
-> A demonstration
-> of a blockquote
-> across several lines.
->
-> Paragraphs within blockquotes are OK.
 
 <!-- foo bar (((# comment #))) baz -->
 
