@@ -45,5 +45,25 @@ I call 'data mills'), cannot do without them.
 
  -->
 
+## Phases
+
+A phase should contain either regular stream transforms or else pseudo-transforms. Regular transforms work
+on the datoms as they come down the pipeline and effects updates and insertions by `send`ing altered and
+newly formed datoms into the stream; pseudo-transforms, by contrast, are called once per entire stream and
+work directly with the rows in the database, doing its CRUD stuff doing SQL `select`, `update`, `insert` and
+so on.
+
+This mixture of methods is fine as long as one can be sure that a single phase does not use both approaches,
+for the simple reason that datoms are immutable and the exact timing of read and write events within a
+stream is left undefined. Therefore, when a regular stream transform reaches out to the database, in the
+middle of processing, to change, add, or delete records, we can in no case alter datoms that have already
+been read from the DB, and can never be sure whether our changes will be picked up by future DB read events.
+Therefore, when a regular and a pseudo transform work side by side within the same phase, neither can be
+sure about the changes effected by the other. To avoid this race condition, each phase can only ever only
+modify the DB directly or work exclusively on the stream of datoms.
+
+> NOTE discuss arrangements where this restriction may be relaxed, e.g. when all DB actions are restricted
+> to the instantiation stage of a regular stream transform.
+
 
 
