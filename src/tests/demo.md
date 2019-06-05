@@ -1,19 +1,53 @@
+
+<raw>
+% stuff for preamble
+</raw>
+<start/>
+
+<ignore>
+This content will be ignored
+</ignore>
+
 # Headline
+
+```
+# not a headline
+lines in code blocks that look like headlines are just lines.
+```
+
+Another paragraph
+## Headline with Warning
+Another paragraph
+that \<i>extends</i>
+over several lines of text.
+
+# Another **Headline**
+
+Text goes on *here*.
 
 text with a <tag>DEMO</tag> to *wit*.
 Within code, `*stars*` and `<em>tags</em>` are just literals.
 
 That remains true for `<code>` tags, <code>without, `within` backticks.</code>.
 
-***X***
-***X* S**
-**S `*code` *X***
-**S `*code` *X***
-**S *X* S**
-**S *X* <ding/> S**
-<div>**S *X* S**</div>
-<div x=foo>**S *X* S**</div>
+A list of markup demos:
 
+* ***X***
+* ***X* S**
+* **S `*code` *X***
+* **S `*code` *X***
+* **S *X* S**
+* **S *X* <ding/> S**
+* <div>**S *X* S**</div>
+* <div x=foo>**S *X* S**</div>
+
+> A demonstration
+> of a blockquote
+> across several lines.
+>
+> Paragraphs within blockquotes are OK.
+
+<!-- foo bar (((# comment #))) baz -->
 
 a tag that <tag
 x
@@ -32,13 +66,7 @@ A <em>short</em> <em><em>demonstration</em></em> of `MKTScript`.
 <em><em><em>em strong</em></em></em>
 
 (1)—You can have ***left-anchored* triple** markup.
-
-(1)—You can have <em><em><em>left-anchored</em> triple</em></em> markup.
-
 (3)—You can have **right-anchored *triple*** markup.
-
-(3)—You can have **right-anchored *triple*** markup.
-
 (3)—You can have <strong>right-anchored <em>triple</strongem/> markup.
 
 *em***strong**
@@ -63,57 +91,12 @@ and text below.
 **strong *em strong* strong**
 
 (1)—You can have ***left-anchored* triple** markup.
-
 (2)—You can have ***left-anchored** triple* markup.
-
 (3)—You can have **right-anchored *triple*** markup.
-
 (4)—You can have *right-anchored **triple*** markup.
 
 *em***strong**
 
 
-```
-# not a headline
-lines in code blocks that look like headlines are just lines.
-```
 
 
-Another paragraph
-# Headline with Warning
-Another paragraph
-that \<i>extends</i>
-over several lines of text.
-
-# Another **Headline**
-
-Text goes on *here*.
-
-
-<tag atr=* foo=*>xxx</tag>
-
-xx &#x123; y
-
-
-
-
-
-
-
-***X***
-
-***X* S**
-
-**S `*code` *X***
-
-**S *X* S**
-
-(1)—You can have ***left-anchored* triple** markup.
-
-(2)—You can have ***left-anchored** triple* markup.
-
-(3)—You can have **right-anchored *triple*** markup.
-
-(4)—You can have *right-anchored **triple*** markup.
-
-*E***S**
