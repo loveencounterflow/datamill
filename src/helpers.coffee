@@ -142,6 +142,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   $vnr        = JSON.parse vnr_txt
   p           = if row.p? then ( JSON.parse row.p ) else {}
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
+  R.region    = row.region
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
   R[ k ]      = p[ k ] for k of p when p[ k ]?
@@ -154,6 +155,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   for k, v of d
     continue if k is 'key'
     continue if k is 'text'
+    continue if k is 'region'
     continue if k.startsWith '$'
     continue unless v?
     count  += 1
@@ -167,9 +169,10 @@ XXX_COLORIZER             = require './experiments/colorizer'
   key       = d.key
   stamped   = if ( PD.is_stamped d ) then 1 else 0
   vnr_txt   = JSON.stringify d.$vnr
-  text      = d.text ? null
+  region    = d.region  ? null
+  text      = d.text    ? null
   p         = @p_from_datom S, d
-  R         = { key, vnr_txt, text, p, stamped, }
+  R         = { key, vnr_txt, region, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
 
@@ -250,18 +253,13 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if raw
       info @format_object row
       continue
-    if ( row.key is '^mktscript' ) and ( row.text is '' )
+    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
       omit_count += +1
       continue
-    if ( row.key is '^blank' )
-      echo CND.white '-'.repeat line_width
-      continue
-    # _color  = @color_from_text row.key[ 1 .. ]
     switch row.key
       when '^line'        then  _color  = CND.YELLOW
       when '^block'       then  _color  = CND.gold
       when '^mktscript'   then  _color  = CND.RED
-      when '^blank'       then  _color  = CND.grey
       when '~warning'     then  _color  = CND.RED
       when '~notice'      then  _color  = CND.cyan
       when '^literal'     then  _color  = CND.GREEN
@@ -269,22 +267,34 @@ XXX_COLORIZER             = require './experiments/colorizer'
       when '<h'           then  _color  = CND.VIOLET
       when '>h'           then  _color  = CND.VIOLET
       else                      _color  = @color_from_text row.key[ 1 .. ]
-    key   = row.key.padEnd      12
-    vnr   = row.vnr_txt.padEnd  12
-    text  = if row.text?  then ( jr row.text      ) else ''
-    p     = if row.p?     then row.p                else ''
-    p     = '' if ( not p? ) or ( p is 'null' )
-    value = text + ' ' + p
-    # value = value[ .. 80 ]
-    stamp = if row.stamped then 'S' else ' '
-    line  = "#{vnr} #{stamp} #{key} #{value}"
-    line  = to_width line, line_width
-    dent  = '  '.repeat level
-    level = switch row.key[ 0 ]
+    #.......................................................................................................
+    if ( row.key is '^blank' )
+      key     = to_width '',          12
+      vnr     = to_width '',          12
+      region  = to_width '',          8
+      text    = ''
+      p       = ''
+    #.......................................................................................................
+    else
+      key     = to_width row.key,     12
+      vnr     = to_width row.vnr_txt, 12
+      region  = to_width row.region,  8
+      text    = if row.text?  then ( jr row.text      ) else ''
+      p       = if row.p?     then row.p                else ''
+      p       = '' if ( not p? ) or ( p is 'null' )
+    #.......................................................................................................
+    value   = text + ' ' + p
+    # value   = value[ .. 80 ]
+    stamp   = if row.stamped then 'S' else ' '
+    line    = "#{vnr} │ #{region} │ #{stamp} │ #{key} │ #{value}"
+    line    = to_width line, line_width
+    dent    = '  '.repeat level
+    level   = switch row.key[ 0 ]
       when '<' then level + 1
       when '>' then level - 1
       else          level
-    color = if row.stamped then CND.grey else ( P... ) -> CND.reverse _color P...
+    level   = Math.max level, 0
+    color   = if ( row.stamped or row.key is '^blank' ) then CND.grey else ( P... ) -> CND.reverse _color P...
     # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
     echo color line
     # echo dent + color line
