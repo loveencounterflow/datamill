@@ -61,14 +61,26 @@ H                         = require './helpers'
   H.feed_source S, source
 
 #-----------------------------------------------------------------------------------------------------------
+@new_datamill = ( mirage ) ->
+  R =
+    mirage:     mirage
+    ### TAINT consider to store these values in DB ###
+    regions:
+      preamble:   { from: null, to: null, }
+      body:       { from: null, to: null, }
+      postscript: { from: null, to: null, }
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
 @translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
-  S           = { mirage, }
+  S           = @new_datamill mirage
   limit       = Infinity
   phase_names = [
-    './005-stop'
+    './005-start-stop'
+    './006-ignore'
     './010-consolidate-whitespace'
     './020-blocks'
-    './040-markdown-inline'
+    # './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
     ]
@@ -103,10 +115,11 @@ unless module.parent?
       db_path:      '/tmp/mirage.db'
       icql_path:    project_abspath './db/datamill.icql'
       default_key:  '^line'
+    help "using database at #{settings.db_path}"
     mirage = await MIRAGE.create settings
     await @translate_document mirage
-    help 'ok'
-
+    # help 'ok'
+    return null
 
 
 
