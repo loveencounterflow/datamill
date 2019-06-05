@@ -1,20 +1,17 @@
 
--- -- ---------------------------------------------------------------------------------------------------------
--- fragment create_table_main_first():
---   drop table if exists main;
---   create table main (
---       vnr_txt      json unique primary key,
---       stamped   boolean default false,
---       line      text );
---   insert into main ( vnr_txt, line ) values
-
--- -- ---------------------------------------------------------------------------------------------------------
--- fragment create_table_main_first():
---   ;
-
--- -- ---------------------------------------------------------------------------------------------------------
--- fragment create_table_main_first( comma, vnr_txt, line ):
---   $comma ( $vnr_txt, $line )
+-- ---------------------------------------------------------------------------------------------------------
+fragment create_table_main_first( default_region, default_key ):
+  drop table if exists main;
+  create table main (
+    vnr_txt   json    unique,
+    stamped   boolean default false,
+    region    text    default $default_region,
+    key       text    default $default_key,
+    text      text,
+    p         json    default 'null' );
+  insert into main ( vnr_txt, text ) values
+fragment create_table_main_middle( vnr, text ):
+  ( $vnr, $text )
 
 -- ---------------------------------------------------------------------------------------------------------
 query read_lines( limit ):
@@ -34,6 +31,24 @@ query read_lines():
     order by vnr_encode( vnr_txt );
 
 -- ---------------------------------------------------------------------------------------------------------
+query find_eq_pattern( key, pattern ):
+  select
+      *
+    from main
+    where true
+      and ( key = $key )
+      and ( text = $pattern )
+    order by vnr_encode( vnr_txt );
+
+-- ---------------------------------------------------------------------------------------------------------
+query find_like_pattern( pattern ):
+  select
+      *
+    from main
+    where text like $pattern
+    order by vnr_encode( vnr_txt );
+
+-- ---------------------------------------------------------------------------------------------------------
 query read_unstamped_lines():
   select
       rowid,
@@ -41,6 +56,11 @@ query read_unstamped_lines():
     from main
     where not stamped
     order by vnr_encode( vnr_txt );
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure set_region( region, first_vnr_txt, last_vnr_txt ):
+  update main set ( region ) = ( $region )
+    where vnr_encode( vnr_txt ) between vnr_encode( $first_vnr_txt ) and vnr_encode( $last_vnr_txt );
 
 -- ---------------------------------------------------------------------------------------------------------
 query count_lines():
@@ -55,16 +75,16 @@ query get_stats():
     select null, null where false;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure insert( key, vnr_txt, text, p, stamped ):
+procedure insert( key, vnr_txt, region, text, p, stamped ):
   insert into
-    main    (  key,  vnr_txt,  text,  p,  stamped )
-    values  ( $key, $vnr_txt, $text, $p, $stamped );
+    main    (  key,  vnr_txt,   region,  text,  p,  stamped )
+    values  ( $key, $vnr_txt,  $region, $text, $p, $stamped );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure update( key, vnr_txt, text, p, stamped ):
+procedure update( key, vnr_txt, region, text, p, stamped ):
   update main
-    set (  key,  text,  p,  stamped ) =
-        ( $key, $text, $p, $stamped )
+    set (  key,   region,  text,  p,  stamped ) =
+        ( $key,  $region, $text, $p, $stamped )
     where vnr_txt = $vnr_txt;
 
 -- ---------------------------------------------------------------------------------------------------------
@@ -72,8 +92,15 @@ query xxx_select( rowid ):
   select * from main where rowid = $rowid;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure stamp_line( rowid ): update main set stamped = true where rowid = $rowid;
-procedure stamp_line( vnr_txt  ): update main set stamped = true where vnr_txt  = e( 'µ44333', $vnr_txt);
+procedure stamp( vnr_txt  ):
+  update main
+    set stamped = true
+    where vnr_txt = $vnr_txt;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure stamp( first_vnr_txt, last_vnr_txt ):
+  update main set stamped = 1
+    where vnr_encode( vnr_txt ) between vnr_encode( $first_vnr_txt ) and vnr_encode( $last_vnr_txt );
 
 -- ---------------------------------------------------------------------------------------------------------
 query datom_from_vnr( vnr_txt ):
