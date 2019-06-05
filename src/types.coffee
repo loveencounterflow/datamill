@@ -21,17 +21,19 @@ intertype                 = new Intertype module.exports
 
 #-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_phase_repeat', ( x ) ->
-	return true unless x?
-	return true if @isa.boolean x
-	return @isa.function x
+  return true unless x?
+  return true if @isa.boolean x
+  return @isa.function x
 
-# #-----------------------------------------------------------------------------------------------------------
-# @declare 'datamill_overview_settings', ( x ) ->
-#   tests:
-#     "x is a object":                          ( x ) -> @isa.object          x
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_register_key_settings', ( x ) ->
+  tests:
+    "x is a object":                          ( x ) -> @isa.object    x
+    "x.is_block is a boolean":                ( x ) -> @isa.boolean   x.is_block
+
 
   # tests:
-  # 	"optional x is function or boolean":
+  #   "optional x is function or boolean":
 #     "x is a object":                          ( x ) -> @isa.object          x
 #     "x has key 'key'":                        ( x ) -> @has_key             x, 'key'
 #     "x has key 'vlnr_txt'":                   ( x ) -> @has_key             x, 'vlnr_txt'

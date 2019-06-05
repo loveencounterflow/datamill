@@ -49,6 +49,10 @@ types                     = require './types'
   markup for source code category and double service as pre-formatted blocks. ###
   pattern           = /// ^ (?<backticks> ``` ) $ ///
   within_codeblock  = false
+  H.register_key S, '<codeblock',     { is_block: true,  }
+  H.register_key S, '>codeblock',     { is_block: true,  }
+  H.register_key S, '^literal',       { is_block: false, }
+  H.register_key S, '^literal-blank', { is_block: false, }
   #.........................................................................................................
   return $ ( d, send ) =>
     if within_codeblock and select d, '^blank'
@@ -85,6 +89,9 @@ types                     = require './types'
   in the future. ###
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
   #.........................................................................................................
+  H.register_key S, '<h', { is_block: true, }
+  H.register_key S, '>h', { is_block: true, }
+  #.........................................................................................................
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
@@ -119,6 +126,8 @@ types                     = require './types'
   prv_was_quote     = false
   $vnr              = null
   dest              = null
+  H.register_key S, '<blockquote', { is_block: true, }
+  H.register_key S, '>blockquote', { is_block: true, }
   #.........................................................................................................
   return $ { last, }, ( d, send ) =>
     if d is last

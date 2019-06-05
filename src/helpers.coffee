@@ -130,6 +130,32 @@ XXX_COLORIZER             = require './experiments/colorizer'
   return null unless ( row = @row_from_vnr S, vnr )?
   return @datom_from_row S, row
 
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
+@register_key = ( S, key, settings ) =>
+  validate.datamill_register_key_settings
+  db        = S.mirage.dbw
+  ### TAINT use API for value conversions ###
+  is_block  = if settings.is_block then 1 else 0
+  db.register_key { key, is_block, }
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+@register_or_validate_key = ( S, key, settings ) =>
+  validate.datamill_register_key_settings
+  db        = S.mirage.dbw
+  unless ( entry = db.$.first_row db.get_key_entry { key, } )?
+    return @register_key S, key, settings
+  definition      = { key, is_block: settings.is_block, }
+  ### TAINT use API for value conversions ###
+  entry.is_block  = if entry.is_block is 1 then true else false
+  unless CND.equals definition, entry
+    throw new Error "µ87332 given key definition #{jr definition} doesn't match esisting entry #{rpr entry}"
+
+
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------

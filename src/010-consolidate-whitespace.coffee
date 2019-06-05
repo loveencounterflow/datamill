@@ -55,6 +55,8 @@ types                     = require './types'
   within_blank  = false
   # is_first      = true
   #.........................................................................................................
+  H.register_key S, '^blank', { is_block: false, }
+  #.........................................................................................................
   flush = ( advance = false ) =>
     return null unless prv_vnr?
     within_blank  = false
