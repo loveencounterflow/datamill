@@ -54,8 +54,7 @@ a tag that <tag
 x
 y=42
 y="42"
-z='42'
-> goes across lines
+z='42'> goes across lines
 <stop/>
 
 A *short* **demonstration** of `MKTScript`.

@@ -40,7 +40,7 @@ types                     = require './types'
   ### TAINT code duplication ###
   key         = '^line'
   pattern     = '<start/>'
-  region      = 'preamble'
+  dest        = 'preamble'
   dbr         = S.mirage.dbr
   dbw         = S.mirage.dbw
   rows        = dbr.$.all_rows dbr.find_eq_pattern { key, pattern, }
@@ -50,8 +50,8 @@ types                     = require './types'
     when 0
       warn "no document preamble found"
       ### TAINT consider to store these values in DB ###
-      S.regions.preamble.from = null
-      S.regions.preamble.to   = null
+      S.dests.preamble.from = null
+      S.dests.preamble.to   = null
     when 1
       row             = rows[ 0 ]
       d               = H.datom_from_row S, row
@@ -61,14 +61,14 @@ types                     = require './types'
       first_vnr_txt   = jr [ first_lnr ]
       start_vnr_txt   = jr [ start_lnr ]
       last_vnr_txt    = jr [ last_lnr  ]
-      dbw.set_region { region, first_vnr_txt, last_vnr_txt, }
+      dbw.set_dest { dest, first_vnr_txt, last_vnr_txt, }
       dbw.stamp { vnr_txt: start_vnr_txt, }
       help "document preamble found on lines 1 thru #{last_lnr}"
     else
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
   ### TAINT consider to store these values in DB ###
-  S.regions.postscript.from = first_lnr
-  S.regions.postscript.to   = last_lnr
+  S.dests.postscript.from = first_lnr
+  S.dests.postscript.to   = last_lnr
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -98,8 +98,8 @@ types                     = require './types'
     else
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
   ### TAINT consider to store these values in DB ###
-  S.regions.postscript.from = first_lnr
-  S.regions.postscript.to   = last_lnr
+  S.dests.postscript.from = first_lnr
+  S.dests.postscript.to   = last_lnr
   return null
 
 #-----------------------------------------------------------------------------------------------------------

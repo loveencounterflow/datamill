@@ -65,7 +65,7 @@ H                         = require './helpers'
   R =
     mirage:     mirage
     ### TAINT consider to store these values in DB ###
-    regions:
+    dests:
       preamble:   { from: null, to: null, }
       body:       { from: null, to: null, }
       postscript: { from: null, to: null, }

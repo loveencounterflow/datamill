@@ -59,7 +59,7 @@ types                     = require './types'
     ### line starts or stops codeblock ###
     if ( match = d.text.match pattern )?
       within_codeblock  = not within_codeblock
-      region            = d.region
+      dest              = d.dest
       #.....................................................................................................
       if within_codeblock
         d = PD.set d, 'key', '<codeblock'
@@ -91,25 +91,25 @@ types                     = require './types'
     ### TAINT accessing DB here produces possible race condition ###
     # prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
     # nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
-    region            = d.region
+    dest              = d.dest
     $vnr              = VNR.new_level d.$vnr, 0
     send stamp d
     #.......................................................................................................
     # unless prv_line_is_blank
     #   message = "µ09082 heading should have blank lines above"
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, region, }
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, region, }
+    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, dest, }
+    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, dest, }
     #.......................................................................................................
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',    { level, $vnr, region, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^line', { text,  $vnr, region, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',    { level, $vnr, region, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',    { level, $vnr, dest, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '^line', { text,  $vnr, dest, }
+    $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',    { level, $vnr, dest, }
     #.......................................................................................................
     # unless nxt_line_is_blank
     #   message = "µ09083 heading should have blank lines below"
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, region, }
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, region, }
+    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, dest, }
+    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, dest, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -118,13 +118,13 @@ types                     = require './types'
   pattern           = /// ^ (?: (?<mu_1> >+ ) | (?<mu_2> >+ ) \s+ (?<text> .* ) ) $ ///
   prv_was_quote     = false
   $vnr              = null
-  region            = null
+  dest              = null
   #.........................................................................................................
   return $ { last, }, ( d, send ) =>
     if d is last
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', {       region, $vnr, }
+        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, }
       return
     #.......................................................................................................
     return send d unless select d, '^line'
@@ -132,7 +132,7 @@ types                     = require './types'
     unless ( match = d.text.match pattern )?
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', {       region, $vnr, }
+        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, }
       prv_was_quote = false
       return send d
     #.......................................................................................................
@@ -141,11 +141,11 @@ types                     = require './types'
     text    = match.groups.text ? ''
     $vnr    = VNR.new_level d.$vnr, 0
     unless prv_was_quote
-      region  = d.region
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '<blockquote', {       region, $vnr, }
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, region, $vnr, }
+      dest    = d.dest
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '<blockquote', {       dest, $vnr, }
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, dest, $vnr, }
     else
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, region, $vnr, }
+      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, dest, $vnr, }
     # debug 'µ33344', match.groups, $vnr
     prv_was_quote = true
     # send d

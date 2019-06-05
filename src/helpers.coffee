@@ -142,7 +142,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   $vnr        = JSON.parse vnr_txt
   p           = if row.p? then ( JSON.parse row.p ) else {}
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
-  R.region    = row.region
+  R.dest      = row.dest
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
   R[ k ]      = p[ k ] for k of p when p[ k ]?
@@ -155,7 +155,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   for k, v of d
     continue if k is 'key'
     continue if k is 'text'
-    continue if k is 'region'
+    continue if k is 'dest'
     continue if k.startsWith '$'
     continue unless v?
     count  += 1
@@ -169,10 +169,10 @@ XXX_COLORIZER             = require './experiments/colorizer'
   key       = d.key
   stamped   = if ( PD.is_stamped d ) then 1 else 0
   vnr_txt   = JSON.stringify d.$vnr
-  region    = d.region  ? null
+  dest      = d.dest  ? null
   text      = d.text    ? null
   p         = @p_from_datom S, d
-  R         = { key, vnr_txt, region, text, p, stamped, }
+  R         = { key, vnr_txt, dest, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
 
@@ -277,14 +277,14 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if false and ( row.key is '^blank' )
       key     = to_width '',          12
       vnr     = to_width '',          12
-      region  = to_width '',          8
+      dest    = to_width '',          8
       text    = ''
       p       = ''
     #.......................................................................................................
     else
       key     = to_width row.key,     12
       vnr     = to_width row.vnr_txt, 12
-      region  = to_width row.region,  8
+      dest    = to_width row.dest,    8
       text    = if row.text?  then ( jr row.text      ) else ''
       p       = if row.p?     then row.p                else ''
       p       = '' if ( not p? ) or ( p is 'null' )
@@ -292,7 +292,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
     value   = text + ' ' + p
     # value   = value[ .. 80 ]
     stamp   = if row.stamped then 'S' else ' '
-    line    = "#{vnr} │ #{region} │ #{stamp} │ #{key} │ #{value}"
+    line    = "#{vnr} │ #{dest} │ #{stamp} │ #{key} │ #{value}"
     line    = to_width line, line_width
     dent    = '  '.repeat level
     level   = switch row.key[ 0 ]

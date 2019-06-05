@@ -49,7 +49,7 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @$blank_lines = ( S ) ->
   prv_vnr       = null
-  prv_region    = null
+  prv_dest      = null
   linecount     = 0
   send          = null
   within_blank  = false
@@ -60,7 +60,7 @@ types                     = require './types'
     within_blank  = false
     if advance  then  $vnr = VNR.new_level VNR.advance  prv_vnr
     else              $vnr = VNR.new_level              prv_vnr
-    send H.fresh_datom '^blank', { linecount, $vnr, region: prv_region, }
+    send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, }
     linecount     = 0
   #.........................................................................................................
   return $ { last, }, ( d, send_ ) =>
@@ -75,7 +75,7 @@ types                     = require './types'
     if is_line and ( d.text isnt '' )
       flush() if within_blank
       ### TAINT use API to ensure all pertinent values are captured ###
-      prv_region  = d.region
+      prv_dest    = d.dest
       prv_vnr     = d.$vnr
       return send d
     #.......................................................................................................
@@ -87,7 +87,7 @@ types                     = require './types'
       within_blank  = true
     #.......................................................................................................
     ### TAINT use API to ensure all pertinent values are captured ###
-    prv_region  = d.region
+    prv_dest    = d.dest
     prv_vnr     = d.$vnr
     send d
     return null

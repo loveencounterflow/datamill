@@ -1,11 +1,11 @@
 
 -- ---------------------------------------------------------------------------------------------------------
-fragment create_table_main_first( default_region, default_key ):
+fragment create_table_main_first( default_dest, default_key ):
   drop table if exists main;
   create table main (
     vnr_txt   json    unique,
     stamped   boolean default false,
-    region    text    default $default_region,
+    dest      text    default $default_dest,
     key       text    default $default_key,
     text      text,
     p         json    default 'null' );
@@ -58,8 +58,8 @@ query read_unstamped_lines():
     order by vnr_encode( vnr_txt );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure set_region( region, first_vnr_txt, last_vnr_txt ):
-  update main set ( region ) = ( $region )
+procedure set_dest( dest, first_vnr_txt, last_vnr_txt ):
+  update main set ( dest ) = ( $dest )
     where vnr_encode( vnr_txt ) between vnr_encode( $first_vnr_txt ) and vnr_encode( $last_vnr_txt );
 
 -- ---------------------------------------------------------------------------------------------------------
@@ -75,16 +75,16 @@ query get_stats():
     select null, null where false;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure insert( key, vnr_txt, region, text, p, stamped ):
+procedure insert( key, vnr_txt, dest, text, p, stamped ):
   insert into
-    main    (  key,  vnr_txt,   region,  text,  p,  stamped )
-    values  ( $key, $vnr_txt,  $region, $text, $p, $stamped );
+    main    (  key,  vnr_txt,   dest,  text,  p,  stamped )
+    values  ( $key, $vnr_txt,  $dest, $text, $p, $stamped );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure update( key, vnr_txt, region, text, p, stamped ):
+procedure update( key, vnr_txt, dest, text, p, stamped ):
   update main
-    set (  key,   region,  text,  p,  stamped ) =
-        ( $key,  $region, $text, $p, $stamped )
+    set (  key,   dest,  text,  p,  stamped ) =
+        ( $key,  $dest, $text, $p, $stamped )
     where vnr_txt = $vnr_txt;
 
 -- ---------------------------------------------------------------------------------------------------------
