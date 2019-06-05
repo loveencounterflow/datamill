@@ -39,11 +39,17 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT to be written; observe this will simplify `$blank_lines()`. ###
 @$trim = ( S ) ->
-  return $ ( d, send ) => send d
+  return $ ( d, send ) =>
+    return send d unless select d, '^line'
+    if ( new_text = d.text.trimEnd() ) isnt d.text
+      d = PD.set d, 'text', new_text
+    send d
+    return null
 
 #-----------------------------------------------------------------------------------------------------------
 @$blank_lines = ( S ) ->
   prv_vnr       = null
+  prv_region    = null
   linecount     = 0
   send          = null
   within_blank  = false
@@ -54,7 +60,7 @@ types                     = require './types'
     within_blank  = false
     if advance  then  $vnr = VNR.new_level VNR.advance  prv_vnr
     else              $vnr = VNR.new_level              prv_vnr
-    send H.fresh_datom '^blank', { linecount, $vnr, }
+    send H.fresh_datom '^blank', { linecount, $vnr, region: prv_region, }
     linecount     = 0
   #.........................................................................................................
   return $ { last, }, ( d, send_ ) =>
@@ -65,17 +71,24 @@ types                     = require './types'
       return null
     #.......................................................................................................
     is_line = select d, '^line'
-    if is_line and not isa.blank_text d.text
+    ### line contains material ###
+    if is_line and ( d.text isnt '' )
       flush() if within_blank
-      prv_vnr = d.$vnr
+      ### TAINT use API to ensure all pertinent values are captured ###
+      prv_region  = d.region
+      prv_vnr     = d.$vnr
       return send d
     #.......................................................................................................
-    if is_line ### is a blank ###
+    ### line is empty / blank ###
+    if is_line
       send stamp d
       linecount     = 0 unless within_blank
       linecount    += +1
       within_blank  = true
-    prv_vnr       = d.$vnr
+    #.......................................................................................................
+    ### TAINT use API to ensure all pertinent values are captured ###
+    prv_region  = d.region
+    prv_vnr     = d.$vnr
     send d
     return null
 
