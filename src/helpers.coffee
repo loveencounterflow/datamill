@@ -242,15 +242,20 @@ XXX_COLORIZER             = require './experiments/colorizer'
   return parseInt ( execSync "tput cols", { encoding: 'utf-8', } ), 10
 
 #-----------------------------------------------------------------------------------------------------------
-@show_overview = ( S, raw = false ) =>
+@show_overview = ( S, settings ) =>
   ### TAINT consider to convert row to datom before display ###
   line_width  = @get_tty_width S
   dbr         = S.mirage.db
   level       = 0
   omit_count  = 0
   #.........................................................................................................
+  defaults =
+    raw:        false
+    hilite:     '^blank'
+  settings = assign {}, defaults, settings
+  #.........................................................................................................
   for row from dbr.read_lines() # { limit: 30, }
-    if raw
+    if settings.raw
       info @format_object row
       continue
     if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
@@ -295,8 +300,14 @@ XXX_COLORIZER             = require './experiments/colorizer'
       when '>' then level - 1
       else          level
     level   = Math.max level, 0
-    color   = if ( row.stamped or row.key is '^blank' ) then CND.grey else ( P... ) -> CND.reverse _color P...
-    # color = if row.stamped then _color else ( P... ) -> CND.reverse _color P...
+    #.......................................................................................................
+    if settings.hilite? and ( settings.hilite is row.key )
+      color = ( P... ) -> CND.reverse CND.pink P...
+    else if ( row.stamped or row.key is '^blank' )
+      color = CND.grey
+    else
+      color = ( P... ) -> CND.reverse _color P...
+    #.......................................................................................................
     echo color line
     # echo dent + color line
   #.........................................................................................................

@@ -25,6 +25,11 @@ intertype                 = new Intertype module.exports
 	return true if @isa.boolean x
 	return @isa.function x
 
+# #-----------------------------------------------------------------------------------------------------------
+# @declare 'datamill_overview_settings', ( x ) ->
+#   tests:
+#     "x is a object":                          ( x ) -> @isa.object          x
+
   # tests:
   # 	"optional x is function or boolean":
 #     "x is a object":                          ( x ) -> @isa.object          x
