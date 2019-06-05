@@ -35,31 +35,28 @@ types                     = require './types'
   size_of
   type_of }               = types
 
-
 #-----------------------------------------------------------------------------------------------------------
-@$stop = ( S ) ->
-  pattern     = /// ^ < stop \/? > $ ///
-  has_stopped = false
+@$ignore = ( S ) ->
+  within_ignore = false
   return $ ( d, send ) =>
-    # debug 'µ09012', d
-    # debug 'µ09012', stamp d
-    return send stamp d if has_stopped
     return send d unless select d, '^line'
-    return send d unless ( d.text.match pattern )?
-    send stamp d
-    has_stopped = true
-    $vnr        = VNR.new_level d.$vnr, 0
-    message     = "µ09011 encountered `<stop>` tag; discarding rest of document"
-    ### TAINT use API call ###
-    $vnr        = VNR.advance $vnr; send H.fresh_datom '~notice', { message, $vnr, }
-    return null
-
+    if d.text is '<ignore>'
+      within_ignore = true
+      send stamp d
+    else if d.text is '</ignore>'
+      within_ignore = false
+      send stamp d
+    else if within_ignore
+      send stamp d
+    else
+      send d
+  return null
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$stop S
+  pipeline.push @$ignore  S
   return PD.pull pipeline...
 
