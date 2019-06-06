@@ -309,6 +309,9 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
       omit_count += +1
       continue
+    if ( row.stamped )
+      omit_count += +1
+      continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
