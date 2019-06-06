@@ -139,7 +139,12 @@ XXX_COLORIZER             = require './experiments/colorizer'
   db        = S.mirage.dbw
   ### TAINT use API for value conversions ###
   is_block  = if settings.is_block then 1 else 0
-  db.register_key { key, is_block, }
+  try
+    db.register_key { key, is_block, }
+  catch error
+    throw error unless error.message.startsWith "UNIQUE constraint failed"
+    throw new Error "µ77754 key #{rpr key} already registered"
+  @_key_registry_cache = null
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -153,7 +158,19 @@ XXX_COLORIZER             = require './experiments/colorizer'
   entry.is_block  = if entry.is_block is 1 then true else false
   unless CND.equals definition, entry
     throw new Error "µ87332 given key definition #{jr definition} doesn't match esisting entry #{rpr entry}"
+  return null
 
+#-----------------------------------------------------------------------------------------------------------
+@_key_registry_cache = null
+
+#-----------------------------------------------------------------------------------------------------------
+@get_key_registry = ( S ) =>
+  return @_key_registry_cache if @_key_registry_cache?
+  db                    = S.mirage.dbw
+  R                     = {}
+  R[ row.key ] = row for row from db.read_key_registry()
+  @_key_registry_cache  = PD.freeze R
+  return R
 
 
 #===========================================================================================================
