@@ -44,39 +44,73 @@ types                     = require './types'
 
 
 #-----------------------------------------------------------------------------------------------------------
-@$paragraphs = ( S ) ->
-  ### TAINT avoid to send `^p` after block-level element ###
-  key_registry = H.get_key_registry S
-  # debug 'µ11121', key_registry
+@$breaks = ( S ) ->
+  H.register_key S, '^break', { is_block: false, }
+  key_registry    = H.get_key_registry S
+  prv_was_break   = false
   #.........................................................................................................
   return $ { first, }, ( d, send ) =>
     return if d is first
-    # debug 'µ11121', jr d
+    return send d if PD.is_stamped d
     #.......................................................................................................
     if ( select d, '^blank' )
-      urge 'µ11121', CND.pink "blank"
+      if ( not prv_was_break )
+        ### TAINT code duplication ###
+        ref           = 'µ44322-1'
+        dest          = d.dest
+        $vnr          = VNR.new_level d.$vnr, 0
+        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
+        prv_was_break = true
+      return send d
     #.......................................................................................................
-    else if ( select d, '^line' )
-      urge 'µ11121', CND.yellow "line", CND.reverse d.text
+    is_block  = key_registry[ d.key ].is_block
+    is_opener = select d, '<'
+    is_closer = select d, '>'
     #.......................................................................................................
-    else if ( key_registry[ d.key ].is_block )
-      color = if d.key.startsWith '<' then CND.green else CND.red
-      urge 'µ11121', color "block", jr d
+    if ( not prv_was_break ) and is_block
+      if is_opener
+        ### TAINT code duplication ###
+        ref           = 'µ44322-2'
+        dest          = d.dest
+        $vnr          = VNR.new_level d.$vnr, 0
+        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
+        $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
+        prv_was_break = true
+        send stamp d
+        return
+      else
+        ### TAINT code duplication ###
+        ref           = 'µ44322-3'
+        dest          = d.dest
+        $vnr          = VNR.new_level d.$vnr, 0
+        $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
+        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
+        prv_was_break = true
+        send stamp d
+        return
     #.......................................................................................................
-    else
-      urge 'µ11121', CND.blue "other", jr d
-    #.......................................................................................................
+    prv_was_break = false
     send d
     # return send d unless select d, '^blank'
     # send stamp d
     # $vnr    = VNR.new_level d.$vnr, 0
     # $vnr    = VNR.advance $vnr; send H.fresh_datom '^p', { blanks: d.linecount, $vnr, }
 
+#-----------------------------------------------------------------------------------------------------------
+@$paragraphs = ( S ) ->
+  ### TAINT avoid to send `^p` after block-level element ###
+  #.........................................................................................................
+  return $ ( d, send ) =>
+    if select d, '^break'
+      return send d
+    send d
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
+  pipeline.push @$breaks      S
   pipeline.push @$paragraphs  S
   return PD.pull pipeline...
 
