@@ -31,6 +31,9 @@ over several lines of text.
 
 Text goes on *here*.
 
+> a blockquote
+next paragraph
+
 text with a <tag>DEMO</tag> to *wit*.
 Within code, `*stars*` and `<em>tags</em>` are just literals.
 
