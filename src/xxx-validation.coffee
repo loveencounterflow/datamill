@@ -65,20 +65,22 @@ types                     = require './types'
         throw new Error message.join ' '
       return null
     #.......................................................................................................
-    vnr   = d.$vnr
-    key   = d.key
-    sigil = key[ 0 ]
-    name  = key[ 1 .. ]
+    vnr     = d.$vnr
+    is_vnr  = jr vnr
+    key     = d.key
+    sigil   = key[ 0 ]
+    name    = key[ 1 .. ]
     #.......................................................................................................
     switch sigil
       when '<'
         stack.push { name, $vnr: d.$vnr, }
       when '>'
+        if isa.empty stack
+          throw new Error "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}), stack empty"
         entry = last_of stack
         unless entry.name is name
           ### TAINT make configurable whether to throw or warn ###
           was_vnr = jr entry.$vnr
-          is_vnr  = jr vnr
           throw new Error "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr})"
         stack.pop()
       else
