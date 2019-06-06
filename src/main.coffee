@@ -46,6 +46,8 @@ H                         = require './helpers'
   project_abspath }       = H
 
 
+
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
@@ -54,7 +56,7 @@ H                         = require './helpers'
   pipeline  = []
   pipeline.push source
   pipeline.push transform
-  # pipeline.push H.$show S
+  # pipeline.push @$validate_symmetric_keys()
   pipeline.push H.$feed_db S
   pipeline.push PD.$drain => resolve()
   PD.pull pipeline...
@@ -84,6 +86,7 @@ H                         = require './helpers'
     # './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
+    './xxx-validation'
     ]
   #.........................................................................................................
   for phase_name in phase_names
