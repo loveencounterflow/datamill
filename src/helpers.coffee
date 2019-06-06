@@ -242,8 +242,13 @@ XXX_COLORIZER             = require './experiments/colorizer'
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
       ### NOTE Make sure to test first for `$fresh`/inserts, then for `$dirty`/updates, since a `$fresh`
       datom may have undergone changes (which doesn't make the correct opertion an update). ###
-      if      d.$fresh then dbw.insert row
-      else if d.$dirty then dbw.update row
+      if d.$fresh
+        dbw.insert row
+      else if d.$dirty
+        ### NOTE force insert when update was without effect; this happens when `$vnr` was
+        affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        { changes, } = dbw.update row
+        dbw.insert row if changes is 0
     catch error
       warn 'µ12133', "when trying to insert or update row"
       warn 'µ12133', jr row
