@@ -160,16 +160,6 @@ types                     = require './types'
     # send d
     return null
 
-#-----------------------------------------------------------------------------------------------------------
-@$paragraphs = ( S ) ->
-  ### TAINT avoid to send `^p` after block-level element ###
-  #.........................................................................................................
-  return $ ( d, send ) =>
-    send d
-    # return send d unless select d, '^blank'
-    # send stamp d
-    # $vnr    = VNR.new_level d.$vnr, 0
-    # $vnr    = VNR.advance $vnr; send H.fresh_datom '^p', { blanks: d.linecount, $vnr, }
 
 #===========================================================================================================
 #
@@ -179,6 +169,5 @@ types                     = require './types'
   pipeline.push @$codeblocks  S
   pipeline.push @$headings    S
   pipeline.push @$blockquotes S
-  pipeline.push @$paragraphs  S
   return PD.pull pipeline...
 
