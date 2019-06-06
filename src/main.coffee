@@ -98,12 +98,12 @@ H                         = require './helpers'
       if pass >= pass_max
         warn "µ44343 enforced break, pass_max is #{pass_max}"
         break
-      help "µ55567 phase #{phase_name} pass #{CND.reverse CND.yellow pass}"
+      help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
       await @run_phase S, phase.$transform S
       break unless H.repeat_phase S, phase
       warn "µ33443 repeating phase #{phase_name}"
   #.........................................................................................................
-  H.show_overview S, { hilite: '^blank', }
+  H.show_overview S, { hilite: '^break', }
   # H.show_overview S, true
   resolve()
   #.........................................................................................................
