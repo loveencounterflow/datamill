@@ -237,20 +237,25 @@ XXX_COLORIZER             = require './experiments/colorizer'
   dbw = S.mirage.dbw
   return $watch ( d ) =>
     ### TAINT how to convert vnr in ICQL? ###
-    row = @row_from_datom S, d
+    row     = @row_from_datom S, d
+    methods = []
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
       ### NOTE Make sure to test first for `$fresh`/inserts, then for `$dirty`/updates, since a `$fresh`
       datom may have undergone changes (which doesn't make the correct opertion an update). ###
       if d.$fresh
+        methods.push 'insert fresh'
         dbw.insert row
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
         affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        methods.push 'update dirty'
         { changes, } = dbw.update row
-        dbw.insert row if changes is 0
+        if changes is 0
+          methods.push 'insert dirty'
+          dbw.insert row
     catch error
-      warn 'µ12133', "when trying to insert or update row"
+      warn 'µ12133', "when trying to #{methods.join ' -> '} row"
       warn 'µ12133', jr row
       warn 'µ12133', "an error occurred:"
       warn 'µ12133', "#{error.message}"
@@ -260,7 +265,6 @@ XXX_COLORIZER             = require './experiments/colorizer'
         urge 'µ88768', "is already in DB"
       throw error
     return null
-
 
 #===========================================================================================================
 # PHASES
@@ -306,12 +310,12 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if settings.raw
       info @format_object row
       continue
-    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
-      omit_count += +1
-      continue
-    if ( row.stamped )
-      omit_count += +1
-      continue
+    # if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
+    #   omit_count += +1
+    #   continue
+    # if ( row.stamped )
+    #   omit_count += +1
+    #   continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold

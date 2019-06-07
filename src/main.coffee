@@ -82,7 +82,8 @@ H                         = require './helpers'
     './006-ignore'
     './010-consolidate-whitespace'
     './020-blocks'
-    './030-paragraphs'
+    './030-1-paragraphs-breaks'
+    './030-2-paragraphs-consolidate'
     # './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
@@ -115,7 +116,8 @@ unless module.parent?
   do =>
     #.......................................................................................................
     settings =
-      file_path:    project_abspath './src/tests/demo.md'
+      # file_path:    project_abspath './src/tests/demo.md'
+      file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
       db_path:      '/tmp/mirage.db'
       icql_path:    project_abspath './db/datamill.icql'
       default_key:  '^line'

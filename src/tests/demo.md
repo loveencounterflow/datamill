@@ -22,10 +22,14 @@ Another paragraph
 that \<i>extends</i>
 over several lines of text.
 
+
+
+
 > A demonstration
 > of a blockquote
 > across several lines.
 >
+> # Headlines Should Be OK
 > Paragraphs within blockquotes are OK.
 # Another **Headline**
 
@@ -58,7 +62,7 @@ x
 y=42
 y="42"
 z='42'> goes across lines
-<stop/>
+<!-- <stop/> -->
 
 A *short* **demonstration** of `MKTScript`.
 
