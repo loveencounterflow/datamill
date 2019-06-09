@@ -100,8 +100,8 @@ H                         = require './helpers'
       break unless H.repeat_phase S, phase
       warn "µ33443 repeating phase #{phase_name}"
   #.........................................................................................................
-  H.show_overview S, { hilite: '^blank', }
-  # H.show_overview S, true
+  # H.show_overview S, { hilite: '^blank', }
+  H.show_overview S
   resolve()
   #.........................................................................................................
   return null
