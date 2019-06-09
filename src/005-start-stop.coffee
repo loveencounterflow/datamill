@@ -49,26 +49,20 @@ types                     = require './types'
   switch size = size_of rows
     when 0
       warn "no document preamble found"
-      ### TAINT consider to store these values in DB ###
-      S.dests.preamble.from = null
-      S.dests.preamble.to   = null
     when 1
       row             = rows[ 0 ]
       d               = H.datom_from_row S, row
       first_lnr       = 1
       start_lnr       = d.$vnr[ 0 ]
       last_lnr        = start_lnr - 1
-      first_vnr_txt   = jr [ first_lnr ]
-      start_vnr_txt   = jr [ start_lnr ]
-      last_vnr_txt    = jr [ last_lnr  ]
-      dbw.set_dest { dest, first_vnr_txt, last_vnr_txt, }
-      dbw.stamp { vnr_txt: start_vnr_txt, }
+      first_vnr_blob  = dbw.$.as_hollerith [ first_lnr ]
+      start_vnr_blob  = dbw.$.as_hollerith [ start_lnr ]
+      last_vnr_blob   = dbw.$.as_hollerith [ last_lnr  ]
+      dbw.set_dest { dest, first_vnr_blob, last_vnr_blob, }
+      dbw.stamp { vnr_blob: start_vnr_blob, }
       help "document preamble found on lines 1 thru #{last_lnr}"
     else
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
-  ### TAINT consider to store these values in DB ###
-  S.dests.postscript.from = first_lnr
-  S.dests.postscript.to   = last_lnr
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -91,15 +85,12 @@ types                     = require './types'
       first_lnr     = d.$vnr[ 0 ]
       ### TAINT can just ignore all <stop/> tags after first ###
       last_lnr      = dbr.$.first_value dbr.count_lines()
-      first_vnr_txt = jr [ first_lnr ]
-      last_vnr_txt  = jr [ last_lnr ]
-      dbw.stamp { first_vnr_txt, last_vnr_txt, }
+      first_vnr_blob = dbw.$.as_hollerith [ first_lnr ]
+      last_vnr_blob  = dbw.$.as_hollerith [ last_lnr ]
+      dbw.stamp { first_vnr_blob, last_vnr_blob, }
       help "document postscript found on lines #{first_lnr} thru #{last_lnr}"
     else
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
-  ### TAINT consider to store these values in DB ###
-  S.dests.postscript.from = first_lnr
-  S.dests.postscript.to   = last_lnr
   return null
 
 #-----------------------------------------------------------------------------------------------------------

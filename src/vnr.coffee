@@ -27,21 +27,30 @@ types                     = require './types'
   type_of }               = types
 
 #-----------------------------------------------------------------------------------------------------------
-@new_level = ( vnr, nr = 1 ) =>
-  ### Given a `mirage` instance and a vectorial line number `vnr`, return a copy of `vnr`, call it
+@deepen = ( d_or_vnr, nr = 0 ) =>
+  ### Given a vectorial line number `vnr`, return a copy of `vnr`, call it
   `vnr0`, which has an index of `0` appended, thus representing the pre-first `vnr` for a level of lines
   derived from the one that the original `vnr` pointed to. ###
-  validate.nonempty_list vnr
-  R = assign [], vnr
+  unless isa.list d_or_vnr then return PD.set d_or_vnr, '$vnr', @deepen d_or_vnr.$vnr
+  validate.vnr d_or_vnr
+  R       = assign [], d_or_vnr
   R.push nr
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@advance = ( vnr ) =>
-  ### Given a `mirage` instance and a vectorial line number `vnr`, return a copy of `vnr`, call it
+@advance  = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, +1
+@recede   = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, -1
+
+#-----------------------------------------------------------------------------------------------------------
+@_advance_or_recede = ( d_or_vnr, delta ) =>
+  ### Given a vectorial line number `vnr`, return a copy of `vnr`, call it
   `vnr0`, which has its last index incremented by `1`, thus representing the vectorial line number of the
   next line in the same level that is derived from the same line as its predecessor. ###
-  validate.nonempty_list vnr
-  R                    = assign [], vnr
-  R[ vnr.length - 1 ] += +1
+  unless isa.list d_or_vnr then return PD.set d_or_vnr, '$vnr', @_advance_or_recede d_or_vnr.$vnr
+  validate.vnr d_or_vnr
+  idx       = d_or_vnr.length - 1
+  R         = assign [], d_or_vnr
+  R[ idx ] += delta
   return R
+
+

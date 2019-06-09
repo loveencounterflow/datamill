@@ -53,15 +53,16 @@ types                     = require './types'
   linecount     = 0
   send          = null
   within_blank  = false
-  # is_first      = true
+  is_first_line = true
   #.........................................................................................................
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
   flush = ( advance = false ) =>
     return null unless prv_vnr?
     within_blank  = false
-    if advance  then  $vnr = VNR.new_level VNR.advance  prv_vnr
-    else              $vnr = VNR.new_level              prv_vnr
+    $vnr = VNR.advance  prv_vnr
+    # if advance  then  $vnr = VNR.deepen VNR.advance  prv_vnr
+    # else              $vnr = VNR.deepen              prv_vnr
     send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, }
     linecount     = 0
   #.........................................................................................................
@@ -73,9 +74,16 @@ types                     = require './types'
       return null
     #.......................................................................................................
     is_line = select d, '^line'
+    #.......................................................................................................
+    ### Insert blank if first line isn't blank: ###
+    if is_line and is_first_line
+      is_first_line = false
+      if ( d.text isnt '' )
+        send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, }
+    #.......................................................................................................
     ### line contains material ###
     if is_line and ( d.text isnt '' )
-      flush() if within_blank
+      flush false if within_blank
       ### TAINT use API to ensure all pertinent values are captured ###
       prv_dest    = d.dest
       prv_vnr     = d.$vnr
@@ -83,7 +91,7 @@ types                     = require './types'
     #.......................................................................................................
     ### line is empty / blank ###
     if is_line
-      send stamp d
+      send d = stamp VNR.deepen d
       linecount     = 0 unless within_blank
       linecount    += +1
       within_blank  = true
@@ -94,12 +102,40 @@ types                     = require './types'
     send d
     return null
 
+#-----------------------------------------------------------------------------------------------------------
+@$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d, send ) =>
+  return send d unless d is last
+  db = S.mirage.dbw
+  for row from db.read_changed_dest_last_lines()
+    d = H.datom_from_row S,row
+    break if select d, '^blank'
+    send stamp d
+    d       = VNR.deepen d
+    send d
+    $vnr    = VNR.advance d.$vnr
+    d       = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
+    send d
+    debug 'µ44552-1', jr d
+  for row from db.read_changed_dest_first_lines()
+    d = H.datom_from_row S,row
+    break if select d, '^blank'
+    send stamp d
+    d       = VNR.deepen d
+    send d
+    $vnr    = VNR.recede d.$vnr
+    d       = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
+    send d
+    debug 'µ44552-2', jr d
+  return null
+
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$trim S
-  pipeline.push @$blank_lines S
+  pipeline.push @$trim                    S
+  pipeline.push @$blank_lines             S
+  pipeline.push @$blanks_at_dest_changes  S
   return PD.pull pipeline...
 

@@ -11,33 +11,31 @@ fragment create_table_main_first( default_dest, default_key ):
     ( $default_key, false );
   -- .......................................................................................................
   create table main (
-    vnr_txt   json    unique,
-    stamped   boolean default false,
-    dest      text    default $default_dest,
-    key       text    default $default_key references keys ( key ),
+    vnr       json    unique not null primary key,
+    stamped   boolean not null default false,
+    dest      text    not null default $default_dest,
+    key       text    not null default $default_key,
     text      text,
-    p         json    default 'null' );
-  insert into main ( vnr_txt, text ) values
--- .........................................................................................................
+    p         json    default 'null',
+    vnr_blob  blob    unique not null );
+  insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
-  ( $vnr, $text )
+  ( $vnr, json_as_hollerith( $vnr ), $text )
 
 -- ---------------------------------------------------------------------------------------------------------
 query read_lines( limit ):
   select
-      rowid,
       *
     from main
-    order by vnr_encode( vnr_txt )
+    order by vnr_blob
     limit $limit;
 
 -- ---------------------------------------------------------------------------------------------------------
 query read_lines():
   select
-      rowid,
       *
     from main
-    order by vnr_encode( vnr_txt );
+    order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
 query find_eq_pattern( key, pattern ):
@@ -47,7 +45,7 @@ query find_eq_pattern( key, pattern ):
     where true
       and ( key = $key )
       and ( text = $pattern )
-    order by vnr_encode( vnr_txt );
+    order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
 query find_like_pattern( pattern ):
@@ -55,26 +53,7 @@ query find_like_pattern( pattern ):
       *
     from main
     where text like $pattern
-    order by vnr_encode( vnr_txt );
-
--- ---------------------------------------------------------------------------------------------------------
-query read_unstamped_lines():
-  select
-      rowid,
-      *
-    from main
-    where not stamped
-    order by vnr_encode( vnr_txt );
-
--- ---------------------------------------------------------------------------------------------------------
-procedure set_dest( dest, first_vnr_txt, last_vnr_txt ):
-  update main set ( dest ) = ( $dest )
-    where vnr_encode( vnr_txt ) between vnr_encode( $first_vnr_txt ) and vnr_encode( $last_vnr_txt );
-
--- ---------------------------------------------------------------------------------------------------------
-procedure register_key( key, is_block ):
-  insert into keys (  key,  is_block )
-    values         ( $key, $is_block );
+    order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
 query get_key_entry( key ):
@@ -98,41 +77,89 @@ query count_lines():
 -- ---------------------------------------------------------------------------------------------------------
 query get_stats():
   select null as key, null as count where false union all
-    select 'all lines',     count(*) from main union all
-    select 'active lines',  count(*) from main where not stamped union all
-    select 'stamped lines', count(*) from main where     stamped union all
+    select 'all lines',     count(*) from main                    union all
+    select 'active lines',  count(*) from main where not stamped  union all
+    select 'stamped lines', count(*) from main where     stamped  union all
     select null, null where false;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure insert( key, vnr_txt, dest, text, p, stamped ):
+procedure _insert( key, vnr, vnr_blob, dest, text, p, stamped ):
   insert into
-    main    (  key,  vnr_txt,   dest,  text,  p,  stamped )
-    values  ( $key, $vnr_txt,  $dest, $text, $p, $stamped );
+    main    (  key,  vnr,  vnr_blob,  dest,  text,  p,  stamped )
+    values  ( $key, $vnr, $vnr_blob, $dest, $text, $p, $stamped );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure update( key, vnr_txt, dest, text, p, stamped ):
+procedure _update( key, vnr, vnr_blob, dest, text, p, stamped ):
   update main
-    set (  key,   dest,  text,  p,  stamped ) =
-        ( $key,  $dest, $text, $p, $stamped )
-    where vnr_txt = $vnr_txt;
+    set (  key,  vnr,  vnr_blob,  dest,   text,  p,  stamped ) =
+        ( $key, $vnr, $vnr_blob, $dest,  $text, $p, $stamped )
+    where vnr = $vnr;
 
 -- ---------------------------------------------------------------------------------------------------------
-query xxx_select( rowid ):
-  select * from main where rowid = $rowid;
-
--- ---------------------------------------------------------------------------------------------------------
-procedure stamp( vnr_txt  ):
+procedure _update( vnr ):
   update main
-    set stamped = true
-    where vnr_txt = $vnr_txt;
+    set (  vnr,  vnr_blob ) =
+        ( $vnr, $vnr_blob )
+    where vnr = $vnr;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure stamp( first_vnr_txt, last_vnr_txt ):
+procedure stamp( vnr_blob ):
+  update main set stamped = true where vnr_blob = $vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure stamp( first_vnr_blob, last_vnr_blob ):
   update main set stamped = 1
-    where vnr_encode( vnr_txt ) between vnr_encode( $first_vnr_txt ) and vnr_encode( $last_vnr_txt );
+    where vnr_blob between $first_vnr_blob and $last_vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
-query datom_from_vnr( vnr_txt ):
+query read_unstamped_lines():
+  select
+      *
+    from main
+    where not stamped
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure set_dest( dest, first_vnr_blob, last_vnr_blob ):
+  update main set ( dest ) = ( $dest )
+    where vnr_blob between $first_vnr_blob and $last_vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure register_key( key, is_block ):
+  insert into keys (  key,  is_block )
+    values         ( $key, $is_block );
+
+-- ---------------------------------------------------------------------------------------------------------
+query datom_from_vnr( vnr ):
   select *
     from main
-    where vnr_txt = $vnr_txt;
+    where vnr = $vnr;
+
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure create_view_dest_changes_backward():
+  drop view if exists dest_changes_backward;
+  create view dest_changes_backward as select
+      lead( dest ) over ( order by vnr_blob ) as nxt_dest,
+      *
+    from main;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure create_view_dest_changes_forward():
+  drop view if exists dest_changes_forward;
+  create view dest_changes_forward as select
+      lag( dest ) over ( order by vnr_blob ) as prv_dest,
+      *
+    from main;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_changed_dest_last_lines():
+  select * from dest_changes_backward
+    where dest != nxt_dest
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_changed_dest_first_lines():
+  select * from dest_changes_forward
+    where dest != prv_dest
+    order by vnr_blob;

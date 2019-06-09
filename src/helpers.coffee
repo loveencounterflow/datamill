@@ -66,13 +66,11 @@ XXX_COLORIZER             = require './experiments/colorizer'
 #-----------------------------------------------------------------------------------------------------------
 @new_datom = ( P ... ) =>
   R = PD.new_datom P...
-  # R = PD.set R, 'vnr_txt',  ( jr R.$vnr ) if R.$vnr?
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @fresh_datom = ( P ... ) =>
   R = PD.new_datom P...
-  # R = PD.set R, 'vnr_txt',  ( jr R.$vnr ) if R.$vnr?
   R = PD.set R, '$fresh',    true
   return R
 
@@ -93,37 +91,11 @@ XXX_COLORIZER             = require './experiments/colorizer'
 #===========================================================================================================
 # DB QUERIES
 #-----------------------------------------------------------------------------------------------------------
-@previous_line_is_blank = ( S, vnr ) =>
-  return true unless ( d = @get_previous_datom S, vnr )?
-  return ( d.text? and d.text.match /^\s*$/ )?
-
-#-----------------------------------------------------------------------------------------------------------
-@next_line_is_blank = ( S, vnr ) =>
-  return true unless ( d = @get_next_datom S, vnr )?
-  return ( d.text? and d.text.match /^\s*$/ )?
-
-#-----------------------------------------------------------------------------------------------------------
-@get_previous_datom = ( S, vnr ) =>
-  ### TAINT consider to use types ###
-  unless vnr.length is 1
-    throw new Error "µ33442 `get_next_datom()` not supported for nested vnrs, got #{rpr vnr}"
-  ### TAINT need inverse to advance ###
-  return null unless vnr[ 0 ] > 1
-  vnr_txt = jr [ vnr[ 0 ] - 1 ]
-  return @datom_from_vnr S, vnr
-
-#-----------------------------------------------------------------------------------------------------------
-@get_next_datom = ( S, vnr ) =>
-  ### TAINT consider to use types ###
-  unless vnr.length is 1
-    throw new Error "µ33442 `get_next_datom()` not supported for nested vnrs, got #{rpr vnr}"
-  return @datom_from_vnr S, VNR.advance vnr
-
-#-----------------------------------------------------------------------------------------------------------
 @row_from_vnr = ( S, vnr ) =>
+  validate.vnr vnr
   dbr     = S.mirage.dbr
-  vnr_txt = jr vnr
-  return dbr.$.first_row dbr.datom_from_vnr { vnr_txt, }
+  vnr     = JSON.stringify vnr
+  return dbr.$.first_row dbr.datom_from_vnr { vnr, }
 
 #-----------------------------------------------------------------------------------------------------------
 @datom_from_vnr = ( S, vnr ) =>
@@ -177,12 +149,8 @@ XXX_COLORIZER             = require './experiments/colorizer'
 #
 #-----------------------------------------------------------------------------------------------------------
 @datom_from_row = ( S, row ) =>
-  ### TAINT how to convert vnr in ICQL? ###
-  # debug 'µ22373', rpr row
-  # debug 'µ22373', rpr row.vnr_txt
-  # debug 'µ22373', rpr row.p
-  vnr_txt     = row.vnr_txt
-  $vnr        = JSON.parse vnr_txt
+  vnr         = row.vnr
+  $vnr        = JSON.parse vnr
   p           = if row.p? then ( JSON.parse row.p ) else {}
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
   R.dest      = row.dest
@@ -208,14 +176,14 @@ XXX_COLORIZER             = require './experiments/colorizer'
 
 #-----------------------------------------------------------------------------------------------------------
 @row_from_datom = ( S, d ) =>
-  ### TAINT how to convert booleans in ICQL? ###
   key       = d.key
-  stamped   = if ( PD.is_stamped d ) then 1 else 0
-  vnr_txt   = JSON.stringify d.$vnr
-  dest      = d.dest  ? null
-  text      = d.text    ? null
+  vnr       = d.$vnr
+  stamped   = d.$stamped  ? false
+  dest      = d.dest      ? S.mirage.default_dest
+  text      = d.text      ? null
   p         = @p_from_datom S, d
-  R         = { key, vnr_txt, dest, text, p, stamped, }
+  R         = { key, vnr, dest, text, p, stamped, }
+  # R         = { key, vnr, vnr_blob, dest, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
 
@@ -249,7 +217,6 @@ XXX_COLORIZER             = require './experiments/colorizer'
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
         affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
-        methods.push 'update dirty'
         { changes, } = dbw.update row
         if changes is 0
           methods.push 'insert dirty'
@@ -338,7 +305,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
     #.......................................................................................................
     else
       key     = to_width row.key,     12
-      vnr     = to_width row.vnr_txt, 12
+      vnr     = to_width row.vnr,     12
       dest    = to_width row.dest,    8
       text    = if row.text?  then ( jr row.text      ) else ''
       p       = if row.p?     then row.p                else ''

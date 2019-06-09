@@ -95,28 +95,15 @@ types                     = require './types'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
-    ### TAINT accessing DB here produces possible race condition ###
-    # prv_line_is_blank = H.previous_line_is_blank  S, d.$vnr
-    # nxt_line_is_blank = H.next_line_is_blank      S, d.$vnr
     dest              = d.dest
     $vnr              = VNR.new_level d.$vnr, 0
     send stamp d
-    #.......................................................................................................
-    # unless prv_line_is_blank
-    #   message = "µ09082 heading should have blank lines above"
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, dest, }
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, dest, }
     #.......................................................................................................
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',    { level, $vnr, dest, }
     $vnr  = VNR.advance $vnr; send H.fresh_datom '^line', { text,  $vnr, dest, }
     $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',    { level, $vnr, dest, }
-    #.......................................................................................................
-    # unless nxt_line_is_blank
-    #   message = "µ09083 heading should have blank lines below"
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '~warning',  { message,      $vnr, dest, }
-    #   $vnr    = VNR.advance $vnr; send H.fresh_datom '^blank',    { linecount: 0, $vnr, dest, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------

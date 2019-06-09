@@ -66,11 +66,6 @@ H                         = require './helpers'
 @new_datamill = ( mirage ) ->
   R =
     mirage:     mirage
-    ### TAINT consider to store these values in DB ###
-    dests:
-      preamble:   { from: null, to: null, }
-      body:       { from: null, to: null, }
-      postscript: { from: null, to: null, }
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -78,12 +73,13 @@ H                         = require './helpers'
   S           = @new_datamill mirage
   limit       = Infinity
   phase_names = [
+    './000-initialize'
     './005-start-stop'
     './006-ignore'
     './010-consolidate-whitespace'
-    './020-blocks'
-    './030-1-paragraphs-breaks'
-    './030-2-paragraphs-consolidate'
+    # './020-blocks'
+    # './030-1-paragraphs-breaks'
+    # './030-2-paragraphs-consolidate'
     # './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
@@ -104,7 +100,7 @@ H                         = require './helpers'
       break unless H.repeat_phase S, phase
       warn "µ33443 repeating phase #{phase_name}"
   #.........................................................................................................
-  H.show_overview S, { hilite: '^break', }
+  H.show_overview S, { hilite: '^blank', }
   # H.show_overview S, true
   resolve()
   #.........................................................................................................
@@ -118,12 +114,27 @@ unless module.parent?
     settings =
       # file_path:    project_abspath './src/tests/demo.md'
       file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
-      db_path:      '/tmp/mirage.db'
+      db_path:      project_abspath './db/datamill.db'
       icql_path:    project_abspath './db/datamill.icql'
       default_key:  '^line'
+      default_dest: 'main'
+      clear:        true
     help "using database at #{settings.db_path}"
-    mirage = await MIRAGE.create settings
+    mirage  = await MIRAGE.create settings
     await @translate_document mirage
+    # db      = mirage.db
+    # for row from db.$.query "select * from dest_changes_backward order by vnr_blob;"
+    #   delete row.vnr_blob
+    #   help jr row
+    # for row from db.$.query "select * from dest_changes_forward order by vnr_blob;"
+    #   delete row.vnr_blob
+    #   info jr row
+    # for row from db.read_changed_dest_last_lines()
+    #   delete row.vnr_blob
+    #   help jr row
+    # for row from db.read_changed_dest_first_lines()
+    #   delete row.vnr_blob
+    #   info jr row
     # help 'ok'
     return null
 
