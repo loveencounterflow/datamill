@@ -273,19 +273,19 @@ XXX_COLORIZER             = require './experiments/colorizer'
   #.........................................................................................................
   defaults =
     raw:        false
-    hilite:     '^blank'
+    hilite:     null
   settings = assign {}, defaults, settings
   #.........................................................................................................
   for row from dbr.read_lines() # { limit: 30, }
     if settings.raw
       info @format_object row
       continue
-    # if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
-    #   omit_count += +1
-    #   continue
-    # if ( row.stamped )
-    #   omit_count += +1
-    #   continue
+    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
+      omit_count += +1
+      continue
+    if ( row.stamped )
+      omit_count += +1
+      continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
@@ -299,25 +299,21 @@ XXX_COLORIZER             = require './experiments/colorizer'
       when '>h'               then  _color  = CND.VIOLET
       else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
-    if false and ( row.key is '^blank' )
-      key     = to_width '',          12
-      vnr     = to_width '',          12
-      dest    = to_width '',          8
-      text    = ''
-      p       = ''
+    stamp   = if row.stamped then '*' else ''
+    key     = to_width row.key,         10
+    vnr     = to_width stamp + row.vnr, 12
+    dest    = to_width row.dest,        4
+    ref     = to_width row.ref ? '',    6
+    text    = if row.text? then ( jr row.text ) else null
+    p       = row.p ? null
+    p       = null if ( p is 'null' )
     #.......................................................................................................
-    else
-      key     = to_width row.key,     12
-      vnr     = to_width row.vnr,     12
-      dest    = to_width row.dest,    8
-      text    = if row.text?  then ( jr row.text      ) else ''
-      p       = if row.p?     then row.p                else ''
-      p       = '' if ( not p? ) or ( p is 'null' )
-    #.......................................................................................................
-    value   = text + ' ' + p
+    combi   = []
+    combi.push text if text?
+    combi.push p    if p?
+    value   = combi.join ' / '
     # value   = value[ .. 80 ]
-    stamp   = if row.stamped then 'S' else ' '
-    line    = "#{vnr} │ #{dest} │ #{stamp} │ #{key} │ #{value}"
+    line    = "#{vnr}│#{dest}│#{ref}│#{key}│#{value}"
     line    = to_width line, line_width
     dent    = '  '.repeat level
     level   = switch row.key[ 0 ]
