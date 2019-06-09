@@ -154,6 +154,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   p           = if row.p? then ( JSON.parse row.p ) else {}
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
   R.dest      = row.dest
+  R.ref       = row.ref
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
   R[ k ]      = p[ k ] for k of p when p[ k ]?
@@ -167,6 +168,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
     continue if k is 'key'
     continue if k is 'text'
     continue if k is 'dest'
+    continue if k is 'ref'
     continue if k.startsWith '$'
     continue unless v?
     count  += 1
@@ -181,8 +183,9 @@ XXX_COLORIZER             = require './experiments/colorizer'
   stamped   = d.$stamped  ? false
   dest      = d.dest      ? S.mirage.default_dest
   text      = d.text      ? null
+  ref       = d.ref       ? null
   p         = @p_from_datom S, d
-  R         = { key, vnr, dest, text, p, stamped, }
+  R         = { key, vnr, dest, text, p, stamped, ref, }
   # R         = { key, vnr, vnr_blob, dest, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
