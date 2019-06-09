@@ -66,12 +66,12 @@ types                     = require './types'
       dest              = d.dest
       #.....................................................................................................
       if within_codeblock
-        d = PD.set d, 'key', '<codeblock'
-        send d
+        send stamp d
+        send PD.set ( VNR.deepen d ), 'key', '<codeblock'
       #.....................................................................................................
       else
-        d = PD.set d, 'key', '>codeblock'
-        send d
+        send stamp d
+        send PD.set ( VNR.deepen d ), 'key', '>codeblock'
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
@@ -95,15 +95,14 @@ types                     = require './types'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
-    dest              = d.dest
-    $vnr              = VNR.new_level d.$vnr, 0
     send stamp d
-    #.......................................................................................................
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '<h',    { level, $vnr, dest, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^line', { text,  $vnr, dest, }
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '>h',    { level, $vnr, dest, }
+    dest  = d.dest
+    $vnr  = VNR.deepen d.$vnr, 0
+    send H.fresh_datom '<h',    { level, $vnr: ( VNR.recede $vnr  ),  dest, }
+    send H.fresh_datom '^line', { text,  $vnr,                        dest, }
+    send H.fresh_datom '>h',    { level, $vnr: ( VNR.advance $vnr ),  dest, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -135,7 +134,7 @@ types                     = require './types'
     send stamp d
     markup  = match.groups.mu_1 ? match.groups.mu_2
     text    = match.groups.text ? ''
-    $vnr    = VNR.new_level d.$vnr, 0
+    $vnr    = VNR.deepen d.$vnr, 0
     unless prv_was_quote
       dest    = d.dest
       $vnr    = VNR.advance $vnr; send H.fresh_datom '<blockquote', {       dest, $vnr, }
@@ -155,6 +154,6 @@ types                     = require './types'
   pipeline = []
   pipeline.push @$codeblocks  S
   pipeline.push @$headings    S
-  pipeline.push @$blockquotes S
+  # pipeline.push @$blockquotes S
   return PD.pull pipeline...
 

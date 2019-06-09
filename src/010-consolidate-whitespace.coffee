@@ -81,25 +81,24 @@ types                     = require './types'
       if ( d.text isnt '' )
         send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, }
     #.......................................................................................................
-    ### line contains material ###
-    if is_line and ( d.text isnt '' )
-      flush false if within_blank
-      ### TAINT use API to ensure all pertinent values are captured ###
-      prv_dest    = d.dest
-      prv_vnr     = d.$vnr
-      return send d
+    return send d unless is_line
     #.......................................................................................................
     ### line is empty / blank ###
-    if is_line
-      send d = stamp VNR.deepen d
+    if d.text is ''
       linecount     = 0 unless within_blank
       linecount    += +1
       within_blank  = true
+      prv_dest      = d.dest
+      prv_vnr       = VNR.deepen d.$vnr
+      return send stamp d
     #.......................................................................................................
+    ### line contains material ###
+    flush false if within_blank
     ### TAINT use API to ensure all pertinent values are captured ###
     prv_dest    = d.dest
     prv_vnr     = d.$vnr
     send d
+    #.......................................................................................................
     return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -109,23 +108,19 @@ types                     = require './types'
   for row from db.read_changed_dest_last_lines()
     d = H.datom_from_row S,row
     break if select d, '^blank'
-    send stamp d
-    d       = VNR.deepen d
+    # send stamp d
+    # send d  = VNR.deepen d
     send d
-    $vnr    = VNR.advance d.$vnr
-    d       = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
-    send d
-    debug 'µ44552-1', jr d
+    $vnr    = VNR.advance VNR.deepen d.$vnr
+    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
   for row from db.read_changed_dest_first_lines()
     d = H.datom_from_row S,row
     break if select d, '^blank'
-    send stamp d
-    d       = VNR.deepen d
+    # send stamp d
+    # send d  = VNR.deepen d
     send d
-    $vnr    = VNR.recede d.$vnr
-    d       = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
-    send d
-    debug 'µ44552-2', jr d
+    $vnr    = VNR.recede VNR.deepen d.$vnr
+    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
   return null
 
 
