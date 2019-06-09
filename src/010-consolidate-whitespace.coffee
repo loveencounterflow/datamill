@@ -39,7 +39,7 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT to be written; observe this will simplify `$blank_lines()`. ###
 @$trim = ( S ) ->
-  ref           = 'µ98870'
+  ref           = 'ws/trm'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     if ( new_text = d.text.trimEnd() ) isnt d.text
@@ -55,7 +55,7 @@ types                     = require './types'
   send          = null
   within_blank  = false
   is_first_line = true
-  ref           = 'µ98871'
+  ref           = 'ws/bl'
   #.........................................................................................................
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
@@ -105,7 +105,7 @@ types                     = require './types'
 
 #-----------------------------------------------------------------------------------------------------------
 @$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d, send ) =>
-  ref           = 'µ98872'
+  ref           = 'ws/dst'
   return send d unless d is last
   db = S.mirage.dbw
   for row from db.read_changed_dest_last_lines()

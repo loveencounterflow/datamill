@@ -47,7 +47,7 @@ types                     = require './types'
 @$codeblocks = ( S ) ->
   ### Recognize codeblocks as regions delimited by triple backticks. Possible extensions include
   markup for source code category and double service as pre-formatted blocks. ###
-  ref               = 'µ55621'
+  ref               = 'bl/cd'
   pattern           = /// ^ (?<backticks> ``` ) $ ///
   within_codeblock  = false
   H.register_key S, '<codeblock',     { is_block: true,  }
@@ -89,7 +89,7 @@ types                     = require './types'
   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
   in the future. ###
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
-  ref     = 'µ78781'
+  ref     = 'bl/hd'
   #.........................................................................................................
   H.register_key S, '<h', { is_block: true, }
   H.register_key S, '>h', { is_block: true, }
