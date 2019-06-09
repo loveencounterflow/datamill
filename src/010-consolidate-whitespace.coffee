@@ -39,10 +39,11 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT to be written; observe this will simplify `$blank_lines()`. ###
 @$trim = ( S ) ->
+  ref           = 'µ98870'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     if ( new_text = d.text.trimEnd() ) isnt d.text
-      d = PD.set d, 'text', new_text
+      d = PD.set d, { text: new_text, ref, }
     send d
     return null
 
@@ -54,6 +55,7 @@ types                     = require './types'
   send          = null
   within_blank  = false
   is_first_line = true
+  ref           = 'µ98871'
   #.........................................................................................................
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
@@ -63,7 +65,7 @@ types                     = require './types'
     $vnr = VNR.advance  prv_vnr
     # if advance  then  $vnr = VNR.deepen VNR.advance  prv_vnr
     # else              $vnr = VNR.deepen              prv_vnr
-    send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, }
+    send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, ref, }
     linecount     = 0
   #.........................................................................................................
   return $ { last, }, ( d, send_ ) =>
@@ -79,7 +81,7 @@ types                     = require './types'
     if is_line and is_first_line
       is_first_line = false
       if ( d.text isnt '' )
-        send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, }
+        send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, ref, }
     #.......................................................................................................
     return send d unless is_line
     #.......................................................................................................
@@ -103,6 +105,7 @@ types                     = require './types'
 
 #-----------------------------------------------------------------------------------------------------------
 @$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d, send ) =>
+  ref           = 'µ98872'
   return send d unless d is last
   db = S.mirage.dbw
   for row from db.read_changed_dest_last_lines()
@@ -112,7 +115,7 @@ types                     = require './types'
     # send d  = VNR.deepen d
     send d
     $vnr    = VNR.advance VNR.deepen d.$vnr
-    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
+    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, ref, }
   for row from db.read_changed_dest_first_lines()
     d = H.datom_from_row S,row
     break if select d, '^blank'
@@ -120,7 +123,7 @@ types                     = require './types'
     # send d  = VNR.deepen d
     send d
     $vnr    = VNR.recede VNR.deepen d.$vnr
-    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, }
+    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, ref, }
   return null
 
 

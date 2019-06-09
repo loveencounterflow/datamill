@@ -47,6 +47,7 @@ types                     = require './types'
 @$codeblocks = ( S ) ->
   ### Recognize codeblocks as regions delimited by triple backticks. Possible extensions include
   markup for source code category and double service as pre-formatted blocks. ###
+  ref               = 'µ55621'
   pattern           = /// ^ (?<backticks> ``` ) $ ///
   within_codeblock  = false
   H.register_key S, '<codeblock',     { is_block: true,  }
@@ -56,7 +57,7 @@ types                     = require './types'
   #.........................................................................................................
   return $ ( d, send ) =>
     if within_codeblock and select d, '^blank'
-      return send PD.set d, 'key', '^literal-blank'
+      return send PD.set d, { key: '^literal-blank', ref, }
     #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
@@ -66,17 +67,17 @@ types                     = require './types'
       dest              = d.dest
       #.....................................................................................................
       if within_codeblock
-        send stamp d
-        send PD.set ( VNR.deepen d ), 'key', '<codeblock'
+        send stamp d, { ref, }
+        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref, }
       #.....................................................................................................
       else
-        send stamp d
-        send PD.set ( VNR.deepen d ), 'key', '>codeblock'
+        send stamp d, { ref, }
+        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref, }
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
       if within_codeblock
-        d = PD.set d, 'key', '^literal'
+        d = PD.set d, { key: '^literal', ref, }
         send d
       else
         send d
@@ -88,6 +89,7 @@ types                     = require './types'
   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
   in the future. ###
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
+  ref     = 'µ78781'
   #.........................................................................................................
   H.register_key S, '<h', { is_block: true, }
   H.register_key S, '>h', { is_block: true, }
@@ -95,14 +97,14 @@ types                     = require './types'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
-    send stamp d
+    send stamp d, { ref, }
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     dest  = d.dest
     $vnr  = VNR.deepen d.$vnr, 0
-    send H.fresh_datom '<h',    { level, $vnr: ( VNR.recede $vnr  ),  dest, }
-    send H.fresh_datom '^line', { text,  $vnr,                        dest, }
-    send H.fresh_datom '>h',    { level, $vnr: ( VNR.advance $vnr ),  dest, }
+    send H.fresh_datom '<h',    { level, $vnr: ( VNR.recede $vnr  ),  dest, ref, }
+    send H.fresh_datom '^line', { text,  $vnr,                        dest, ref, }
+    send H.fresh_datom '>h',    { level, $vnr: ( VNR.advance $vnr ),  dest, ref, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------
