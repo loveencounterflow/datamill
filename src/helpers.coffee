@@ -275,7 +275,8 @@ XXX_COLORIZER             = require './experiments/colorizer'
   dbr           = S.mirage.db
   level         = 0
   omit_count    = 0
-  skip_stamped  = false
+  skip_stamped  = true
+  skip_blanks   = true
   #.........................................................................................................
   defaults =
     raw:        false
@@ -289,13 +290,16 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
       omit_count += +1
       continue
+    if skip_blanks and ( row.key is '^blank' )
+      omit_count += +1
+      continue
     if skip_stamped and row.stamped
       omit_count += +1
       continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
-      when '^mktscript'       then  _color  = CND.RED
+      when '^mktscript'       then  _color  = CND.ORANGE
       when '~warning'         then  _color  = CND.RED
       when '~notice'          then  _color  = CND.cyan
       when '^literal'         then  _color  = CND.GREEN
