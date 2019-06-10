@@ -52,16 +52,23 @@ H                         = require './helpers'
 #
 #-----------------------------------------------------------------------------------------------------------
 @run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
+  #.........................................................................................................
+  $capture_control_messages = ( S ) -> $ ( d, send ) =>
+    if select d, '~'
+      switch d.key
+        when '~datamill-break-phase-and-repeat'
+          S.control.push d
+        else
+          throw new Error "µ98401 unknown system key #{rpr d.key}"
+    else
+      send d
+  #.........................................................................................................
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
   pipeline.push transform
-  pipeline.push $ ( d, send ) ->
-    if select d, '~'
-      debug 'µ23498', d
-    else
-      send d
-  pipeline.push H.$feed_db S
+  pipeline.push $capture_control_messages S
+  pipeline.push H.$feed_db                S
   pipeline.push PD.$drain => resolve()
   PD.pull pipeline...
   H.feed_source S, source
@@ -69,7 +76,9 @@ H                         = require './helpers'
 #-----------------------------------------------------------------------------------------------------------
 @new_datamill = ( mirage ) ->
   R =
-    mirage:     mirage
+    mirage:       mirage
+    control:      [] ### A queue for flow control messages ###
+    confine_to:   null ### when set, indicates start_vnr, stop_vnr ###
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -91,24 +100,26 @@ H                         = require './helpers'
     './xxx-validation'
     ]
   #.........................................................................................................
-  XXX_count = 0
   loop
-    XXX_count += +1
-    break if XXX_count > 1
-    debug 'µ33982', "run-through #{XXX_count}"
-    for phase_name in phase_names
-      phase     = require phase_name
-      pass_max  = 5
-      pass      = 0
-      loop
-        pass += +1
-        if pass >= pass_max
-          warn "µ44343 enforced break, pass_max is #{pass_max}"
-          break
+    try
+      for phase_name in phase_names
+        phase     = require phase_name
+        pass      = 1
         help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
         await @run_phase S, phase.$transform S
-        break unless H.repeat_phase S, phase
-        warn "µ33443 repeating phase #{phase_name}"
+        #.....................................................................................................
+        throw message if ( message = S.control.shift() )?
+        S.confine_to = null
+        #.....................................................................................................
+        if H.repeat_phase S, phase
+          throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
+    #.........................................................................................................
+    catch m
+      throw m unless ( select m, '~datamill-break-phase-and-repeat' )
+      info "µ33324 breaking to repeat with #{jr m.start_vnr}...#{jr m.stop_vnr}"
+      S.confine_to = m
+      continue
+    break
   #.........................................................................................................
   # H.show_overview S, { hilite: '^blank', }
   H.show_overview S

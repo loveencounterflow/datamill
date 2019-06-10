@@ -197,10 +197,20 @@ XXX_COLORIZER             = require './experiments/colorizer'
 
 #-----------------------------------------------------------------------------------------------------------
 @feed_source = ( S, source, limit = Infinity ) =>
-  dbr = S.mirage.db
-  nr  = 0
+  validate.datamill_S_confine S.confine_to
+  dbr           = S.mirage.db
+  nr            = 0
+  debug 'µ22982', S.confine_to
   #.........................................................................................................
-  for row from dbr.read_unstamped_lines()
+  if S.confine_to?
+    { start_vnr
+      stop_vnr }  = S.confine_to
+    rows          = dbr.read_unstamped_lines { start_vnr, stop_vnr, }
+  #.........................................................................................................
+  else
+    rows          = dbr.read_unstamped_lines()
+  #.........................................................................................................
+  for row from rows
     nr += +1
     break if nr > limit
     source.send @datom_from_row S, row
@@ -275,7 +285,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   dbr           = S.mirage.db
   level         = 0
   omit_count    = 0
-  skip_stamped  = true
+  skip_stamped  = false
   skip_blanks   = true
   #.........................................................................................................
   defaults =

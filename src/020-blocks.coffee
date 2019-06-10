@@ -112,9 +112,9 @@ types                     = require './types'
   ### TAINT ATM also captures closing pointy bracket of multiline tag literals ###
   pattern           = /// ^ (?: (?<mu_1> >+ ) | (?<mu_2> >+ ) \s+ (?<text> .* ) ) $ ///
   prv_was_quote     = false
+  start_vnr         = null
   $vnr              = null
   dest              = null
-  ref               = 'bl/bq'
   ### TAINT only register once per pair ###
   H.register_key S, '<blockquote', { is_block: true, has_paragraphs: true, }
   H.register_key S, '>blockquote', { is_block: true, has_paragraphs: true, }
@@ -123,29 +123,43 @@ types                     = require './types'
     if d is last
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
+        ref       = 'bl/bq1'
+        $vnr      = VNR.advance $vnr
+        send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
+        send PD.new_datom '~datamill-break-phase-and-repeat', { start_vnr, stop_vnr: $vnr, ref, }
+        $vnr      = null
+        start_vnr = null
       return
     #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
     unless ( match = d.text.match pattern )?
+      #.....................................................................................................
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
+        ref       = 'bl/bq2'
+        $vnr      = VNR.advance $vnr
+        send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
+        send PD.new_datom '~datamill-break-phase-and-repeat', { start_vnr, stop_vnr: $vnr, ref, }
+        $vnr      = null
+        start_vnr = null
+      #.....................................................................................................
       prv_was_quote = false
       return send d
     #.......................................................................................................
     markup  = match.groups.mu_1 ? match.groups.mu_2
     text    = match.groups.text ? ''
     $vnr    = VNR.deepen d.$vnr, 0
+    #.......................................................................................................
     unless prv_was_quote
-      dest    = d.dest
+      ref         = 'bl/bq3'
+      dest        = d.dest
+      start_vnr   = $vnr
       send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
       send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
-      ### !!!!!!!!!!!!!!!!!!!! ###
-      send PD.new_system_datom 'datamill:break-and-repeat'
-      ### !!!!!!!!!!!!!!!!!!!! ###
+    #.......................................................................................................
     else
+      ref   = 'bl/bq4'
       send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
     #.......................................................................................................
     send stamp d

@@ -26,6 +26,13 @@ intertype                 = new Intertype module.exports
   return @isa.function x
 
 #-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_S_confine', ( x ) ->
+  tests:
+    "x is a ?object":                 ( x ) -> ( not x? ) or @isa.object x
+    "x.start_vnr is a vnr":           ( x ) -> isa.vnr x.start_vnr
+    "x.stop_vnr is a vnr":            ( x ) -> isa.vnr x.stop_vnr
+
+#-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_register_key_settings', ( x ) ->
   tests:
     "x is a object":                  ( x ) -> @isa.object    x
