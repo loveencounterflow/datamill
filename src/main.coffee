@@ -76,8 +76,9 @@ H                         = require './helpers'
     './000-initialize'
     './005-start-stop'
     './006-ignore'
-    './010-consolidate-whitespace'
+    './010-whitespace-1'
     './020-blocks'
+    './025-whitespace-2'
     # './030-1-paragraphs-breaks'
     # './030-2-paragraphs-consolidate'
     # './040-markdown-inline'
@@ -86,19 +87,24 @@ H                         = require './helpers'
     './xxx-validation'
     ]
   #.........................................................................................................
-  for phase_name in phase_names
-    phase     = require phase_name
-    pass_max  = 5
-    pass      = 0
-    loop
-      pass += +1
-      if pass >= pass_max
-        warn "µ44343 enforced break, pass_max is #{pass_max}"
-        break
-      help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
-      await @run_phase S, phase.$transform S
-      break unless H.repeat_phase S, phase
-      warn "µ33443 repeating phase #{phase_name}"
+  XXX_count = 0
+  loop
+    XXX_count += +1
+    break if XXX_count > 1
+    debug 'µ33982', "run-through #{XXX_count}"
+    for phase_name in phase_names
+      phase     = require phase_name
+      pass_max  = 5
+      pass      = 0
+      loop
+        pass += +1
+        if pass >= pass_max
+          warn "µ44343 enforced break, pass_max is #{pass_max}"
+          break
+        help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
+        await @run_phase S, phase.$transform S
+        break unless H.repeat_phase S, phase
+        warn "µ33443 repeating phase #{phase_name}"
   #.........................................................................................................
   # H.show_overview S, { hilite: '^blank', }
   H.show_overview S
@@ -114,6 +120,7 @@ unless module.parent?
     settings =
       file_path:    project_abspath './src/tests/demo.md'
       # file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
+      # db_path:      ':memory:'
       db_path:      project_abspath './db/datamill.db'
       icql_path:    project_abspath './db/datamill.icql'
       default_key:  '^line'
