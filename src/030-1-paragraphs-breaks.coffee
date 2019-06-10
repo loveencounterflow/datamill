@@ -56,10 +56,10 @@ types                     = require './types'
     if ( select d, '^blank' )
       if ( not prv_was_break )
         ### TAINT code duplication ###
-        ref           = 'µ15600'
+        ref           = 'pbr/br1'
         dest          = d.dest
-        $vnr          = VNR.new_level d.$vnr, 0
-        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
+        $vnr          = VNR.deepen d.$vnr, 0
+        send H.fresh_datom '^break', { $vnr: ( VNR.advance $vnr ), dest, ref, }
         prv_was_break = true
       return send d
     #.......................................................................................................
@@ -70,21 +70,21 @@ types                     = require './types'
     if ( not prv_was_break ) and is_block
       if is_opener
         ### TAINT code duplication ###
-        ref           = 'µ15601'
+        ref           = 'pbr/br2'
         dest          = d.dest
-        $vnr          = VNR.new_level d.$vnr, 0
-        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
-        $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
+        $vnr          = VNR.deepen d.$vnr, 0
+        send H.fresh_datom '^break', { $vnr: ( VNR.recede $vnr ), dest, ref, }
+        send PD.set d, { $vnr, ref, }
         prv_was_break = true
         send stamp d
         return
       else
         ### TAINT code duplication ###
-        ref           = 'µ15602'
+        ref           = 'pbr/br3'
         dest          = d.dest
-        $vnr          = VNR.new_level d.$vnr, 0
-        $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
-        $vnr          = VNR.advance $vnr; send H.fresh_datom '^break', { $vnr, dest, ref, }
+        $vnr          = VNR.deepen d.$vnr, 0
+        send PD.set d, { $vnr, ref, }
+        send H.fresh_datom '^break', { $vnr: ( VNR.advance $vnr ), dest, ref, }
         prv_was_break = true
         send stamp d
         return
@@ -93,7 +93,7 @@ types                     = require './types'
     send d
     # return send d unless select d, '^blank'
     # send stamp d
-    # $vnr    = VNR.new_level d.$vnr, 0
+    # $vnr    = VNR.deepen d.$vnr, 0
     # $vnr    = VNR.advance $vnr; send H.fresh_datom '^p', { blanks: d.linecount, $vnr, }
 
 
