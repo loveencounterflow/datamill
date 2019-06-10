@@ -114,14 +114,16 @@ types                     = require './types'
   prv_was_quote     = false
   $vnr              = null
   dest              = null
-  H.register_key S, '<blockquote', { is_block: true, }
-  H.register_key S, '>blockquote', { is_block: true, }
+  ref               = 'bl/bq'
+  ### TAINT only register once per pair ###
+  H.register_key S, '<blockquote', { is_block: true, has_paragraphs: true, }
+  H.register_key S, '>blockquote', { is_block: true, has_paragraphs: true, }
   #.........................................................................................................
   return $ { last, }, ( d, send ) =>
     if d is last
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, }
+        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
       return
     #.......................................................................................................
     return send d unless select d, '^line'
@@ -129,23 +131,22 @@ types                     = require './types'
     unless ( match = d.text.match pattern )?
       ### TAINT code duplication ###
       if prv_was_quote
-        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, }
+        $vnr = VNR.advance $vnr; send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
       prv_was_quote = false
       return send d
     #.......................................................................................................
-    send stamp d
     markup  = match.groups.mu_1 ? match.groups.mu_2
     text    = match.groups.text ? ''
     $vnr    = VNR.deepen d.$vnr, 0
     unless prv_was_quote
       dest    = d.dest
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '<blockquote', {       dest, $vnr, }
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, dest, $vnr, }
+      send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
+      send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
     else
-      $vnr    = VNR.advance $vnr; send H.fresh_datom '^line',       { text, dest, $vnr, }
-    # debug 'µ33344', match.groups, $vnr
+      send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
+    #.......................................................................................................
+    send stamp d
     prv_was_quote = true
-    # send d
     return null
 
 
@@ -156,6 +157,6 @@ types                     = require './types'
   pipeline = []
   pipeline.push @$codeblocks  S
   pipeline.push @$headings    S
-  # pipeline.push @$blockquotes S
+  pipeline.push @$blockquotes S
   return PD.pull pipeline...
 
