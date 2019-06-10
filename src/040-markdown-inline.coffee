@@ -45,37 +45,8 @@ TIMETUNNEL                = require 'timetunnel'
 
 
 #-----------------------------------------------------------------------------------------------------------
-@$consolidate_paragraphs = ( S ) ->
-  collector = null
-  $vnr      = null
-  send      = null
-  #.........................................................................................................
-  flush = ->
-    return if ( not collector? ) or ( collector.length is 0 )
-    text      = collector.join '\n'
-    send H.fresh_datom '^block', { text, $vnr, }
-    collector = null
-    $vnr      = null
-    return null
-  #.........................................................................................................
-  return $ { last, }, ( d, send_ ) =>
-    send = send_
-    if d is last
-      flush()
-    else if select d, '^line'
-      $vnr       ?= VNR.new_level d.$vnr, 1
-      collector  ?= []
-      collector.push d.text
-      send stamp d
-    else if select d, '^blank'
-      flush()
-      send d
-    else
-      send d
-    return null
-
-#-----------------------------------------------------------------------------------------------------------
 @$parse = ( S ) ->
+  ref       = 'mdi/prs'
   guards    = 'äöüßp'
   intalph   = '0123456789'
   tnl       = new TIMETUNNEL.Timetunnel { guards, intalph, }
