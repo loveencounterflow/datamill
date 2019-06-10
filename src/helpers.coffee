@@ -33,6 +33,7 @@ PD                        = require 'pipedreams'
 types                     = require './types'
 { isa
   validate
+  cast
   declare
   size_of
   type_of }               = types
@@ -106,28 +107,32 @@ XXX_COLORIZER             = require './experiments/colorizer'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@register_key = ( S, key, settings ) =>
+@register_new_key = ( S, key, settings ) =>
   validate.datamill_register_key_settings
-  db        = S.mirage.dbw
-  ### TAINT use API for value conversions ###
-  is_block  = if settings.is_block then 1 else 0
+  db              = S.mirage.dbw
+  is_block        = cast.boolean 'number', ( settings.is_block        ? false )
+  has_paragraphs  = cast.boolean 'number', ( settings.has_paragraphs  ? false )
   try
-    db.register_key { key, is_block, }
+    db.register_key { key, is_block, has_paragraphs, }
   catch error
     throw error unless error.message.startsWith "UNIQUE constraint failed"
-    throw new Error "µ77754 key #{rpr key} already registered"
+    # throw new Error "µ77754 key #{rpr key} already registered"
+    warn "µ77754 key #{rpr key} already registered"
   @_key_registry_cache = null
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@register_or_validate_key = ( S, key, settings ) =>
+@register_key = ( S, key, settings ) =>
+  ### TAINT code duplication ###
   validate.datamill_register_key_settings
-  db        = S.mirage.dbw
+  db                    = S.mirage.dbw
+  is_block              = ( settings.is_block        ? false )
+  has_paragraphs        = ( settings.has_paragraphs  ? false )
   unless ( entry = db.$.first_row db.get_key_entry { key, } )?
-    return @register_key S, key, settings
-  definition      = { key, is_block: settings.is_block, }
-  ### TAINT use API for value conversions ###
-  entry.is_block  = if entry.is_block is 1 then true else false
+    return @register_new_key S, key, settings
+  definition            = { key, is_block, has_paragraphs, }
+  entry.is_block        = cast.number 'boolean', ( entry.is_block       ? 0 )
+  entry.has_paragraphs  = cast.number 'boolean', ( entry.has_paragraphs ? 0 )
   unless CND.equals definition, entry
     throw new Error "µ87332 given key definition #{jr definition} doesn't match esisting entry #{rpr entry}"
   return null

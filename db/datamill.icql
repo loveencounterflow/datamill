@@ -5,8 +5,10 @@ fragment create_table_main_first( default_dest, default_key ):
   drop table if exists keys;
   -- .......................................................................................................
   create table keys (
-    key       text    not null unique primary key,
-    is_block  boolean not null );
+    key             text    not null unique primary key,
+    is_block        boolean not null default false,
+    has_paragraphs  boolean not null default false
+    check ( not ( ( not is_block ) and has_paragraphs ) ) );
   insert into keys ( key, is_block ) values
     ( $default_key, false );
   -- .......................................................................................................
@@ -55,21 +57,6 @@ query find_like_pattern( pattern ):
     from main
     where text like $pattern
     order by vnr_blob;
-
--- ---------------------------------------------------------------------------------------------------------
-query get_key_entry( key ):
-  select
-      key,
-      is_block
-    from keys
-    where key = $key;
-
--- ---------------------------------------------------------------------------------------------------------
-query read_key_registry():
-  select
-      key,
-      is_block
-    from keys;
 
 -- ---------------------------------------------------------------------------------------------------------
 query count_lines():
@@ -126,16 +113,10 @@ procedure set_dest( dest, first_vnr_blob, last_vnr_blob ):
     where vnr_blob between $first_vnr_blob and $last_vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure register_key( key, is_block ):
-  insert into keys (  key,  is_block )
-    values         ( $key, $is_block );
-
--- ---------------------------------------------------------------------------------------------------------
 query datom_from_vnr( vnr ):
   select *
     from main
     where vnr = $vnr;
-
 
 -- ---------------------------------------------------------------------------------------------------------
 procedure create_view_dest_changes_backward():
@@ -164,3 +145,29 @@ query read_changed_dest_first_lines():
   select * from dest_changes_forward
     where dest != prv_dest
     order by vnr_blob;
+
+
+-- =========================================================================================================
+-- KEY REGISTRY
+-- ---------------------------------------------------------------------------------------------------------
+procedure register_key( key, is_block, has_paragraphs ):
+  insert into keys (  key,  is_block,  has_paragraphs )
+    values         ( $key, $is_block, $has_paragraphs );
+
+-- ---------------------------------------------------------------------------------------------------------
+query get_key_entry( key ):
+  select
+      key,
+      is_block,
+      has_paragraphs
+    from keys
+    where key = $key;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_key_registry():
+  select
+      key,
+      is_block,
+      has_paragraphs
+    from keys;
+
