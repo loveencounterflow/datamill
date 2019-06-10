@@ -271,10 +271,11 @@ XXX_COLORIZER             = require './experiments/colorizer'
 #-----------------------------------------------------------------------------------------------------------
 @show_overview = ( S, settings ) =>
   ### TAINT consider to convert row to datom before display ###
-  line_width  = @get_tty_width S
-  dbr         = S.mirage.db
-  level       = 0
-  omit_count  = 0
+  line_width    = @get_tty_width S
+  dbr           = S.mirage.db
+  level         = 0
+  omit_count    = 0
+  skip_stamped  = false
   #.........................................................................................................
   defaults =
     raw:        false
@@ -285,12 +286,12 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if settings.raw
       info @format_object row
       continue
-    # if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
-    #   omit_count += +1
-    #   continue
-    # if ( row.stamped )
-    #   omit_count += +1
-    #   continue
+    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
+      omit_count += +1
+      continue
+    if skip_stamped and row.stamped
+      omit_count += +1
+      continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
