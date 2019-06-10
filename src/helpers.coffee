@@ -285,12 +285,12 @@ XXX_COLORIZER             = require './experiments/colorizer'
     if settings.raw
       info @format_object row
       continue
-    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
-      omit_count += +1
-      continue
-    if ( row.stamped )
-      omit_count += +1
-      continue
+    # if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
+    #   omit_count += +1
+    #   continue
+    # if ( row.stamped )
+    #   omit_count += +1
+    #   continue
     switch row.key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
@@ -305,10 +305,10 @@ XXX_COLORIZER             = require './experiments/colorizer'
       else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
     stamp   = if row.stamped then '*' else ''
-    key     = to_width row.key,         10
+    key     = to_width row.key,         15
     vnr     = to_width stamp + row.vnr, 12
     dest    = to_width row.dest,        4
-    ref     = to_width row.ref ? '',    6
+    ref     = to_width row.ref ? '',    9
     text    = if row.text? then ( jr row.text ) else null
     p       = row.p ? null
     p       = null if ( p is 'null' )
@@ -334,7 +334,14 @@ XXX_COLORIZER             = require './experiments/colorizer'
     else
       color = ( P... ) -> CND.reverse _color P...
     #.......................................................................................................
-    echo color line
+    ### TAINT experimental, needs better implementation ###
+    xxxxx = 44
+    if row.stamped
+      echo ( color line[ ... xxxxx ] ) + CND.grey line[ xxxxx .. ]
+    else if line[ xxxxx ] is '"'
+      echo ( color line[ ... xxxxx ] ) + CND.reverse CND.YELLOW line[ xxxxx .. ]
+    else
+      echo ( color line[ ... xxxxx ] ) + CND.RED line[ xxxxx .. ]
     # echo dent + color line
   #.........................................................................................................
   echo "#{omit_count} rows omitted from this view"
