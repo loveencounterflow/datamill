@@ -56,7 +56,11 @@ H                         = require './helpers'
   pipeline  = []
   pipeline.push source
   pipeline.push transform
-  # pipeline.push @$validate_symmetric_keys()
+  pipeline.push $ ( d, send ) ->
+    if select d, '~'
+      debug 'µ23498', d
+    else
+      send d
   pipeline.push H.$feed_db S
   pipeline.push PD.$drain => resolve()
   PD.pull pipeline...
@@ -81,7 +85,7 @@ H                         = require './helpers'
     './025-whitespace-2'
     './030-1-paragraphs-breaks'
     './030-2-paragraphs-consolidate'
-    # './040-markdown-inline'
+    './040-markdown-inline'
     # './030-escapes'
     # './035-special-forms'
     './xxx-validation'

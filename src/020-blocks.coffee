@@ -142,6 +142,9 @@ types                     = require './types'
       dest    = d.dest
       send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
       send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
+      ### !!!!!!!!!!!!!!!!!!!! ###
+      send PD.new_system_datom 'datamill:break-and-repeat'
+      ### !!!!!!!!!!!!!!!!!!!! ###
     else
       send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
     #.......................................................................................................

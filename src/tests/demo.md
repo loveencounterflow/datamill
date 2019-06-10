@@ -17,7 +17,7 @@ lines in code blocks that look like headlines are just lines.
 ```
 
 Another paragraph
-## Headline with Warning
+## Headline *Without* Blank Lines
 Another paragraph
 that \<i>extends</i>
 over several lines of text.
@@ -30,7 +30,7 @@ over several lines of text.
 > across several lines.
 >
 > ```
-> code in quote?
+> code in **blockquote**
 > ```
 >
 > # Headlines Should Be OK
