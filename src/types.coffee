@@ -28,8 +28,9 @@ intertype                 = new Intertype module.exports
 #-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_register_key_settings', ( x ) ->
   tests:
-    "x is a object":                          ( x ) -> @isa.object    x
-    "x.is_block is a boolean":                ( x ) -> @isa.boolean   x.is_block
+    "x is a object":                  ( x ) -> @isa.object    x
+    "x.is_block is a boolean":        ( x ) -> @isa.boolean   x.is_block
+    "x.has_paragraphs is a ?boolean": ( x ) -> ( not x.has_paragraphs? ) or @isa.boolean x.has_paragraphs
 
 
   # tests:
