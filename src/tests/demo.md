@@ -29,6 +29,10 @@ over several lines of text.
 > of a blockquote
 > across several lines.
 >
+> ```
+> code in quote?
+> ```
+>
 > # Headlines Should Be OK
 > Paragraphs within blockquotes are OK.
 # Another **Headline**
