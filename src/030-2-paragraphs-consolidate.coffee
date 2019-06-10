@@ -49,7 +49,6 @@ types                     = require './types'
   within_p        = false
   block_depth     = 0
   prv_was_break   = false
-  prv_line_vnr    = null
   #.........................................................................................................
   return $ ( d, send ) =>
     return send d if PD.is_stamped d
@@ -65,28 +64,21 @@ types                     = require './types'
     if select d, '^break'
       prv_was_break = true
       send stamp d
-      debug 'µ440098', jr d
       if within_p
-        ref           = 'µ15603'
+        ref           = 'pco/p1'
         dest          = d.dest
-        throw new Error "µ44982" unless prv_line_vnr?
-        $vnr          = VNR.new_level prv_line_vnr, 0
-        prv_line_vnr  = null
-        # $vnr          = VNR.new_level d.$vnr, 0
-        # $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
-        $vnr          = VNR.advance $vnr; send H.fresh_datom '>p', { $vnr, dest, ref, }
+        $vnr          = VNR.deepen d.$vnr, 0
+        send H.fresh_datom '>p', { $vnr, dest, ref, }
         within_p      = false
         prv_was_break = false
     #.......................................................................................................
     if select d, '^line'
-      prv_line_vnr = d.$vnr
       if prv_was_break
-        ref           = 'µ15604'
+        ref           = 'pco/p2'
         dest          = d.dest
-        $vnr          = VNR.new_level d.$vnr, 0
-        $vnr          = VNR.advance $vnr; send H.fresh_datom '<p', { $vnr, dest, ref, }
-        $vnr          = VNR.advance $vnr; send PD.set d, '$vnr', $vnr
-        prv_line_vnr  = $vnr
+        $vnr          = VNR.deepen d.$vnr, 0
+        send H.fresh_datom '<p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
+        send PD.set d, { $vnr, ref, }
         within_p      = true
         prv_was_break = false
         send stamp d
@@ -95,15 +87,15 @@ types                     = require './types'
     #.......................................................................................................
     send d
 
-#-----------------------------------------------------------------------------------------------------------
-@$experiment = ( S ) ->
-  H.register_key S, '^x', { is_block: false, }
-  #.........................................................................................................
-  return $ { last, }, ( d, send ) =>
-    return send d unless d is last
-    send H.fresh_datom '^x', { $vnr: [ 10, -1, ], dest: 'xxx', }
-    send H.fresh_datom '^x', { $vnr: [ 10,  0, ], dest: 'xxx', }
-    return null
+# #-----------------------------------------------------------------------------------------------------------
+# @$experiment = ( S ) ->
+#   H.register_key S, '^x', { is_block: false, }
+#   #.........................................................................................................
+#   return $ { last, }, ( d, send ) =>
+#     return send d unless d is last
+#     send H.fresh_datom '^x', { $vnr: [ 10, -1, ], dest: 'xxx', }
+#     send H.fresh_datom '^x', { $vnr: [ 10,  0, ], dest: 'xxx', }
+#     return null
 
 #===========================================================================================================
 #
@@ -111,6 +103,6 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$paragraphs  S
-  pipeline.push @$experiment  S
+  # pipeline.push @$experiment  S
   return PD.pull pipeline...
 
