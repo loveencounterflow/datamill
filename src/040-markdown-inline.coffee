@@ -55,30 +55,29 @@ TIMETUNNEL                = require 'timetunnel'
   tnl.add_tunnel TIMETUNNEL.tunnels.htmlish
   #.........................................................................................................
   return $ ( d, send ) =>
-    return send d unless ( select d, '^mktscript' )
+    return send d unless ( select d, '^line' )
     #.......................................................................................................
     original_text = d.text
     tunneled_text = tnl.hide original_text
     modified_text = md.renderInline tunneled_text
     text          = tnl.reveal modified_text
     # info 'µ33344', ( CND.white rpr text ), ( CND.yellow md.parse text )
-    #.......................................................................................................
-    info 'µ33344', ( CND.white  jr original_text )
-    info 'µ33344', ( CND.red    jr tunneled_text )
-    info 'µ33344', ( CND.yellow jr modified_text )
-    info 'µ33344', ( CND.green  jr text )
-    info 'µ33344'
+    # #.......................................................................................................
+    # info 'µ33344', ( CND.white  jr original_text )
+    # info 'µ33344', ( CND.red    jr tunneled_text )
+    # info 'µ33344', ( CND.yellow jr modified_text )
+    # info 'µ33344', ( CND.green  jr text )
+    # info 'µ33344'
     #.......................................................................................................
     send stamp d
-    $vnr  = VNR.new_level d.$vnr, 0
-    $vnr  = VNR.advance $vnr; send H.fresh_datom '^mktscript', { text, $vnr, }
+    $vnr  = VNR.deepen d.$vnr, 0
+    send H.fresh_datom '^mktscript', { text, $vnr, ref, }
     send
 
 #-----------------------------------------------------------------------------------------------------------
 @repeat_phase = false
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$consolidate_paragraphs  S
-  pipeline.push @$parse                   S
+  pipeline.push @$parse S
   return PD.pull pipeline...
 
