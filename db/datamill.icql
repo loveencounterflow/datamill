@@ -135,7 +135,8 @@ procedure create_view_dest_changes_backward():
   create view dest_changes_backward as select
       lead( dest ) over ( order by vnr_blob ) as nxt_dest,
       *
-    from main;
+    from main
+    where not stamped;
 
 -- ---------------------------------------------------------------------------------------------------------
 procedure create_view_dest_changes_forward():
@@ -143,7 +144,8 @@ procedure create_view_dest_changes_forward():
   create view dest_changes_forward as select
       lag( dest ) over ( order by vnr_blob ) as prv_dest,
       *
-    from main;
+    from main
+    where not stamped;
 
 -- ---------------------------------------------------------------------------------------------------------
 query read_changed_dest_last_lines():
