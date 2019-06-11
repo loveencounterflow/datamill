@@ -108,6 +108,17 @@ query read_unstamped_lines():
     order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
+query read_unstamped_lines( start_vnr_blob, stop_vnr_blob ):
+  select
+      *
+    from main
+    where true
+      and ( not stamped )
+      and ( vnr_blob >= $start_vnr_blob )
+      and ( vnr_blob <  $stop_vnr_blob  )
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
 procedure set_dest( dest, first_vnr_blob, last_vnr_blob ):
   update main set ( dest ) = ( $dest )
     where vnr_blob between $first_vnr_blob and $last_vnr_blob;
