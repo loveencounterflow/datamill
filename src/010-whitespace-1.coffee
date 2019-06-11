@@ -108,29 +108,35 @@ types                     = require './types'
 
 #-----------------------------------------------------------------------------------------------------------
 @$blank_lines_2 = ( S ) ->
-  ref = 'ws1/bl2'
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
   return PD.mark_position $ ( pd, send ) =>
     { is_first
       is_last
       d       } = pd
-    sent_d      = false
-    # if S.confine_to?
-    #   debug 'µ33444', ( CND.truth is_first ), ( CND.truth is_last ), jr d
+    #.......................................................................................................
+    ### Make sure the first thing in document or fragment is a blank: ###
     if is_first and not select d, '^blank'
-      send stamp d, { ref, }
-      $vnr = VNR.deepen d.$vnr
+      send stamp d
+      ref   = 'ws1/b2-1'
+      $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
-      sent_d = true
-    if is_last and not select d, '^blank'
-      send stamp d, { ref, }
-      $vnr = VNR.deepen d.$vnr
+      ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
+      blank; we do this here and not in the next clause, below, to avoid sending a duplicate of the
+      the text line: ###
+      if is_last
+        send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), ref, }
+    #.......................................................................................................
+    ### Make sure the last thing in document or fragment is a blank: ###
+    else if is_last and not select d, '^blank'
+      send stamp d
+      ref   = 'ws1/b2-2'
+      $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
-      sent_d = true
-    send d unless sent_d
+    else
+      send d
     return null
 
 #-----------------------------------------------------------------------------------------------------------
