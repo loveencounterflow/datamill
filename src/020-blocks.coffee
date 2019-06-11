@@ -66,11 +66,11 @@ DM                        = require '..'
       dest              = d.dest
       #.....................................................................................................
       if within_codeblock
-        send stamp d, { ref, }
+        send stamp d
         send PD.set ( VNR.deepen d ), { key: '<codeblock', ref, }
       #.....................................................................................................
       else
-        send stamp d, { ref, }
+        send stamp d
         send PD.set ( VNR.deepen d ), { key: '>codeblock', ref, }
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
@@ -96,7 +96,7 @@ DM                        = require '..'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     return send d unless ( match = d.text.match pattern )?
-    send stamp d, { ref, }
+    send stamp d
     level = match.groups.hashes.length
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     dest  = d.dest

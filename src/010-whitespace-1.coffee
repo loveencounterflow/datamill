@@ -20,6 +20,7 @@ require                   './exception-handler'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
 VNR                       = require './vnr'
+DM                        = require '..'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -149,7 +150,7 @@ types                     = require './types'
     for row from db.read_changed_dest_last_lines()
       break if select row, '^blank'
       d = H.datom_from_row S, row
-      send stamp d, { ref, }
+      send stamp d
       send d = VNR.deepen PD.set d, { $fresh: true, ref, }
       send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.advance d.$vnr ), dest: d.dest, ref, }
   #.........................................................................................................
@@ -158,7 +159,7 @@ types                     = require './types'
     for row from db.read_changed_dest_first_lines()
       break if select row, '^blank'
       d = H.datom_from_row S, row
-      send stamp d, { ref, }
+      send stamp d
       send d  = VNR.deepen PD.set d, { $fresh: true, ref, }
       send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.recede d.$vnr ), dest: d.dest, ref, }
   return null
