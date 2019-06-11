@@ -126,7 +126,7 @@ types                     = require './types'
         ref       = 'bl/bq1'
         $vnr      = VNR.advance $vnr
         send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        send PD.new_datom '~datamill-break-phase-and-repeat', { start_vnr, stop_vnr: $vnr, ref, }
+        H.break_phase_and_repeat_confined_to S, { start_vnr, stop_vnr: $vnr, ref, }
         $vnr      = null
         start_vnr = null
       return
@@ -140,7 +140,7 @@ types                     = require './types'
         ref       = 'bl/bq2'
         $vnr      = VNR.advance $vnr
         send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        send PD.new_datom '~datamill-break-phase-and-repeat', { start_vnr, stop_vnr: $vnr, ref, }
+        H.break_phase_and_repeat_confined_to S, { start_vnr, stop_vnr: $vnr, ref, }
         $vnr      = null
         start_vnr = null
       #.....................................................................................................
