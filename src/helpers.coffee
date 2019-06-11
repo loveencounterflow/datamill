@@ -202,16 +202,17 @@ DM                        = require '..'
   nr            = 0
   #.........................................................................................................
   if DM._is_reprising S
-    { start_vnr
-      stop_vnr
-      phase }       = S.confine_to
+    validate.datamill_inclusive_region S.control.reprise
+    { first_vnr
+      last_vnr
+      phase }       = S.control.reprise
     ### TAINT do casting in DB module ###
-    start_vnr_blob  = dbr.$.as_hollerith start_vnr
-    stop_vnr_blob   = dbr.$.as_hollerith stop_vnr
-    rows            = dbr.read_unstamped_lines { start_vnr_blob, stop_vnr_blob, }
+    first_vnr_blob  = dbr.$.as_hollerith first_vnr
+    last_vnr_blob   = dbr.$.as_hollerith last_vnr
+    rows            = dbr.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
   #.........................................................................................................
   else
-    rows          = dbr.read_unstamped_lines()
+    rows            = dbr.read_unstamped_lines()
   #.........................................................................................................
   for row from rows
     nr += +1
