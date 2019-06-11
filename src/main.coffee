@@ -68,6 +68,13 @@ H                         = require './helpers'
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
+  # pipeline.push PD.mark_position $ ( pd, send ) =>
+  #   { is_first
+  #     is_last
+  #     d       } = pd
+  #   if @_is_reprising S
+  #     urge 'µ11231', is_first, is_last, jr d
+  #   send d
   pipeline.push transform
   pipeline.push $capture_control_messages S
   pipeline.push H.$feed_db                S
@@ -145,8 +152,8 @@ H                         = require './helpers'
         await @run_phase S, phase.$transform S
         #.....................................................................................................
         ### TAINT use proper flag / API ###
-        for x in S.control.queue
-          debug 'µ09087', jr x
+        # for x in S.control.queue
+        #   debug 'µ09087', jr x
         # if length_of_queue isnt @_length_of_control_queue S
         if @_next_control_message_is_from S, phase_name
           @_cancel_active_phase S
@@ -187,10 +194,15 @@ unless module.parent?
     help "using database at #{settings.db_path}"
     mirage  = await MIRAGE.create settings
     await @translate_document mirage
-    # db      = mirage.db
-    # for row from db.$.query "select * from dest_changes_backward order by vnr_blob;"
-    #   { prv_dest, dest, stamped, key, } = row
-    #   info jr { prv_dest, dest, stamped, key, }
+    #.......................................................................................................
+    db              = mirage.db
+    first_vnr_blob  = db.$.as_hollerith [ 42, 0, ]
+    last_vnr_blob   = db.$.as_hollerith [ 42, 0, ]
+    for row from db.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
+      info jr H.datom_from_row null, row
+      # { prv_dest, dest, stamped, key, } = row
+      # info jr { prv_dest, dest, stamped, key, }
+    #.......................................................................................................
     # for row from db.$.query "select * from dest_changes_forward order by vnr_blob;"
     #   { prv_dest, dest, stamped, key, } = row
     #   info jr { prv_dest, dest, stamped, key, }
