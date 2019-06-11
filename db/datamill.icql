@@ -114,8 +114,27 @@ query read_unstamped_lines( start_vnr_blob, stop_vnr_blob ):
     from main
     where true
       and ( not stamped )
-      and ( vnr_blob >= $start_vnr_blob )
-      and ( vnr_blob <  $stop_vnr_blob  )
+      and ( $start_vnr_blob <= vnr_blob ) and ( vnr_blob < $stop_vnr_blob )
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_unstamped_lines( lower_vnr_blob, upper_vnr_blob ):
+  select
+      *
+    from main
+    where true
+      and ( not stamped )
+      and ( $lower_vnr_blob < vnr_blob ) and ( vnr_blob < $upper_vnr_blob )
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_unstamped_lines( first_vnr_blob, last_vnr_blob ):
+  select
+      *
+    from main
+    where true
+      and ( not stamped )
+      and ( $first_vnr_blob <= vnr_blob ) and ( vnr_blob <= $last_vnr_blob )
     order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
