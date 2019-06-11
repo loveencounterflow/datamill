@@ -62,7 +62,9 @@ types                     = require './types'
       dbw.stamp { vnr_blob: start_vnr_blob, }
       help "document preamble found on lines 1 thru #{last_lnr}"
     else
-      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
+      delete row.vnr_blob for row in rows
+      rows_txt = jr rows
+      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed (#{rows_txt})"
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -90,7 +92,9 @@ types                     = require './types'
       dbw.stamp { first_vnr_blob, last_vnr_blob, }
       help "document postscript found on lines #{first_lnr} thru #{last_lnr}"
     else
-      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed"
+      delete row.vnr_blob for row in rows
+      rows_txt = jr rows
+      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed (#{rows_txt})"
   return null
 
 #-----------------------------------------------------------------------------------------------------------
