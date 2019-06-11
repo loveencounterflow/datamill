@@ -16,10 +16,10 @@ fragment create_table_main_first( default_dest, default_key ):
     vnr       json    unique not null primary key,
     stamped   boolean not null default false,
     dest      text    not null default $default_dest,
+    ref       text,
     key       text    not null default $default_key,
     text      text,
     p         json    default 'null',
-    ref       text,
     vnr_blob  blob    unique not null );
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
