@@ -200,12 +200,14 @@ XXX_COLORIZER             = require './experiments/colorizer'
   validate.datamill_S_confine S.confine_to
   dbr           = S.mirage.db
   nr            = 0
-  debug 'µ22982', S.confine_to
   #.........................................................................................................
   if S.confine_to?
     { start_vnr
-      stop_vnr }  = S.confine_to
-    rows          = dbr.read_unstamped_lines { start_vnr, stop_vnr, }
+      stop_vnr }    = S.confine_to
+    ### TAINT do casting in DB module ###
+    start_vnr_blob  = dbr.$.as_hollerith start_vnr
+    stop_vnr_blob   = dbr.$.as_hollerith stop_vnr
+    rows            = dbr.read_unstamped_lines { start_vnr_blob, stop_vnr_blob, }
   #.........................................................................................................
   else
     rows          = dbr.read_unstamped_lines()
@@ -259,6 +261,12 @@ XXX_COLORIZER             = require './experiments/colorizer'
   return false unless phase.repeat_phase?
   return phase.repeat_phase if isa.boolean phase.repeat_phase
   return phase.repeat_phase S
+
+#-----------------------------------------------------------------------------------------------------------
+@break_phase_and_repeat_confined_to = ( S, confine_to ) =>
+  validate.datamill_S_confine confine_to
+  S.control.push PD.new_datom '~break_phase_and_repeat_confined_to', confine_to
+  return null
 
 
 #===========================================================================================================

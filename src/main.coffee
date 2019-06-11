@@ -108,14 +108,15 @@ H                         = require './helpers'
         help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
         await @run_phase S, phase.$transform S
         #.....................................................................................................
-        throw message if ( message = S.control.shift() )?
-        S.confine_to = null
+        ### TAINT use proper flag / API ###
+        unless S.confine_to?
+          throw message if ( message = S.control.shift() )?
         #.....................................................................................................
         if H.repeat_phase S, phase
           throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
     #.........................................................................................................
     catch m
-      throw m unless ( select m, '~datamill-break-phase-and-repeat' )
+      throw m unless ( select m, '~break_phase_and_repeat_confined_to' )
       info "µ33324 breaking to repeat with #{jr m.start_vnr}...#{jr m.stop_vnr}"
       S.confine_to = m
       continue
