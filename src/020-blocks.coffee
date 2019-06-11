@@ -110,27 +110,24 @@ DM                        = require '..'
 @$blockquotes = ( S ) ->
   ### TAINT ATM also captures closing pointy bracket of multiline tag literals ###
   pattern           = /// ^ (?: (?<mu_1> >+ ) | (?<mu_2> >+ ) \s+ (?<text> .* ) ) $ ///
-  prv_was_quote     = false
-  start_vnr         = null
+  within_quote      = false
+  first_vnr         = null
   $vnr              = null
   dest              = null
-  XXX_reprised = false
   ### TAINT only register once per pair ###
   H.register_key S, '<blockquote', { is_block: true, has_paragraphs: true, }
   H.register_key S, '>blockquote', { is_block: true, has_paragraphs: true, }
   #.........................................................................................................
   return $ { last, }, ( d, send ) =>
     if d is last
+      ### If the previous datom was the last in the document and we're within a blockwuote, close it: ###
       ### TAINT code duplication ###
-      if prv_was_quote
+      if within_quote
         ref       = 'bl/bq1'
-        $vnr      = VNR.advance $vnr
-        send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        unless XXX_reprised
-          XXX_reprised = true
-          DM.reprise S, { start_vnr, stop_vnr: $vnr, ref, }
+        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
+        DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
         $vnr      = null
-        start_vnr = null
+        first_vnr = null
       return
     #.......................................................................................................
     return send d unless select d, '^line'
@@ -138,27 +135,25 @@ DM                        = require '..'
     unless ( match = d.text.match pattern )?
       #.....................................................................................................
       ### TAINT code duplication ###
-      if prv_was_quote
+      ### If we've found a text that has no blockquote markup, the quote has ended: ###
+      if within_quote
         ref       = 'bl/bq2'
-        $vnr      = VNR.advance $vnr
-        send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        unless XXX_reprised
-          XXX_reprised = true
-          DM.reprise S, { start_vnr, stop_vnr: $vnr, ref, }
+        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
+        DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
         $vnr      = null
-        start_vnr = null
+        first_vnr = null
       #.....................................................................................................
-      prv_was_quote = false
+      within_quote = false
       return send d
     #.......................................................................................................
     markup  = match.groups.mu_1 ? match.groups.mu_2
     text    = match.groups.text ? ''
     $vnr    = VNR.deepen d.$vnr, 0
     #.......................................................................................................
-    unless prv_was_quote
+    unless within_quote
       ref         = 'bl/bq3'
       dest        = d.dest
-      start_vnr   = $vnr
+      first_vnr   = $vnr
       send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
       send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
     #.......................................................................................................
@@ -167,7 +162,7 @@ DM                        = require '..'
       send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
     #.......................................................................................................
     send stamp d
-    prv_was_quote = true
+    within_quote = true
     return null
 
 
