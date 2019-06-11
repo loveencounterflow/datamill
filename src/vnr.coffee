@@ -38,8 +38,22 @@ types                     = require './types'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@advance  = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, +1
-@recede   = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, -1
+@advance      = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, +1
+@recede       = ( d_or_vnr ) => @_advance_or_recede d_or_vnr, -1
+
+#-----------------------------------------------------------------------------------------------------------
+@_lower_bound = ( vnr ) =>
+  ### Return a new VNR `z` such that `( as_hollerith vnr ) > ( as_hollerith z )` holds; this is needed to
+  iterate over all rows within a given limit. ###
+  validate.vnr vnr
+  return [ vnr[ 0 ] - 1 ]
+
+#-----------------------------------------------------------------------------------------------------------
+@_upper_bound = ( vnr ) =>
+  ### Return a new VNR `z` such that `( as_hollerith vnr ) < ( as_hollerith z )` holds; this is needed to
+  iterate over all rows within a given limit. ###
+  validate.vnr vnr
+  return [ vnr[ 0 ] + 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
 @_advance_or_recede = ( d_or_vnr, delta ) =>
