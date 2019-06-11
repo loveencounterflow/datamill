@@ -101,7 +101,13 @@ H                         = require './helpers'
 @_length_of_control_queue         = ( S             ) => S.control.queue.length
 @_control_queue_has_messages      = ( S             ) => ( @_length_of_control_queue S ) > 0
 @_next_control_message_is_from    = ( S, phase_name ) => S.control.queue[ 0 ]?.phase is phase_name
-@_is_reprising                    = ( S             ) => S.control.reprise.start_vnr?
+@_is_reprising                    = ( S             ) => S.control.reprise.phase?
+
+#-----------------------------------------------------------------------------------------------------------
+@_set_to_reprising = ( S, message ) =>
+  validate.datamill_reprising_message message
+  assign S.control.reprise.phase, message
+  return null
 
 #-----------------------------------------------------------------------------------------------------------
 @_pluck_next_control_message = ( S ) =>
@@ -112,11 +118,11 @@ H                         = require './helpers'
 
 #-----------------------------------------------------------------------------------------------------------
 @reprise = ( S, region ) =>
-  validate.datamill_region  region
-  validate.nonempty_text    S.control.active_phase
-  { start_vnr
-    stop_vnr }  = region
-  S.control.queue.push PD.new_datom '~reprise', { start_vnr, stop_vnr, phase: S.control.active_phase, }
+  validate.datamill_inclusive_region  region
+  validate.nonempty_text              S.control.active_phase
+  { first_vnr
+    last_vnr } = region
+  S.control.queue.push PD.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -163,11 +169,11 @@ H                         = require './helpers'
           throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
         @_cancel_active_phase S
     #.........................................................................................................
-    catch m
-      throw m unless ( select m, '~reprise' )
-      info "µ33324 reprising, confined to #{jr m.start_vnr}...#{jr m.stop_vnr}"
+    catch message
+      throw message unless ( select message, '~reprise' )
+      info "µ33324 reprising, confined to #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
       ### TAINT use API ###
-      S.confine_to = m
+      @_set_to_reprising S, message
       continue
     break
   #.........................................................................................................
