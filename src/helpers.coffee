@@ -294,7 +294,7 @@ XXX_COLORIZER             = require './experiments/colorizer'
   level         = 0
   omit_count    = 0
   skip_stamped  = false
-  skip_blanks   = true
+  skip_blanks   = false
   #.........................................................................................................
   defaults =
     raw:        false

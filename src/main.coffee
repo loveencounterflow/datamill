@@ -92,12 +92,12 @@ H                         = require './helpers'
     './010-whitespace-1'
     './020-blocks'
     './025-whitespace-2'
-    './030-1-paragraphs-breaks'
-    './030-2-paragraphs-consolidate'
-    './040-markdown-inline'
-    # './030-escapes'
-    # './035-special-forms'
-    './xxx-validation'
+    # './030-1-paragraphs-breaks'
+    # './030-2-paragraphs-consolidate'
+    # './040-markdown-inline'
+    # # './030-escapes'
+    # # './035-special-forms'
+    # './xxx-validation'
     ]
   #.........................................................................................................
   loop
@@ -147,11 +147,11 @@ unless module.parent?
     await @translate_document mirage
     # db      = mirage.db
     # for row from db.$.query "select * from dest_changes_backward order by vnr_blob;"
-    #   delete row.vnr_blob
-    #   help jr row
+    #   { prv_dest, dest, stamped, key, } = row
+    #   info jr { prv_dest, dest, stamped, key, }
     # for row from db.$.query "select * from dest_changes_forward order by vnr_blob;"
-    #   delete row.vnr_blob
-    #   info jr row
+    #   { prv_dest, dest, stamped, key, } = row
+    #   info jr { prv_dest, dest, stamped, key, }
     # for row from db.read_changed_dest_last_lines()
     #   delete row.vnr_blob
     #   help jr row
