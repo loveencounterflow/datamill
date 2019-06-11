@@ -38,6 +38,7 @@ types                     = require './types'
   size_of
   type_of }               = types
 XXX_COLORIZER             = require './experiments/colorizer'
+DM                        = require '..'
 
 #===========================================================================================================
 #
@@ -197,13 +198,13 @@ XXX_COLORIZER             = require './experiments/colorizer'
 
 #-----------------------------------------------------------------------------------------------------------
 @feed_source = ( S, source, limit = Infinity ) =>
-  validate.datamill_S_confine S.confine_to
   dbr           = S.mirage.db
   nr            = 0
   #.........................................................................................................
-  if S.confine_to?
+  if DM._is_reprising S
     { start_vnr
-      stop_vnr }    = S.confine_to
+      stop_vnr
+      phase }       = S.confine_to
     ### TAINT do casting in DB module ###
     start_vnr_blob  = dbr.$.as_hollerith start_vnr
     stop_vnr_blob   = dbr.$.as_hollerith stop_vnr
@@ -261,12 +262,6 @@ XXX_COLORIZER             = require './experiments/colorizer'
   return false unless phase.repeat_phase?
   return phase.repeat_phase if isa.boolean phase.repeat_phase
   return phase.repeat_phase S
-
-#-----------------------------------------------------------------------------------------------------------
-@break_phase_and_repeat_confined_to = ( S, confine_to ) =>
-  validate.datamill_S_confine confine_to
-  S.control.push PD.new_datom '~break_phase_and_repeat_confined_to', confine_to
-  return null
 
 
 #===========================================================================================================

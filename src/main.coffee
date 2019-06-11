@@ -36,6 +36,8 @@ PD                        = require 'pipedreams'
 { isa
   validate
   declare
+  first_of
+  last_of
   size_of
   type_of }               = @types
 #...........................................................................................................
@@ -77,9 +79,38 @@ H                         = require './helpers'
 @new_datamill = ( mirage ) ->
   R =
     mirage:       mirage
-    control:      [] ### A queue for flow control messages ###
-    confine_to:   null ### when set, indicates start_vnr, stop_vnr ###
+    control:
+      active_phase: null
+      queue:        []    ### A queue for flow control messages ###
+      reprise:
+        start_vnr:    null
+        stop_vnr:     null
+        phase:        null  ### name of phase that queued control messages ###
   return R
+
+#-----------------------------------------------------------------------------------------------------------
+@_set_active_phase                = ( S, phase_name ) => S.control.active_phase = phase_name
+@_cancel_active_phase             = ( S             ) => S.control.active_phase = null
+@_length_of_control_queue         = ( S             ) => S.control.queue.length
+@_control_queue_has_messages      = ( S             ) => ( @_length_of_control_queue S ) > 0
+@_next_control_message_is_from    = ( S, phase_name ) => S.control.queue[ 0 ]?.phase is phase_name
+@_is_reprising                    = ( S             ) => S.control.reprise.start_vnr?
+
+#-----------------------------------------------------------------------------------------------------------
+@_pluck_next_control_message = ( S ) =>
+  throw new Error "µ11092 queue is empty" unless S.control.queue.length > 0
+  message = S.control.queue.shift()
+  assign S.control.reprise, message
+  return message
+
+#-----------------------------------------------------------------------------------------------------------
+@reprise = ( S, region ) =>
+  validate.datamill_region  region
+  validate.nonempty_text    S.control.active_phase
+  { start_vnr
+    stop_vnr }  = region
+  S.control.queue.push PD.new_datom '~reprise', { start_vnr, stop_vnr, phase: S.control.active_phase, }
+  return null
 
 #-----------------------------------------------------------------------------------------------------------
 @translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
@@ -102,22 +133,33 @@ H                         = require './helpers'
   #.........................................................................................................
   loop
     try
+      # ### TAINT use API ###
+      # S.confine_to = null
+      # S.confine_from_phase = null
       for phase_name in phase_names
-        phase     = require phase_name
-        pass      = 1
+        @_set_active_phase S, phase_name
+        # length_of_queue = @_length_of_control_queue S
+        phase           = require phase_name
+        pass            = 1
         help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
         await @run_phase S, phase.$transform S
         #.....................................................................................................
         ### TAINT use proper flag / API ###
-        unless S.confine_to?
-          throw message if ( message = S.control.shift() )?
+        for x in S.control.queue
+          debug 'µ09087', jr x
+        # if length_of_queue isnt @_length_of_control_queue S
+        if @_next_control_message_is_from S, phase_name
+          @_cancel_active_phase S
+          throw @_pluck_next_control_message S
         #.....................................................................................................
         if H.repeat_phase S, phase
           throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
+        @_cancel_active_phase S
     #.........................................................................................................
     catch m
-      throw m unless ( select m, '~break_phase_and_repeat_confined_to' )
-      info "µ33324 breaking to repeat with #{jr m.start_vnr}...#{jr m.stop_vnr}"
+      throw m unless ( select m, '~reprise' )
+      info "µ33324 reprising, confined to #{jr m.start_vnr}...#{jr m.stop_vnr}"
+      ### TAINT use API ###
       S.confine_to = m
       continue
     break

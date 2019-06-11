@@ -39,8 +39,7 @@ types                     = require './types'
   size_of
   type_of }               = types
 #...........................................................................................................
-# ### Whether in-place updates are OK ###
-# prefer_updates = true
+DM                        = require '..'
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -115,6 +114,7 @@ types                     = require './types'
   start_vnr         = null
   $vnr              = null
   dest              = null
+  XXX_reprised = false
   ### TAINT only register once per pair ###
   H.register_key S, '<blockquote', { is_block: true, has_paragraphs: true, }
   H.register_key S, '>blockquote', { is_block: true, has_paragraphs: true, }
@@ -126,7 +126,9 @@ types                     = require './types'
         ref       = 'bl/bq1'
         $vnr      = VNR.advance $vnr
         send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        H.break_phase_and_repeat_confined_to S, { start_vnr, stop_vnr: $vnr, ref, }
+        unless XXX_reprised
+          XXX_reprised = true
+          DM.reprise S, { start_vnr, stop_vnr: $vnr, ref, }
         $vnr      = null
         start_vnr = null
       return
@@ -140,7 +142,9 @@ types                     = require './types'
         ref       = 'bl/bq2'
         $vnr      = VNR.advance $vnr
         send H.fresh_datom '>blockquote', { dest, $vnr, ref, }
-        H.break_phase_and_repeat_confined_to S, { start_vnr, stop_vnr: $vnr, ref, }
+        unless XXX_reprised
+          XXX_reprised = true
+          DM.reprise S, { start_vnr, stop_vnr: $vnr, ref, }
         $vnr      = null
         start_vnr = null
       #.....................................................................................................
