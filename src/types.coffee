@@ -28,9 +28,32 @@ intertype                 = new Intertype module.exports
 #-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_region', ( x ) ->
   tests:
-    "x is a ?object":                 ( x ) -> ( not x? ) or @isa.object x
+    "x is an inclusive or an exclusive region": ( x ) ->
+      is_inclusive = @isa.datamill_inclusive_region x
+      is_exclusive = @isa.datamill_exclusive_region x
+      return ( is_inclusive or is_exclusive ) and not ( is_inclusive and is_exclusive )
+
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_exclusive_region', ( x ) ->
+  tests:
+    "x is an object":                 ( x ) -> @isa.object x
     "x.start_vnr is a vnr":           ( x ) -> isa.vnr x.start_vnr
     "x.stop_vnr is a vnr":            ( x ) -> isa.vnr x.stop_vnr
+
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_inclusive_region', ( x ) ->
+  tests:
+    "x is an object":                 ( x ) -> @isa.object x
+    "x.first_vnr is a vnr":           ( x ) -> isa.vnr x.first_vnr
+    "x.last_vnr is a vnr":            ( x ) -> isa.vnr x.last_vnr
+
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_reprising_message', ( x ) ->
+  tests:
+    "x is an object":                   ( x ) -> @isa.object x
+    "x.key is '^reprise'":              ( x ) -> @isa.key is '^reprise'
+    "x.phase is a nonempty_text":       ( x ) -> isa.nonempty_text x.phase
+    "x is a datamill_region":           ( x ) -> isa.datamill_region x
 
 #-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_register_key_settings', ( x ) ->
