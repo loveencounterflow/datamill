@@ -53,7 +53,6 @@ types                     = require './types'
   linecount     = 0
   send          = null
   within_blank  = false
-  is_first_line = true
   ref           = 'ws1/bl'
   #.........................................................................................................
   H.register_key S, '^blank', { is_block: false, }
@@ -61,25 +60,28 @@ types                     = require './types'
   flush = ( advance = false ) =>
     return null unless prv_vnr?
     within_blank  = false
-    $vnr = VNR.advance  prv_vnr
+    $vnr = VNR.advance prv_vnr
     # if advance  then  $vnr = VNR.deepen VNR.advance  prv_vnr
     # else              $vnr = VNR.deepen              prv_vnr
     ref = 'ws1/bl-A'
     send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, ref, }
     linecount     = 0
   #.........................................................................................................
-  return $ { last, }, ( d, send_ ) =>
+  return PD.mark_position $ ( pd, send_ ) =>
+    { is_first
+      is_last
+      d       } = pd
+    #.......................................................................................................
     send = send_
     #.......................................................................................................
-    if d is last
+    if is_last
       flush true
       return null
     #.......................................................................................................
     is_line = select d, '^line'
     #.......................................................................................................
     ### Insert blank if first line isn't blank: ###
-    if is_line and is_first_line
-      is_first_line = false
+    if is_line and is_first
       if ( d.text isnt '' )
         ref = 'ws1/bl-B'
         send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, ref, }
@@ -105,26 +107,54 @@ types                     = require './types'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d, send ) =>
-  ref = 'ws1/dst'
-  return send d unless d is last
-  db = S.mirage.dbw
-  for row from db.read_changed_dest_last_lines()
-    d = H.datom_from_row S,row
-    break if select d, '^blank'
-    # send stamp d
-    # send d  = VNR.deepen d
-    send d
-    $vnr    = VNR.advance VNR.deepen d.$vnr
-    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, ref, }
-  for row from db.read_changed_dest_first_lines()
-    d = H.datom_from_row S,row
-    break if select d, '^blank'
-    # send stamp d
-    # send d  = VNR.deepen d
-    send d
-    $vnr    = VNR.recede VNR.deepen d.$vnr
-    send d  = H.fresh_datom '^blank', { linecount: 0, $vnr, dest: d.dest, ref, }
+@$blank_lines_2 = ( S ) ->
+  ref = 'ws1/bl2'
+  H.register_key S, '^blank', { is_block: false, }
+  #.........................................................................................................
+  return PD.mark_position $ ( pd, send ) =>
+    { is_first
+      is_last
+      d       } = pd
+    sent_d      = false
+    # if S.confine_to?
+    #   debug 'µ33444', ( CND.truth is_first ), ( CND.truth is_last ), jr d
+    if is_first and not select d, '^blank'
+      send stamp d, { ref, }
+      $vnr = VNR.deepen d.$vnr
+      send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), ref, }
+      send PD.set d, { $vnr, $fresh: true, ref, }
+      sent_d = true
+    if is_last and not select d, '^blank'
+      send stamp d, { ref, }
+      $vnr = VNR.deepen d.$vnr
+      send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), ref, }
+      send PD.set d, { $vnr, $fresh: true, ref, }
+      sent_d = true
+    send d unless sent_d
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d_, send ) =>
+  return send d_ unless d_ is last
+  db  = S.mirage.dbw
+  #.........................................................................................................
+  do =>
+    ref = 'ws1/dst1'
+    for row from db.read_changed_dest_last_lines()
+      break if select row, '^blank'
+      d = H.datom_from_row S, row
+      send stamp d, { ref, }
+      send d = VNR.deepen PD.set d, { $fresh: true, ref, }
+      send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.advance d.$vnr ), dest: d.dest, ref, }
+  #.........................................................................................................
+  do =>
+    ref = 'ws1/dst2'
+    for row from db.read_changed_dest_first_lines()
+      break if select row, '^blank'
+      d = H.datom_from_row S, row
+      send stamp d, { ref, }
+      send d  = VNR.deepen PD.set d, { $fresh: true, ref, }
+      send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.recede d.$vnr ), dest: d.dest, ref, }
   return null
 
 
@@ -134,7 +164,8 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$trim                    S
-  pipeline.push @$blank_lines             S
+  # pipeline.push @$blank_lines             S
+  pipeline.push @$blank_lines_2           S
   pipeline.push @$blanks_at_dest_changes  S
   return PD.pull pipeline...
 
