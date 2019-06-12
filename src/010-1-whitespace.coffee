@@ -48,64 +48,65 @@ types                     = require './types'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$blank_lines = ( S ) ->
-  prv_vnr       = null
-  prv_dest      = null
-  linecount     = 0
-  send          = null
-  within_blank  = false
-  #.........................................................................................................
-  H.register_key S, '^blank', { is_block: false, }
-  #.........................................................................................................
-  flush = =>
-    return null unless prv_vnr?
-    within_blank  = false
-    $vnr          = VNR.advance prv_vnr
-    ref           = 'ws1/bl-A'
-    send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, ref, }
-    linecount     = 0
-  #.........................................................................................................
-  return PD.mark_position $ ( pd, send_ ) =>
-    { is_first
-      is_last
-      d       } = pd
-    #.......................................................................................................
-    send = send_
-    #.......................................................................................................
-    if is_last
-      flush true
-      return null
-    #.......................................................................................................
-    is_line = select d, '^line'
-    #.......................................................................................................
-    ### Insert blank if first line isn't blank: ###
-    if is_line and is_first
-      if ( d.text isnt '' )
-        ref = 'ws1/bl-B'
-        # send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, ref, }
-    #.......................................................................................................
-    return send d unless is_line
-    #.......................................................................................................
-    ### line is empty / blank ###
+@$group_by = ( S ) =>
+  ### TAINT, simplify, generalize, implement as standard transform `$group_by()` ###
+  group   = null
+  buffer  = null
+  return $ { last, }, ( d, send ) =>
+    if d is last
+      if buffer? and buffer.length > 0
+        send [ group, buffer, ]
+        buffer = null
+      return
+    return send d unless select d, '^line'
     if d.text is ''
-      linecount     = 0 unless within_blank
-      linecount    += +1
-      within_blank  = true
-      prv_dest      = d.dest
-      prv_vnr       = VNR.deepen d.$vnr
-      return send stamp d
-    #.......................................................................................................
-    ### line contains material ###
-    flush false if within_blank
-    ### TAINT use API to ensure all pertinent values are captured ###
-    prv_dest    = d.dest
-    prv_vnr     = d.$vnr
-    send d
-    #.......................................................................................................
+      if group? and ( group isnt 'blank' )
+        send [ group, buffer, ]
+        buffer = null
+      group   = 'blank'
+      buffer ?= []
+      buffer.push d
+    else
+      if group? and ( group isnt 'line' )
+        send [ group, buffer, ]
+        buffer = null
+      group   = 'line'
+      buffer ?= []
+      buffer.push d
     return null
 
 #-----------------------------------------------------------------------------------------------------------
+@$blank_lines_1 = ( S ) ->
+  pipeline = []
+  #.........................................................................................................
+  $unpack = ( S ) =>
+    return $ ( d, send ) =>
+      return send d unless isa.list d
+      [ group, buffer, ] = d
+      switch group
+        #...................................................................................................
+        when 'line'
+          send sub_d for sub_d in buffer
+        #...................................................................................................
+        when 'blank'
+          d1        = buffer[ 0 ]
+          $vnr      = VNR.deepen d1.$vnr
+          linecount = buffer.length
+          ref       = 'ws1/bl1'
+          send H.fresh_datom '^blank', { $vnr, linecount, ref, }
+          send ( stamp sub_d ) for sub_d in buffer
+        #...................................................................................................
+        else
+          throw new Error "µ11928 unknown group #{rpr group}"
+      return null
+  #.........................................................................................................
+  pipeline.push @$group_by S
+  pipeline.push $unpack S
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
 @$blank_lines_2 = ( S ) ->
+  ### Make sure to include blanks as first and last lines in document or fragment. ###
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
   return PD.mark_position $ ( pd, send ) =>
@@ -145,7 +146,7 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$trim                    S
-  pipeline.push @$blank_lines             S
+  pipeline.push @$blank_lines_1           S
   pipeline.push @$blank_lines_2           S
   return PD.pull pipeline...
 
