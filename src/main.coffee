@@ -112,6 +112,11 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
+@_conclude_current_reprise = ( S ) =>
+  S.control.reprise[ key ] = null for key of S.control.reprise
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
 @_pluck_next_control_message = ( S ) =>
   throw new Error "µ11092 queue is empty" unless S.control.queue.length > 0
   message = S.control.queue.shift()
@@ -173,16 +178,20 @@ H                         = require './helpers'
         pass            = 1
         msg_1()
         await @run_phase S, phase.$transform S
-        #.....................................................................................................
-        msg_2 phase_name if S.control.reprise.phase is phase_name
+        #...................................................................................................
+        if S.control.reprise.phase is phase_name
+          ### Conclude reprise; continue with upcoming phase and entire document ###
+          ### TAINT do we have to stack boundaries? ###
+          msg_2 phase_name
+          @_conclude_current_reprise S
+        #...................................................................................................
         if @_next_control_message_is_from S, phase_name
-          @_cancel_active_phase S
           throw @_pluck_next_control_message S
-        #.....................................................................................................
+        #...................................................................................................
         if H.repeat_phase S, phase
           throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
         @_cancel_active_phase S
-    #.........................................................................................................
+    #.......................................................................................................
     catch message
       throw message unless ( select message, '~reprise' )
       @_set_to_reprising S, message
