@@ -156,7 +156,7 @@ H                         = require './helpers'
   #.........................................................................................................
   msg_2 = ( phase_name ) ->
     nrs_txt = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
-    info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}"
+    info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}; continuing without limits"
     info()
   #.........................................................................................................
   msg_3 = ( message ) ->
