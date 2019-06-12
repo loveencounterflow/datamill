@@ -1,24 +1,12 @@
-frontmatter 1
-frontmatter 2
-frontmatter 3
-frontmatter 4
-<start/>
-simple paragraphs
-some shorter
+Steigt man hingegen abwärts ins Flachland und in dichter bevölkerte
+Gegenden, ändert sich das Bild.
 
-> a quote
-> ```
-> with code
-> ```
-> is possible
+Die dortigen Sprachen sind morphologisch einfacher.
 
-some a bit longer
 
-<ignore>
-ignored stuff
-</ignore>
-but at any rate
-just
-paragraphs
 
-EOF
+
+Die Linuistin entdeckte Parallelen in anderen Weltregionen.
+
+So zum Beispiel in Südamerika, wo viele der schwierigsten Sprachen im
+Hochland der Anden beheimatet sind.
