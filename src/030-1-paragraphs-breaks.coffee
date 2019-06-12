@@ -49,8 +49,7 @@ types                     = require './types'
   key_registry    = H.get_key_registry S
   prv_was_break   = false
   #.........................................................................................................
-  return $ { first, }, ( d, send ) =>
-    return if d is first
+  return $ ( d, send ) =>
     return send d if PD.is_stamped d
     #.......................................................................................................
     if ( select d, '^blank' )
