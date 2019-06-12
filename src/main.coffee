@@ -147,6 +147,20 @@ H                         = require './helpers'
     # './xxx-validation'
     ]
   #.........................................................................................................
+  msg_1 = ->
+    nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} p#{pass} "
+    help 'µ55567 ' + nrs_txt + ( CND.lime " phase #{phase_name} " )
+  #.........................................................................................................
+  msg_2 = ( phase_name ) ->
+    nrs_txt = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
+    info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}"
+    info()
+  #.........................................................................................................
+  msg_3 = ( message ) ->
+    nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
+    info()
+    info 'µ33324', nrs_txt + CND.blue " reprise for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
+  #.........................................................................................................
   loop
     try
       # ### TAINT use API ###
@@ -157,14 +171,10 @@ H                         = require './helpers'
         # length_of_queue = @_length_of_control_queue S
         phase           = require phase_name
         pass            = 1
-        nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} p#{pass} "
-        help 'µ55567 ' + nrs_txt + ( CND.lime " phase #{phase_name} " )
+        msg_1()
         await @run_phase S, phase.$transform S
         #.....................................................................................................
-        if S.control.reprise.phase is phase_name
-          nrs_txt = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
-          info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}"
-          info()
+        msg_2 phase_name if S.control.reprise.phase is phase_name
         if @_next_control_message_is_from S, phase_name
           @_cancel_active_phase S
           throw @_pluck_next_control_message S
@@ -176,9 +186,7 @@ H                         = require './helpers'
     catch message
       throw message unless ( select message, '~reprise' )
       @_set_to_reprising S, message
-      nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
-      info()
-      info 'µ33324', nrs_txt + CND.blue " reprise for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
+      msg_3 message
       ### TAINT use API ###
       continue
     break
