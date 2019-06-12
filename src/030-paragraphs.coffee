@@ -48,7 +48,7 @@ types                     = require './types'
   key_registry    = H.get_key_registry S
   within_p        = false
   block_depth     = 0
-  prv_was_break   = false
+  prv_was_blank   = false
   #.........................................................................................................
   return $ ( d, send ) =>
     return send d if PD.is_stamped d
@@ -61,8 +61,8 @@ types                     = require './types'
       else              block_depth--
     return send d unless block_depth is 0
     #.......................................................................................................
-    if select d, '^break'
-      prv_was_break = true
+    if select d, '^blank'
+      prv_was_blank = true
       send stamp d
       if within_p
         ref           = 'pco/p1'
@@ -70,17 +70,17 @@ types                     = require './types'
         $vnr          = VNR.deepen d.$vnr, 0
         send H.fresh_datom '>p', { $vnr, dest, ref, }
         within_p      = false
-        prv_was_break = false
+        prv_was_blank = false
     #.......................................................................................................
     if select d, '^line'
-      if prv_was_break
+      if prv_was_blank
         ref           = 'pco/p2'
         dest          = d.dest
         $vnr          = VNR.deepen d.$vnr, 0
         send H.fresh_datom '<p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
         send PD.set d, { $vnr, ref, }
         within_p      = true
-        prv_was_break = false
+        prv_was_blank = false
         send stamp d
       else
         send d
