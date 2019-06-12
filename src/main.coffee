@@ -211,6 +211,7 @@ unless module.parent?
     #.......................................................................................................
     settings =
       # file_path:    project_abspath './src/tests/demo.md'
+      # file_path:    project_abspath './src/tests/demo-medium.md'
       file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
       # db_path:      ':memory:'
       db_path:      project_abspath './db/datamill.db'
