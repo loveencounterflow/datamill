@@ -48,7 +48,8 @@ types                     = require './types'
   last_lnr    = null
   switch size = size_of rows
     when 0
-      warn "no document preamble found"
+      null
+      # warn "no document preamble found"
     when 1
       row             = rows[ 0 ]
       d               = H.datom_from_row S, row
@@ -79,7 +80,8 @@ types                     = require './types'
   last_lnr    = null
   switch size = size_of rows
     when 0
-      warn "no document terminator found"
+      null
+      # warn "no document terminator found"
       ### TAINT consider to store these values in DB ###
     when 1
       row           = rows[ 0 ]
