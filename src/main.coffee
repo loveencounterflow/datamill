@@ -89,6 +89,7 @@ H                         = require './helpers'
     control:
       active_phase: null
       queue:        []    ### A queue for flow control messages ###
+      reprise_nr:   0
       reprise:
         start_vnr:    null
         stop_vnr:     null
@@ -107,6 +108,7 @@ H                         = require './helpers'
 @_set_to_reprising = ( S, message ) =>
   validate.datamill_reprising_message message
   assign S.control.reprise.phase, message
+  S.control.reprise_nr += +1
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -154,13 +156,12 @@ H                         = require './helpers'
         # length_of_queue = @_length_of_control_queue S
         phase           = require phase_name
         pass            = 1
-        help 'µ55567 ' + ( CND.reverse CND.yellow " pass #{pass} " ) + ( CND.lime " phase #{phase_name} " )
+        nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} p#{pass} "
+        help 'µ55567 ' + nrs_txt + ( CND.lime " phase #{phase_name} " )
         await @run_phase S, phase.$transform S
         #.....................................................................................................
-        ### TAINT use proper flag / API ###
-        # for x in S.control.queue
-        #   debug 'µ09087', jr x
-        # if length_of_queue isnt @_length_of_control_queue S
+        if S.control.reprise.phase is phase_name
+          info 'µ22872', "finished reprise for #{phase_name}"
         if @_next_control_message_is_from S, phase_name
           @_cancel_active_phase S
           throw @_pluck_next_control_message S
@@ -171,9 +172,10 @@ H                         = require './helpers'
     #.........................................................................................................
     catch message
       throw message unless ( select message, '~reprise' )
-      info "µ33324 reprising, confined to #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
-      ### TAINT use API ###
       @_set_to_reprising S, message
+      nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
+      info "µ33324 reprise #{nrs_txt} " + CND.blue "for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
+      ### TAINT use API ###
       continue
     break
   #.........................................................................................................
