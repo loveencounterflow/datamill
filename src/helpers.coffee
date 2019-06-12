@@ -289,8 +289,8 @@ DM                        = require '..'
   dbr           = S.mirage.db
   level         = 0
   omit_count    = 0
-  skip_stamped  = false
-  skip_blanks   = false
+  show_stamped  = true
+  show_blanks   = true
   #.........................................................................................................
   defaults =
     raw:        false
@@ -304,10 +304,10 @@ DM                        = require '..'
     if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
       omit_count += +1
       continue
-    if skip_blanks and ( row.key is '^blank' )
+    if ( not show_blanks ) and ( row.key is '^blank' )
       omit_count += +1
       continue
-    if skip_stamped and row.stamped
+    if ( not show_stamped ) and row.stamped
       omit_count += +1
       continue
     switch row.key
