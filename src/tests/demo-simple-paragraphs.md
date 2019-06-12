@@ -6,6 +6,12 @@ frontmatter 4
 simple paragraphs
 some shorter
 
+> a quote
+> ```
+> with code
+> ```
+> is possible
+
 some a bit longer
 
 <ignore>
