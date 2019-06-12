@@ -89,7 +89,7 @@ H                         = require './helpers'
     control:
       active_phase: null
       queue:        []    ### A queue for flow control messages ###
-      reprise_nr:   0
+      reprise_nr:   1
       reprise:
         start_vnr:    null
         stop_vnr:     null
