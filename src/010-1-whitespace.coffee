@@ -54,17 +54,14 @@ types                     = require './types'
   linecount     = 0
   send          = null
   within_blank  = false
-  ref           = 'ws1/bl'
   #.........................................................................................................
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
-  flush = ( advance = false ) =>
+  flush = =>
     return null unless prv_vnr?
     within_blank  = false
-    $vnr = VNR.advance prv_vnr
-    # if advance  then  $vnr = VNR.deepen VNR.advance  prv_vnr
-    # else              $vnr = VNR.deepen              prv_vnr
-    ref = 'ws1/bl-A'
+    $vnr          = VNR.advance prv_vnr
+    ref           = 'ws1/bl-A'
     send H.fresh_datom '^blank', { linecount, $vnr, dest: prv_dest, ref, }
     linecount     = 0
   #.........................................................................................................
@@ -85,7 +82,7 @@ types                     = require './types'
     if is_line and is_first
       if ( d.text isnt '' )
         ref = 'ws1/bl-B'
-        send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, ref, }
+        # send H.fresh_datom '^blank', { linecount: 0, $vnr: [ 0 ], dest: d.dest, ref, }
     #.......................................................................................................
     return send d unless is_line
     #.......................................................................................................
@@ -121,48 +118,25 @@ types                     = require './types'
       send stamp d
       ref   = 'ws1/b2-1'
       $vnr  = VNR.deepen d.$vnr
-      send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), ref, }
+      send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
       ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
       blank; we do this here and not in the next clause, below, to avoid sending a duplicate of the
       the text line: ###
       if is_last
-        send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), ref, }
+        send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
     #.......................................................................................................
     ### Make sure the last thing in document or fragment is a blank: ###
     else if is_last and not select d, '^blank'
       send stamp d
       ref   = 'ws1/b2-2'
       $vnr  = VNR.deepen d.$vnr
-      send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), ref, }
+      send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
     else
       send d
     return null
 
-#-----------------------------------------------------------------------------------------------------------
-@$blanks_at_dest_changes = ( S ) -> $ { last, }, ( d_, send ) =>
-  return send d_ unless d_ is last
-  db  = S.mirage.dbw
-  #.........................................................................................................
-  do =>
-    ref = 'ws1/dst1'
-    for row from db.read_changed_dest_last_lines()
-      break if select row, '^blank'
-      d = H.datom_from_row S, row
-      send stamp d
-      send d = VNR.deepen PD.set d, { $fresh: true, ref, }
-      send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.advance d.$vnr ), dest: d.dest, ref, }
-  #.........................................................................................................
-  do =>
-    ref = 'ws1/dst2'
-    for row from db.read_changed_dest_first_lines()
-      break if select row, '^blank'
-      d = H.datom_from_row S, row
-      send stamp d
-      send d  = VNR.deepen PD.set d, { $fresh: true, ref, }
-      send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.recede d.$vnr ), dest: d.dest, ref, }
-  return null
 
 
 #===========================================================================================================
@@ -171,8 +145,7 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$trim                    S
-  # pipeline.push @$blank_lines             S
+  pipeline.push @$blank_lines             S
   pipeline.push @$blank_lines_2           S
-  pipeline.push @$blanks_at_dest_changes  S
   return PD.pull pipeline...
 
