@@ -24,6 +24,7 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
 VNR                       = require './vnr'
+@RENDER_AS_HTML           = require './render-as-html'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -133,7 +134,7 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@translate_document = ( mirage ) -> new Promise ( resolve, reject ) =>
+@parse_document = ( mirage ) -> new Promise ( resolve, reject ) =>
   S           = @new_datamill mirage
   limit       = Infinity
   phase_names = [
@@ -221,7 +222,8 @@ unless module.parent?
       clear:        true
     help "using database at #{settings.db_path}"
     mirage  = await MIRAGE.create settings
-    await @translate_document mirage
+    await @parse_document mirage
+    await @RENDER_AS_HTML.render mirage
     #.......................................................................................................
     db              = mirage.db
     first_vnr_blob  = db.$.as_hollerith [ 42, 0, ]
