@@ -54,7 +54,6 @@ H                         = require './helpers'
 #
 #-----------------------------------------------------------------------------------------------------------
 @run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
-  debug 'µ44455', jr ( k for k of S )
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
