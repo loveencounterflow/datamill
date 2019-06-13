@@ -48,64 +48,36 @@ types                     = require './types'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$group_by = ( S ) =>
-  ### TAINT, simplify, generalize, implement as standard transform `$group_by()` ###
-  group   = null
-  buffer  = null
-  return $ { last, }, ( d, send ) =>
-    if d is last
-      if buffer? and buffer.length > 0
-        send [ group, buffer, ]
-        buffer = null
-      return
-    return send d unless select d, '^line'
-    if d.text is ''
-      if group? and ( group isnt 'blank' )
-        send [ group, buffer, ]
-        buffer = null
-      group   = 'blank'
-      buffer ?= []
-      buffer.push d
-    else
-      if group? and ( group isnt 'line' )
-        send [ group, buffer, ]
-        buffer = null
-      group   = 'line'
-      buffer ?= []
-      buffer.push d
-    return null
-
-#-----------------------------------------------------------------------------------------------------------
-@$blank_lines_1 = ( S ) ->
+@$group_blank_lines = ( S ) ->
   pipeline = []
   #.........................................................................................................
-  $unpack = ( S ) =>
-    return $ ( d, send ) =>
-      return send d unless isa.list d
-      [ group, buffer, ] = d
-      switch group
-        #...................................................................................................
-        when 'line'
-          send sub_d for sub_d in buffer
-        #...................................................................................................
-        when 'blank'
-          d1        = buffer[ 0 ]
-          $vnr      = VNR.deepen d1.$vnr
-          linecount = buffer.length
-          ref       = 'ws1/bl1'
-          send H.fresh_datom '^blank', { $vnr, linecount, ref, }
-          send ( stamp sub_d ) for sub_d in buffer
-        #...................................................................................................
-        else
-          throw new Error "µ11928 unknown group #{rpr group}"
-      return null
+  $group = => PD.$group_by ( d ) ->
+    return 'blank' if ( select d, '^line' ) and ( d.text is '' )
+    return 'other'
   #.........................................................................................................
-  pipeline.push @$group_by S
-  pipeline.push $unpack S
+  $unpack = => $ ( group, send ) =>
+    buffer = group.value
+    #.......................................................................................................
+    if group.name is 'blank'
+      d         = buffer[ 0 ]
+      $vnr      = VNR.deepen d.$vnr
+      linecount = buffer.length
+      ref       = 'ws1/gbl'
+      send H.fresh_datom '^blank', { $vnr, linecount, ref, }
+      for d in buffer
+        send stamp d
+    #.......................................................................................................
+    else
+      for d in buffer
+        send d
+    return null
+  #.........................................................................................................
+  pipeline.push $group()
+  pipeline.push $unpack()
   return PD.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
-@$blank_lines_2 = ( S ) ->
+@$ensure_blanks_at_ends = ( S ) ->
   ### Make sure to include blanks as first and last lines in document or fragment. ###
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
@@ -117,7 +89,7 @@ types                     = require './types'
     ### Make sure the first thing in document or fragment is a blank: ###
     if is_first and not select d, '^blank'
       send stamp d
-      ref   = 'ws1/b2-1'
+      ref   = 'ws1/ebae1'
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
@@ -130,7 +102,7 @@ types                     = require './types'
     ### Make sure the last thing in document or fragment is a blank: ###
     else if is_last and not select d, '^blank'
       send stamp d
-      ref   = 'ws1/b2-2'
+      ref   = 'ws1/ebae2'
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
       send PD.set d, { $vnr, $fresh: true, ref, }
@@ -146,7 +118,7 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$trim                    S
-  pipeline.push @$blank_lines_1           S
-  pipeline.push @$blank_lines_2           S
+  pipeline.push @$group_blank_lines       S
+  pipeline.push @$ensure_blanks_at_ends   S
   return PD.pull pipeline...
 
