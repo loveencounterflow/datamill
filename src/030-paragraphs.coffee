@@ -41,38 +41,36 @@ types                     = require './types'
 #...........................................................................................................
 
 
+  # key_registry    = H.get_key_registry S
+  # block_depth     = 0
+    # is_block  = key_registry[ d.key ].is_block
+    # is_opener = select d, '<'
+    # is_closer = select d, '>'
+    # if is_block
+    #   if is_opener then block_depth++
+    #   else              block_depth--
+    # return send d unless block_depth is 0
+
 #-----------------------------------------------------------------------------------------------------------
 @$paragraphs = ( S ) ->
   H.register_key S, '<p', { is_block: true, }
   H.register_key S, '>p', { is_block: true, }
-  key_registry    = H.get_key_registry S
   within_p        = false
-  block_depth     = 0
   prv_was_blank   = false
   #.........................................................................................................
   return $ ( d, send ) =>
-    return send d if PD.is_stamped d
-    #.......................................................................................................
-    is_block  = key_registry[ d.key ].is_block
-    is_opener = select d, '<'
-    is_closer = select d, '>'
-    if is_block
-      if is_opener then block_depth++
-      else              block_depth--
-    return send d unless block_depth is 0
     #.......................................................................................................
     if select d, '^blank'
-      prv_was_blank = true
-      send stamp d
+      send d
       if within_p
         ref           = 'pco/p1'
         dest          = d.dest
         $vnr          = VNR.deepen d.$vnr, 0
         send H.fresh_datom '>p', { $vnr, dest, ref, }
         within_p      = false
-        prv_was_blank = false
+      prv_was_blank = true
     #.......................................................................................................
-    if select d, '^line'
+    else if select d, '^line'
       if prv_was_blank
         ref           = 'pco/p2'
         dest          = d.dest
@@ -80,10 +78,10 @@ types                     = require './types'
         send H.fresh_datom '<p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
         send PD.set d, { $vnr, ref, }
         within_p      = true
-        prv_was_blank = false
         send stamp d
       else
         send d
+      prv_was_blank = false
     #.......................................................................................................
     send d
 
