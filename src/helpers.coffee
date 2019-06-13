@@ -289,8 +289,8 @@ DM                        = require '..'
   dbr           = S.mirage.db
   level         = 0
   omit_count    = 0
-  show_stamped  = true
-  show_blanks   = true
+  show_stamped  = false
+  show_blanks   = false
   #.........................................................................................................
   defaults =
     raw:        false
