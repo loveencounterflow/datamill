@@ -50,42 +50,25 @@ H                         = require './helpers'
 
 
 
-
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
-  #.........................................................................................................
-  $capture_control_messages = ( S ) -> $ ( d, send ) =>
-    if select d, '~'
-      switch d.key
-        when '~datamill-break-phase-and-repeat'
-          S.control.push d
-        else
-          throw new Error "µ98401 unknown system key #{rpr d.key}"
-    else
-      send d
-  #.........................................................................................................
+  debug 'µ44455', jr ( k for k of S )
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
-  # pipeline.push PD.mark_position $ ( pd, send ) =>
-  #   { is_first
-  #     is_last
-  #     d       } = pd
-  #   if @_is_reprising S
-  #     urge 'µ11231', is_first, is_last, jr d
-  #   send d
   pipeline.push transform
-  pipeline.push $capture_control_messages S
-  pipeline.push H.$feed_db                S
+  pipeline.push H.$feed_db S
   pipeline.push PD.$drain => resolve()
-  PD.pull pipeline...
+  R = PD.pull pipeline...
   H.feed_source S, source
+  return null
 
 #-----------------------------------------------------------------------------------------------------------
-@new_datamill = ( mirage ) ->
-  R =
+@create_datamill = ( settings ) ->
+  mirage  = await MIRAGE.create settings
+  R       =
     mirage:       mirage
     control:
       active_phase: null
