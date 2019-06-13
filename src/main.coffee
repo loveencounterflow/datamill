@@ -116,8 +116,7 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@parse_document = ( mirage ) -> new Promise ( resolve, reject ) =>
-  S           = @new_datamill mirage
+@parse_document = ( S ) -> new Promise ( resolve, reject ) =>
   limit       = Infinity
   phase_names = [
     './000-initialize'
@@ -203,15 +202,15 @@ unless module.parent?
       default_dest: 'main'
       clear:        true
     help "using database at #{settings.db_path}"
-    mirage  = await MIRAGE.create settings
-    await @parse_document mirage
-    await @RENDER_AS_HTML.render mirage
+    datamill = await @create_datamill settings
+    await @parse_document         datamill
+    await @RENDER_AS_HTML.render  datamill
     #.......................................................................................................
-    db              = mirage.db
-    first_vnr_blob  = db.$.as_hollerith [ 42, 0, ]
-    last_vnr_blob   = db.$.as_hollerith [ 42, 0, ]
-    for row from db.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
-      info jr H.datom_from_row null, row
+    # db              = datamill.mirage.db
+    # first_vnr_blob  = db.$.as_hollerith [ 42, 0, ]
+    # last_vnr_blob   = db.$.as_hollerith [ 42, 0, ]
+    # for row from db.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
+    #   info jr H.datom_from_row null, row
       # { prv_dest, dest, stamped, key, } = row
       # info jr { prv_dest, dest, stamped, key, }
     #.......................................................................................................
