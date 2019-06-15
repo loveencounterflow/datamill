@@ -63,7 +63,7 @@ DM                        = require '..'
 @$p = ( S ) ->
   return PD.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
-    return null unless select d, '^mktscript'
+    return send d unless select d, '^mktscript'
     text = d.text
     if select prv, '<p'
       text  = "<p>#{text}"
