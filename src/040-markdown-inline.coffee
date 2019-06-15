@@ -53,6 +53,7 @@ TIMETUNNEL                = require 'timetunnel'
   # tnl.add_tunnel TIMETUNNEL.tunnels.remove_backslash
   # tnl.add_tunnel TIMETUNNEL.tunnels.keep_backslash
   tnl.add_tunnel TIMETUNNEL.tunnels.htmlish
+  H.register_key S, '^mktscript', { is_block: false, }
   #.........................................................................................................
   return $ ( d, send ) =>
     return send d unless ( select d, '^line' )
