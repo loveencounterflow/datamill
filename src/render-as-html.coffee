@@ -48,13 +48,14 @@ H                         = require './helpers'
   project_abspath }       = H
 #...........................................................................................................
 DM                        = require '..'
+realm                     = 'html'
 
 #-----------------------------------------------------------------------------------------------------------
 @$decorations = ( S ) -> $ { first, last, }, ( d, send ) =>
   if d is first
-    send H.fresh_datom '^html', { text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
+    send H.fresh_datom '^html', { realm, text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
   if d is last
-    send H.fresh_datom '^html', { text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
+    send H.fresh_datom '^html', { realm, text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
   else
     send d
   return null
@@ -70,7 +71,7 @@ DM                        = require '..'
     if select nxt, '>p'
       text  = "#{text}</p>"
     $vnr = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
+    send H.fresh_datom '^html', { realm, text: text, ref: 'rdh/p', $vnr, }
     send d
     return null
 
@@ -90,7 +91,7 @@ DM                        = require '..'
   $vnr = VNR.deepen d.$vnr
   for _ in [ 1 .. ( d.linecount ? 0 ) ] by +1
     $vnr = VNR.advance $vnr
-    send H.fresh_datom '^html', { text: '', ref: 'rdh/mkts-1', $vnr, }
+    send H.fresh_datom '^html', { realm, text: '', ref: 'rdh/mkts-1', $vnr, }
   send d
 
 
@@ -98,7 +99,8 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 @render = ( S ) -> new Promise ( resolve, reject ) =>
-  H.register_key S, '^html', { is_block: false, }
+  H.register_key    S, '^html', { is_block: false, }
+  H.register_realm  S, realm
   pipeline = []
   # pipeline.push @$line      S
   # pipeline.push @$decorations S

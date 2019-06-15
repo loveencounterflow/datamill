@@ -154,6 +154,13 @@ DM                        = require '..'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
+@register_realm = ( S, realm ) =>
+  S.mirage.dbw.register_realm { realm }
+  return null
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
 @datom_from_row = ( S, row ) =>
   vnr         = row.vnr
   $vnr        = JSON.parse vnr
@@ -161,18 +168,20 @@ DM                        = require '..'
   R           = PD.thaw PD.new_datom row.key, { $vnr, }
   R.dest      = row.dest
   R.ref       = row.ref
+  R.realm     = row.realm
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
   R[ k ]      = p[ k ] for k of p when p[ k ]?
   return PD.freeze R
 
 #-----------------------------------------------------------------------------------------------------------
-@p_from_datom = ( S, d ) =>
+@_properties_from_datom = ( S, d ) =>
   R     = {}
   count = 0
   for k, v of d
     continue if k is 'key'
     continue if k is 'text'
+    continue if k is 'realm'
     continue if k is 'dest'
     continue if k is 'ref'
     continue if k.startsWith '$'
@@ -190,8 +199,9 @@ DM                        = require '..'
   dest      = d.dest      ? S.mirage.default_dest
   text      = d.text      ? null
   ref       = d.ref       ? null
-  p         = @p_from_datom S, d
-  R         = { key, vnr, dest, text, p, stamped, ref, }
+  realm     = d.realm     ? S.mirage.default_realm
+  p         = @_properties_from_datom S, d
+  R         = { key, realm, vnr, dest, text, p, stamped, ref, }
   # R         = { key, vnr, vnr_blob, dest, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R
@@ -239,6 +249,7 @@ DM                        = require '..'
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
         affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        methods.push 'update dirty'
         { changes, } = dbw.update row
         if changes is 0
           methods.push 'insert dirty'
@@ -284,6 +295,14 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @show_overview = ( S, settings ) =>
+  dbr           = S.mirage.dbr
+  for realm in dbr.$.all_first_values dbr.read_realm_registry()
+    info 'µ13221', "Realm #{rpr realm}"
+    @_show_overview S, settings, realm
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+@_show_overview = ( S, settings, realm ) =>
   ### TAINT consider to convert row to datom before display ###
   line_width    = @get_tty_width S
   dbr           = S.mirage.db
@@ -298,7 +317,7 @@ DM                        = require '..'
     hilite:     null
   settings = assign {}, defaults, settings
   #.........................................................................................................
-  for row from dbr.read_lines() # { limit: 30, }
+  for row from dbr.read_lines { realm, } # { limit: 30, }
     if settings.raw
       info @format_object row
       continue
@@ -326,6 +345,8 @@ DM                        = require '..'
     #.......................................................................................................
     stamp   = if row.stamped then '*' else ''
     key     = to_width row.key,         15
+    sid     = to_width "#{row.sid}",    2
+    realm   = to_width row.realm,       6
     vnr     = to_width stamp + row.vnr, 12
     dest    = to_width row.dest,        4
     ref     = to_width row.ref ? '',    9
@@ -338,7 +359,7 @@ DM                        = require '..'
     combi.push p    if p?
     value   = combi.join ' / '
     # value   = value[ .. 80 ]
-    line    = "#{vnr}│#{dest}│#{ref}│#{key}│#{value}"
+    line    = "#{sid}#{realm}#{vnr}│#{dest}│#{ref}│#{key}│#{value}"
     line    = to_width line, line_width
     dent    = '  '.repeat level
     level   = switch row.key[ 0 ]
@@ -363,7 +384,7 @@ DM                        = require '..'
         color = ( P... ) -> CND.reverse _color P...
     #.......................................................................................................
     ### TAINT experimental, needs better implementation ###
-    xxxxx = 44
+    xxxxx = 52
     if row.stamped
       echo ( color line[ ... xxxxx ] ) + CND.grey line[ xxxxx .. ]
     else if line[ xxxxx ] is '"'

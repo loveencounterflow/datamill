@@ -195,15 +195,16 @@ unless module.parent?
   do =>
     #.......................................................................................................
     settings =
-      # file_path:    project_abspath './src/tests/demo.md'
-      file_path:    project_abspath './src/tests/demo-medium.md'
-      # file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
-      # db_path:      ':memory:'
-      db_path:      project_abspath './db/datamill.db'
-      icql_path:    project_abspath './db/datamill.icql'
-      default_key:  '^line'
-      default_dest: 'main'
-      clear:        true
+      # file_path:      project_abspath './src/tests/demo.md'
+      # file_path:      project_abspath './src/tests/demo-medium.md'
+      file_path:      project_abspath './src/tests/demo-simple-paragraphs.md'
+      # db_path:        ':memory:'
+      db_path:        project_abspath './db/datamill.db'
+      icql_path:      project_abspath './db/datamill.icql'
+      default_key:    '^line'
+      default_dest:   'main'
+      default_realm:  'input'
+      clear:          true
     help "using database at #{settings.db_path}"
     datamill = await @create_datamill settings
     await @parse_document         datamill

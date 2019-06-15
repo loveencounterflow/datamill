@@ -1,28 +1,44 @@
 
 -- ---------------------------------------------------------------------------------------------------------
-fragment create_table_main_first( default_dest, default_key ):
-  pragma foreign_keys = OFF;
+fragment create_table_main_first( path, default_dest, default_key, default_realm ):
+  pragma foreign_keys = off;
   drop table if exists main;
   drop table if exists keys;
-  pragma foreign_keys = ON;
+  drop table if exists realms;
+  drop table if exists sources;
+  pragma foreign_keys = on;
+  -- .......................................................................................................
+  create table sources (
+    id              integer not null unique primary key, /* alias for system rowid */
+    path            text    not null );
+  insert into sources ( id,  path )
+    values            (  1, $path );
+  -- .......................................................................................................
+  create table realms (
+    realm           text    not null unique primary key );
+  insert into realms  (          realm )
+    values            ( $default_realm );
   -- .......................................................................................................
   create table keys (
     key             text    not null unique primary key,
     is_block        boolean not null default false,
     has_paragraphs  boolean not null default false
     check ( not ( ( not is_block ) and has_paragraphs ) ) );
-  insert into keys ( key, is_block ) values
-    ( $default_key, false );
+  insert into keys  (          key, is_block )
+    values          ( $default_key,    false );
   -- .......................................................................................................
   create table main (
-    vnr       json    unique not null primary key,
+    vnr       json    unique not null,
     stamped   boolean not null default false,
     dest      text    not null default $default_dest,
+    sid       integer not null default 1 references sources ( id ),
+    realm     text    not null default $default_realm references realms ( realm ),
     ref       text    default 'mirage',
     key       text    not null default $default_key references keys ( key ),
     text      text,
     p         json    default 'null',
-    vnr_blob  blob    unique not null );
+    vnr_blob  blob    unique not null,
+    primary key ( realm, vnr_blob ) );
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
   ( $vnr, json_as_hollerith( $vnr ), $text )
@@ -40,6 +56,14 @@ query read_lines():
   select
       *
     from main
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_lines( realm ):
+  select
+      *
+    from main
+    where ( realm = $realm )
     order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
@@ -73,23 +97,16 @@ query get_stats():
     select null, null where false;
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure _insert( key, vnr, vnr_blob, dest, text, p, stamped, ref ):
+procedure _insert( realm, key, vnr, vnr_blob, dest, text, ref, p, stamped ):
   insert into
-    main    (  key,  vnr,  vnr_blob,  dest,  text,  p,  stamped,  ref )
-    values  ( $key, $vnr, $vnr_blob, $dest, $text, $p, $stamped, $ref );
+    main    (  realm,  key,  vnr,  vnr_blob,  dest,  text,  ref,  p,  stamped )
+    values  ( $realm, $key, $vnr, $vnr_blob, $dest, $text, $ref, $p, $stamped );
 
 -- ---------------------------------------------------------------------------------------------------------
-procedure _update( key, vnr, vnr_blob, dest, text, p, stamped, ref ):
+procedure _update( realm, key, vnr, vnr_blob, dest, text, ref, p, stamped ):
   update main
-    set (  key,  vnr,  vnr_blob,  dest,   text,  p,  stamped,  ref ) =
-        ( $key, $vnr, $vnr_blob, $dest,  $text, $p, $stamped, $ref )
-    where vnr = $vnr;
-
--- ---------------------------------------------------------------------------------------------------------
-procedure _update( vnr ):
-  update main
-    set (  vnr,  vnr_blob ) =
-        ( $vnr, $vnr_blob )
+    set (  realm,  key,  vnr,  vnr_blob,  dest,   text,  ref,  p,  stamped ) =
+        ( $realm, $key, $vnr, $vnr_blob, $dest,  $text, $ref, $p, $stamped )
     where vnr = $vnr;
 
 -- ---------------------------------------------------------------------------------------------------------
@@ -225,6 +242,27 @@ procedure create_view_rows_mktscript_and_block_tags():
     where true
       and ( k.is_block or m.key = '^mktscript' )
     order by m.vnr_blob;
+
+
+-- =========================================================================================================
+-- REALM REGISTRY
+-- ---------------------------------------------------------------------------------------------------------
+procedure register_realm( realm ):
+  insert into realms ( realm ) values ( $realm );
+
+-- ---------------------------------------------------------------------------------------------------------
+query get_realm_entry( realm ):
+  select
+      realm
+    from realms
+    where realm = $realm;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_realm_registry():
+  select
+      realm
+    from realms;
+
 
 -- =========================================================================================================
 -- KEY REGISTRY
