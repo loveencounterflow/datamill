@@ -289,8 +289,9 @@ DM                        = require '..'
   dbr           = S.mirage.db
   level         = 0
   omit_count    = 0
-  show_stamped  = false
-  show_blanks   = false
+  show_stamped  = true
+  show_blanks   = true
+  xxx_deemphasize_closing_tags = false
   #.........................................................................................................
   defaults =
     raw:        false
@@ -318,9 +319,9 @@ DM                        = require '..'
       when '~notice'          then  _color  = CND.cyan
       when '^literal'         then  _color  = CND.GREEN
       when '^literal-blank'   then  _color  = CND.GREEN
-      when '^p'               then  _color  = CND.BLUE
       when '<h'               then  _color  = CND.VIOLET
       when '>h'               then  _color  = CND.VIOLET
+      when '^html'            then  _color  = CND.BLUE
       else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
     stamp   = if row.stamped then '*' else ''
@@ -353,8 +354,11 @@ DM                        = require '..'
     else if row.key is '^blank'
       color = CND.yellow
     else
-      if row.key[ 0 ] is '>'
-        color = ( P... ) -> _color P...
+      if xxx_deemphasize_closing_tags
+        if row.key[ 0 ] is '>'
+          color = ( P... ) -> _color P...
+        else
+          color = ( P... ) -> CND.reverse _color P...
       else
         color = ( P... ) -> CND.reverse _color P...
     #.......................................................................................................

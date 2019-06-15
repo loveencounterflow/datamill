@@ -138,7 +138,11 @@ H                         = require './helpers'
   #.........................................................................................................
   msg_2 = ( phase_name ) ->
     nrs_txt = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
-    info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}; continuing without limits"
+    info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}"
+    info()
+  #.........................................................................................................
+  msg_2a = ( phase_name ) ->
+    info 'µ22872', CND.blue "continuing without limits"
     info()
   #.........................................................................................................
   msg_3 = ( message ) ->
@@ -167,6 +171,7 @@ H                         = require './helpers'
         #...................................................................................................
         if @_next_control_message_is_from S, phase_name
           throw @_pluck_next_control_message S
+        # msg_2a() unless @_control_queue_has_messages S
         #...................................................................................................
         if H.repeat_phase S, phase
           throw new Error "µ33443 phase repeating not implemented (#{rpr phase_name})"
@@ -180,8 +185,6 @@ H                         = require './helpers'
       continue
     break
   #.........................................................................................................
-  # H.show_overview S, { hilite: '^blank', }
-  H.show_overview S
   resolve()
   #.........................................................................................................
   return null
@@ -193,8 +196,8 @@ unless module.parent?
     #.......................................................................................................
     settings =
       # file_path:    project_abspath './src/tests/demo.md'
-      # file_path:    project_abspath './src/tests/demo-medium.md'
-      file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
+      file_path:    project_abspath './src/tests/demo-medium.md'
+      # file_path:    project_abspath './src/tests/demo-simple-paragraphs.md'
       # db_path:      ':memory:'
       db_path:      project_abspath './db/datamill.db'
       icql_path:    project_abspath './db/datamill.icql'
@@ -205,11 +208,19 @@ unless module.parent?
     datamill = await @create_datamill settings
     await @parse_document         datamill
     await @RENDER_AS_HTML.render  datamill
+    await H.show_overview datamill
     #.......................................................................................................
-    # db              = datamill.mirage.db
-    # first_vnr_blob  = db.$.as_hollerith [ 42, 0, ]
-    # last_vnr_blob   = db.$.as_hollerith [ 42, 0, ]
-    # for row from db.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
+    { to_width
+      width_of }              = require 'to-width'
+    db                        = datamill.mirage.db
+    for row from db.$.query "select * from main where key = '^html' order by vnr_blob;"
+      d       = H.datom_from_row datamill, row
+      { text
+        $vnr } = d
+      lnr = $vnr[ 0 ]
+      # echo text, "<!-- #{lnr} -->"
+      echo ( CND.yellow to_width text, 100 ) + ( CND.grey lnr )
+    #.......................................................................................................
     #   info jr H.datom_from_row null, row
       # { prv_dest, dest, stamped, key, } = row
       # info jr { prv_dest, dest, stamped, key, }
