@@ -10,8 +10,8 @@
     "icql": "^3.2.0",
     "intertype": "^2.5.0",
     "markdown-it": "^8.4.2",
-    "mkts-mirage": "^3.3.3",
-    "pipedreams": "^8.7.0",
+    "mkts-mirage": "^3.4.0",
+    "pipedreams": "^8.8.0",
     "timetunnel": "^1.0.1",
     "to-width": "^1.0.3"
   },
