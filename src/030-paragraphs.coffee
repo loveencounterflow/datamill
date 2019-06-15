@@ -61,13 +61,16 @@ types                     = require './types'
   return $ ( d, send ) =>
     #.......................................................................................................
     if select d, '^blank'
-      send d
       if within_p
+        send stamp d
         ref           = 'pco/p1'
         dest          = d.dest
         $vnr          = VNR.deepen d.$vnr, 0
-        send H.fresh_datom '>p', { $vnr, dest, ref, }
+        send PD.set d, { $vnr, dest, ref, $fresh: true, }
+        send H.fresh_datom '>p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
         within_p      = false
+      else
+        send d
       prv_was_blank = true
     #.......................................................................................................
     else if select d, '^line'
