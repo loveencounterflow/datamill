@@ -219,7 +219,7 @@ unless module.parent?
         $vnr } = d
       lnr = $vnr[ 0 ]
       # echo text, "<!-- #{lnr} -->"
-      echo ( CND.yellow to_width text, 100 ) + ( CND.grey lnr )
+      echo ( CND.reverse CND.BLUE to_width text, 100 ) + ( CND.grey lnr )
     #.......................................................................................................
     #   info jr H.datom_from_row null, row
       # { prv_dest, dest, stamped, key, } = row
