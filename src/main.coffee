@@ -71,7 +71,7 @@ H                         = require './helpers'
 @_create_udfs = ( mirage ) ->
   db = mirage.db
   ### Placeholder function re-defined by `H.copy_realms()`: ###
-  db.$.function 'datamill_copy_realms_select', { deterministic: false, varargs: false }, ( row ) -> true
+  db.$.function 'datamill_copy_realm_select', { deterministic: false, varargs: false }, ( row ) -> true
   return null
 
 #-----------------------------------------------------------------------------------------------------------

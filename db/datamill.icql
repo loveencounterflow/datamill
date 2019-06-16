@@ -296,7 +296,7 @@ procedure copy_realms( from_realm, to_realm ):
       and ( not stamped )
       and ( realm = $from_realm )
       -- ### TAINT find a way to use fewer positional arguments ###
-      and ( datamill_copy_realms_select( rowid, vnr, dest, sid, realm, ref, key, text, p ) );
+      and ( datamill_copy_realm_select( rowid, vnr, dest, sid, realm, ref, key, text, p ) );
   -- .......................................................................................................
   update datamill_copy_realms set ( realm ) = ( $to_realm );
   -- .......................................................................................................

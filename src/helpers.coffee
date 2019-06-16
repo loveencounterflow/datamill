@@ -175,7 +175,7 @@ DM                        = require '..'
   else
     select_row = ( rowid, vnr, dest, sid, realm, ref, key, text, p ) => 1
   #.........................................................................................................
-  dbw.$.function 'datamill_copy_realms_select', { deterministic: false, varargs: false, }, select_row
+  dbw.$.function 'datamill_copy_realm_select', { deterministic: false, varargs: false, }, select_row
   dbw.copy_realms { from_realm, to_realm, }
   return null
 
