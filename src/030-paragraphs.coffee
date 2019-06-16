@@ -76,24 +76,68 @@ types                     = require './types'
         send d
       prv_was_blank = false
     #.......................................................................................................
-    send d
+    else
+      send d
+    #.......................................................................................................
+    return null
 
-# #-----------------------------------------------------------------------------------------------------------
-# @$experiment = ( S ) ->
-#   H.register_key S, '^x', { is_block: false, }
-#   #.........................................................................................................
-#   return $ { last, }, ( d, send ) =>
-#     return send d unless d is last
-#     send H.fresh_datom '^x', { $vnr: [ 10, -1, ], dest: 'xxx', }
-#     send H.fresh_datom '^x', { $vnr: [ 10,  0, ], dest: 'xxx', }
-#     return null
+#-----------------------------------------------------------------------------------------------------------
+@$assemble_paragraphs = ( S ) ->
+  collector       = []
+  within_p        = false
+  send            = null
+  leapfrogger     = ( d ) -> PD.is_stamped d
+  last_vnr        = null
+  H.register_key S, '^hunk', { is_block: false, }
+  #.........................................................................................................
+  collect = ( d ) ->
+    collector ?= []
+    collector.push d
+    send stamp d
+    return null
+  #.........................................................................................................
+  flush = ( d ) ->
+    collect d
+    text      = ( x.text for x in collector ).join '\n'
+    collector = null
+    $vnr      = VNR.deepen d.$vnr
+    send H.fresh_datom '^hunk', { text, $vnr, ref: 'pco/asp', }
+    within_p  = false
+    return null
+  #.........................................................................................................
+  return PD.leapfrog leapfrogger, PD.lookaround $ ( d3, send_ ) =>
+    send              = send_
+    [ prv, d, nxt, ]  = d3
+    return send d unless select d, '^line'
+    #.......................................................................................................
+    if ( select prv, '<p' ) and ( ( select nxt, '>p' ) or ( select nxt, '^blank' ) )
+      flush d
+    #.......................................................................................................
+    else if ( select prv, '<p' )
+      within_p  = true
+      collect d
+    #.......................................................................................................
+    else if ( select nxt, '>p' ) or ( select nxt, '^blank' )
+      flush d
+    #.......................................................................................................
+    else if ( select d, '^line' ) and within_p
+      collect d
+    #.......................................................................................................
+    else
+      send d
+    #.......................................................................................................
+    return null
+
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$paragraphs  S
+  pipeline.push @$paragraphs          S
+  # pipeline.push $watch ( d ) -> info 'µ99872', ( CND.truth PD.is_stamped d ), ( CND.white d.key ), ( CND.blue jr d )
+  # pipeline.push PD.leapfrog ( ( d ) -> PD.is_stamped d ), $watch ( d ) -> info d.$vnr, d.key, d.text
+  pipeline.push @$assemble_paragraphs S
   # pipeline.push @$experiment  S
   return PD.pull pipeline...
 
