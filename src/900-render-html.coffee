@@ -76,22 +76,12 @@ DM                        = require '..'
     send stamp d
     return null
 
-# #-----------------------------------------------------------------------------------------------------------
-# @$mktscript = ( S ) -> $ ( d, send ) =>
-#   if select d, '^mktscript'
-#     $vnr = VNR.deepen d.$vnr
-#     send H.fresh_datom '^html', { text: d.text, ref: 'rdh/mkts-1', $vnr, }
-#     send d
-#   else
-#     send d
-#   return null
-
 #-----------------------------------------------------------------------------------------------------------
 @$blank = ( S ) -> $ ( d, send ) =>
   return send d unless select d, '^blank'
   $vnr = VNR.deepen d.$vnr
-  if linecount = d.linecount ? 0
-    text = '\n'.repeat linecount
+  if ( linecount = d.linecount ? 0 ) > 0
+    text = '\n'.repeat linecount - 1
     send H.fresh_datom '^html', { text, ref: 'rdh/mkts-1', $vnr, }
   send stamp d
 
