@@ -129,6 +129,16 @@ query read_unstamped_lines():
     order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
+query read_unstamped_lines( realm ):
+  select
+      *
+    from main
+    where true
+      and ( not stamped )
+      and ( realm = $realm )
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
 query read_unstamped_lines( start_vnr_blob, stop_vnr_blob ):
   select
       *
@@ -155,6 +165,17 @@ query read_unstamped_lines( first_vnr_blob, last_vnr_blob ):
     from main
     where true
       and ( not stamped )
+      and ( $first_vnr_blob <= vnr_blob ) and ( vnr_blob <= $last_vnr_blob )
+    order by vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+query read_unstamped_lines( realm, first_vnr_blob, last_vnr_blob ):
+  select
+      *
+    from main
+    where true
+      and ( not stamped )
+      and ( realm = $realm, )
       and ( $first_vnr_blob <= vnr_blob ) and ( vnr_blob <= $last_vnr_blob )
     order by vnr_blob;
 
@@ -264,6 +285,28 @@ query read_realm_registry():
   select
       realm
     from realms;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure copy_realms( from_realm, to_realm ):
+  -- .......................................................................................................
+  create temporary table datamill_copy_realms as select
+      *
+    from main as m
+    where true
+      and ( not stamped )
+      and ( realm = $from_realm )
+      -- ### TAINT find a way to use fewer positional arguments ###
+      and ( datamill_copy_realms_select( rowid, vnr, dest, sid, realm, ref, key, text, p ) );
+  -- .......................................................................................................
+  update datamill_copy_realms set ( realm ) = ( $to_realm );
+  -- .......................................................................................................
+  insert into main
+    ( vnr, stamped, dest, sid, realm, ref, key, text, p, vnr_blob )
+   select
+      vnr, stamped, dest, sid, realm, ref, key, text, p, vnr_blob
+   from datamill_copy_realms;
+  -- .......................................................................................................
+  drop table datamill_copy_realms;
 
 
 -- =========================================================================================================
