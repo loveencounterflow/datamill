@@ -36,73 +36,64 @@ types                     = require './types'
   type_of }               = types
 
 #-----------------------------------------------------------------------------------------------------------
-@mark_preamble = ( S ) ->
-  ### TAINT code duplication ###
-  key         = '^line'
-  pattern     = '<start/>'
-  dest        = 'preamble'
-  dbr         = S.mirage.dbr
-  dbw         = S.mirage.dbw
-  rows        = dbr.$.all_rows dbr.find_eq_pattern { key, pattern, }
-  first_lnr   = null
-  last_lnr    = null
-  switch size = size_of rows
-    when 0
-      null
-      # warn "no document preamble found"
-    when 1
-      row             = rows[ 0 ]
-      d               = H.datom_from_row S, row
-      first_lnr       = 1
-      start_lnr       = d.$vnr[ 0 ]
-      last_lnr        = start_lnr - 1
-      first_vnr_blob  = dbw.$.as_hollerith [ first_lnr ]
-      start_vnr_blob  = dbw.$.as_hollerith [ start_lnr ]
-      last_vnr_blob   = dbw.$.as_hollerith [ last_lnr  ]
-      dbw.set_dest { dest, first_vnr_blob, last_vnr_blob, }
-      dbw.stamp { vnr_blob: start_vnr_blob, }
-      help "document preamble found on lines 1 thru #{last_lnr}"
-    else
-      delete row.vnr_blob for row in rows
-      rows_txt = jr rows
-      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed (#{rows_txt})"
+@ignore_rows = ( S, first_lnr, last_lnr = null ) ->
+  dbw             = S.mirage.dbw
+  first_vnr_blob  = dbw.$.as_hollerith [ first_lnr ]
+  last_vnr_blob   = dbw.$.as_hollerith [ last_lnr  ]
+  if last_lnr?
+    dbw.set_dest    { first_vnr_blob, last_vnr_blob, dest: 'ignore', }
+    dbw.set_ref     { first_vnr_blob, last_vnr_blob, ref:  'stop', }
+    dbw.stamp       { first_vnr_blob, last_vnr_blob, }
+  else
+    dbw.set_dest    { first_vnr_blob, dest: 'ignore', }
+    dbw.set_ref     { first_vnr_blob, ref:  'stop', }
+    dbw.stamp       { first_vnr_blob, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@mark_postscript = ( S ) ->
-  ### TAINT code duplication ###
+@_get_lnr = ( row ) -> ( JSON.parse row.vnr )[ 0 ]
+
+#-----------------------------------------------------------------------------------------------------------
+@mark_start = ( S ) ->
+  key         = '^line'
+  pattern     = '<start/>'
+  dbr         = S.mirage.dbr
+  rows        = dbr.$.all_rows dbr.find_eq_pattern { key, pattern, }
+  switch size = size_of rows
+    when 0 then null
+    when 1
+      lnr = @_get_lnr rows[ 0 ]
+      @ignore_rows S, 1, lnr
+      info "µ33421 document start found on line #{lnr}"
+    else
+      lnrs = ( ( @_get_lnr row ) for row in rows ).join ', '
+      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one allowed (lines #{lnrs})"
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+@mark_stop = ( S ) ->
   key         = '^line'
   pattern     = '<stop/>'
   dbr         = S.mirage.dbr
-  dbw         = S.mirage.dbw
   rows        = dbr.$.all_rows dbr.find_eq_pattern { key, pattern, }
-  first_lnr   = null
-  last_lnr    = null
   switch size = size_of rows
-    when 0
-      null
-      # warn "no document terminator found"
-      ### TAINT consider to store these values in DB ###
+    when 0 then null
     when 1
-      row           = rows[ 0 ]
-      d             = H.datom_from_row S, row
-      first_lnr     = d.$vnr[ 0 ]
-      ### TAINT can just ignore all <stop/> tags after first ###
-      last_lnr      = dbr.$.first_value dbr.count_lines()
-      first_vnr_blob = dbw.$.as_hollerith [ first_lnr ]
-      last_vnr_blob  = dbw.$.as_hollerith [ last_lnr ]
-      dbw.stamp { first_vnr_blob, last_vnr_blob, }
-      help "document postscript found on lines #{first_lnr} thru #{last_lnr}"
+      lnr = @_get_lnr rows[ 0 ]
+      @ignore_rows S, lnr
+      info "µ33421 document stop found on line #{lnr}"
     else
-      delete row.vnr_blob for row in rows
-      rows_txt = jr rows
-      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one are allowed (#{rows_txt})"
+      lnrs = ( ( @_get_lnr row ) for row in rows ).join ', '
+      throw new Error "µ22231 found #{size} #{pattern} tags, only up to one allowed (lines #{lnrs})"
   return null
 
 #-----------------------------------------------------------------------------------------------------------
 ### NOTE pseudo-transforms that run before first datom is sent ###
-@$start = ( S ) -> $watch { first, }, ( d ) => @mark_preamble   S if d is first
-@$stop  = ( S ) -> $watch { first, }, ( d ) => @mark_postscript S if d is first
+@$mark_start_and_stop = ( S ) -> $watch { first, }, ( d ) =>
+  return null unless d is first
+  @mark_start S
+  @mark_stop  S
+  return null
 
 
 #===========================================================================================================
@@ -110,7 +101,6 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$start   S
-  pipeline.push @$stop    S
+  pipeline.push @$mark_start_and_stop   S
   return PD.pull pipeline...
 
