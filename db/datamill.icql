@@ -28,7 +28,7 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
     values          ( $default_key,    false );
   -- .......................................................................................................
   create table main (
-    vnr       json    unique not null,
+    vnr       json    not null,
     stamped   boolean not null default false,
     dest      text    not null default $default_dest,
     sid       integer not null default 1 references sources ( id ),
@@ -37,7 +37,7 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
     key       text    not null default $default_key references keys ( key ),
     text      text,
     p         json    default 'null',
-    vnr_blob  blob    unique not null,
+    vnr_blob  blob    not null,
     primary key ( realm, vnr_blob ) );
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
