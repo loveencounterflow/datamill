@@ -217,20 +217,24 @@ unless module.parent?
       clear:          true
     help "using database at #{settings.db_path}"
     datamill = await @create_datamill settings
-    await @parse_document         datamill
-    await @RENDER_AS_HTML.render  datamill
-    await H.show_overview datamill
+    await @parse_document   datamill
+    await H.show_overview   datamill
     #.......................................................................................................
     { to_width
       width_of }              = require 'to-width'
     db                        = datamill.mirage.db
     for row from db.$.query "select * from main where key = '^html' order by vnr_blob;"
-      d       = H.datom_from_row datamill, row
+      d         = H.datom_from_row datamill, row
       { text
-        $vnr } = d
-      lnr = $vnr[ 0 ]
-      # echo text, "<!-- #{lnr} -->"
-      echo ( CND.reverse CND.BLUE to_width text, 100 ) + ( CND.grey lnr )
+        $vnr }  = d
+      lnr       = $vnr[ 0 ]
+      lines     = text.split '\n'
+      last_idx  = lines.length - 1
+      for line, idx in lines
+        if idx is last_idx
+          echo ( CND.reverse CND.BLUE to_width line, 100 ) + ( CND.grey lnr )
+        else
+          echo ( CND.reverse CND.BLUE to_width line, 100 )
     #.......................................................................................................
     #   info jr H.datom_from_row null, row
       # { prv_dest, dest, stamped, key, } = row
