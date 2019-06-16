@@ -427,3 +427,21 @@ _color_cache = {}
   _color_cache[ text ] = R
   return R
 
+#-----------------------------------------------------------------------------------------------------------
+@show_html = ( datamill ) ->
+  #.......................................................................................................
+  { to_width
+    width_of }              = require 'to-width'
+  db                        = datamill.mirage.db
+  for row from db.$.query "select * from main where key = '^html' order by vnr_blob;"
+    d         = @datom_from_row datamill, row
+    { text
+      $vnr }  = d
+    lnr       = $vnr[ 0 ]
+    lines     = text.split '\n'
+    last_idx  = lines.length - 1
+    for line, idx in lines
+      if idx is last_idx
+        echo ( CND.reverse CND.BLUE to_width line, 100 ) + ( CND.grey lnr )
+      else
+        echo ( CND.reverse CND.BLUE to_width line, 100 )
