@@ -56,7 +56,7 @@ TIMETUNNEL                = require 'timetunnel'
   H.register_key S, '^mktscript', { is_block: false, }
   #.........................................................................................................
   return $ ( d, send ) =>
-    return send d unless ( select d, '^line' )
+    return send d unless ( select d, '^hunk' )
     #.......................................................................................................
     original_text = d.text
     tunneled_text = tnl.hide original_text
