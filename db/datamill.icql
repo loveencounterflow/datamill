@@ -107,7 +107,9 @@ procedure _update( realm, key, vnr, vnr_blob, dest, text, ref, p, stamped ):
   update main
     set (  realm,  key,  vnr,  vnr_blob,  dest,   text,  ref,  p,  stamped ) =
         ( $realm, $key, $vnr, $vnr_blob, $dest,  $text, $ref, $p, $stamped )
-    where vnr = $vnr;
+    where true
+      and ( realm = $realm  )
+      and ( vnr   = $vnr    );
 
 -- ---------------------------------------------------------------------------------------------------------
 procedure stamp( vnr_blob ):
