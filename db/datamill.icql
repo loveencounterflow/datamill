@@ -124,6 +124,11 @@ procedure stamp( first_vnr_blob, last_vnr_blob ):
     where vnr_blob between $first_vnr_blob and $last_vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
+procedure stamp( first_vnr_blob ):
+  update main set stamped = 1
+    where vnr_blob >= $first_vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
 query read_unstamped_lines():
   select
       *
@@ -186,6 +191,21 @@ query read_unstamped_lines( realm, first_vnr_blob, last_vnr_blob ):
 procedure set_dest( dest, first_vnr_blob, last_vnr_blob ):
   update main set ( dest ) = ( $dest )
     where vnr_blob between $first_vnr_blob and $last_vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure set_dest( dest, first_vnr_blob ):
+  update main set ( dest ) = ( $dest )
+    where vnr_blob >= $first_vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure set_ref( ref, first_vnr_blob, last_vnr_blob ):
+  update main set ( ref ) = ( $ref )
+    where vnr_blob between $first_vnr_blob and $last_vnr_blob;
+
+-- ---------------------------------------------------------------------------------------------------------
+procedure set_ref( ref, first_vnr_blob ):
+  update main set ( ref ) = ( $ref )
+    where vnr_blob >= $first_vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
 query datom_from_vnr( vnr ):
