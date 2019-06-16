@@ -24,7 +24,6 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
 VNR                       = require './vnr'
-@RENDER_AS_HTML           = require './render-as-html'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -129,7 +128,8 @@ H                         = require './helpers'
     './040-markdown-inline'
     # # './030-escapes'
     # # './035-special-forms'
-    # './xxx-validation'
+    './xxx-validation'
+    './render-as-html'
     ]
   #.........................................................................................................
   msg_1 = ->
