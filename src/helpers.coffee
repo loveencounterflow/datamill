@@ -429,18 +429,27 @@ _color_cache = {}
 
 #-----------------------------------------------------------------------------------------------------------
 @show_html = ( datamill ) ->
-  db = datamill.mirage.db
+  line_width  = @get_tty_width null
+  db          = datamill.mirage.db
   for row from db.$.query "select * from main where key = '^html' order by vnr_blob;"
-    d         = @datom_from_row datamill, row
+    d             = @datom_from_row datamill, row
     { text
-      $vnr }  = d
-    lnr       = $vnr[ 0 ]
-    lines     = text.split '\n'
-    for line, idx in lines
-      if idx is 0
-        echo ( CND.reverse CND.BLUE to_width line, 100 ) + ( CND.grey lnr )
+      $vnr }      = d
+    lnr           = $vnr[ 0 ]
+    texts         = text.split '\n'
+    lnr_width     = 4
+    text_width    = line_width - lnr_width - 2
+    text_color    = ( P... ) -> CND.reverse CND.BLUE P...
+    lnr_color     = ( P... ) -> CND.reverse CND.grey P...
+    blank         = lnr_color ( ( '' ).padStart lnr_width ) + ' │'
+    #.......................................................................................................
+    for text, idx in texts
+      text_rpr = ( text_color ' ' + to_width text, text_width )
+      if ( idx is 0 ) and not ( text.match '^\s*$' )?
+        lnr_rpr = lnr_color ( ( "#{lnr}" ).padStart lnr_width ) + ' │'
+        echo "#{lnr_rpr}#{text_rpr}"
       else
-        echo ( CND.reverse CND.BLUE to_width line, 100 )
+        echo "#{blank}#{text_rpr}"
   #.........................................................................................................
   return null
 
