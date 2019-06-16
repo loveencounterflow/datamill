@@ -368,7 +368,7 @@ DM                        = require '..'
     realm   = to_width row.realm,       6
     vnr     = to_width stamp + row.vnr, 12
     dest    = to_width row.dest,        4
-    ref     = to_width row.ref ? '',    9
+    ref     = to_width row.ref ? '',    13
     text    = if row.text? then ( jr row.text ) else null
     p       = row.p ? null
     p       = null if ( p is 'null' )
@@ -403,7 +403,7 @@ DM                        = require '..'
         color = ( P... ) -> CND.reverse _color P...
     #.......................................................................................................
     ### TAINT experimental, needs better implementation ###
-    xxxxx = 52
+    xxxxx = 56
     if row.stamped
       echo ( color line[ ... xxxxx ] ) + CND.grey line[ xxxxx .. ]
     else if line[ xxxxx ] is '"'
