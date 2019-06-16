@@ -161,7 +161,7 @@ H                         = require './helpers'
         phase           = require phase_name
         pass            = 1
         msg_1()
-        await @run_phase S, phase.$transform S
+        await @run_phase S, ( phase.settings ? null ), ( phase.$transform S )
         #...................................................................................................
         if S.control.reprise.phase is phase_name
           ### Conclude reprise; continue with upcoming phase and entire document ###

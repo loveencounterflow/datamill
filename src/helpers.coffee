@@ -229,9 +229,8 @@ DM                        = require '..'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@feed_source = ( S, source, limit = Infinity ) =>
+@feed_source = ( S, source, from_realm ) =>
   dbr           = S.mirage.db
-  nr            = 0
   #.........................................................................................................
   if DM._is_reprising S
     validate.datamill_inclusive_region S.control.reprise
@@ -241,14 +240,12 @@ DM                        = require '..'
     ### TAINT do casting in DB module ###
     first_vnr_blob  = dbr.$.as_hollerith first_vnr
     last_vnr_blob   = dbr.$.as_hollerith last_vnr
-    rows            = dbr.read_unstamped_lines { first_vnr_blob, last_vnr_blob, }
+    rows            = dbr.read_unstamped_lines { realm: from_realm, first_vnr_blob, last_vnr_blob, }
   #.........................................................................................................
   else
-    rows            = dbr.read_unstamped_lines()
+    rows            = dbr.read_unstamped_lines { realm: from_realm, }
   #.........................................................................................................
   for row from rows
-    nr += +1
-    break if nr > limit
     source.send @datom_from_row S, row
   #.........................................................................................................
   source.end()
