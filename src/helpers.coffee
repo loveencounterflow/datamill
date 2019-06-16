@@ -436,9 +436,8 @@ _color_cache = {}
       $vnr }  = d
     lnr       = $vnr[ 0 ]
     lines     = text.split '\n'
-    last_idx  = lines.length - 1
     for line, idx in lines
-      if idx is last_idx
+      if idx is 0
         echo ( CND.reverse CND.BLUE to_width line, 100 ) + ( CND.grey lnr )
       else
         echo ( CND.reverse CND.BLUE to_width line, 100 )
