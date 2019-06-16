@@ -6,7 +6,8 @@ Die dortigen Sprachen sind *morphologisch einfacher*.
 
 
 
-Die Linguistin entdeckte **Parallelen** in anderen Weltregionen.
+Die Linguistin entdeckte **Parallelen** *in anderen
+Weltregionen*.
 
 So zum Beispiel in Südamerika, wo viele der schwierigsten Sprachen im
 Hochland der Anden beheimatet sind.
