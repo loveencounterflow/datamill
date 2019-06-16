@@ -87,7 +87,7 @@ types                     = require './types'
   within_p        = false
   send            = null
   leapfrogger     = ( d ) -> PD.is_stamped d
-  last_vnr        = null
+  first_vnr       = null
   H.register_key S, '^hunk', { is_block: false, }
   #.........................................................................................................
   collect = ( d ) ->
@@ -100,7 +100,7 @@ types                     = require './types'
     collect d
     text      = ( x.text for x in collector ).join '\n'
     collector = null
-    $vnr      = VNR.deepen d.$vnr
+    $vnr      = VNR.deepen first_vnr
     send H.fresh_datom '^hunk', { text, $vnr, ref: 'pco/asp', }
     within_p  = false
     return null
@@ -111,10 +111,12 @@ types                     = require './types'
     return send d unless select d, '^line'
     #.......................................................................................................
     if ( select prv, '<p' ) and ( ( select nxt, '>p' ) or ( select nxt, '^blank' ) )
+      first_vnr = d.$vnr
       flush d
     #.......................................................................................................
     else if ( select prv, '<p' )
       within_p  = true
+      first_vnr = d.$vnr
       collect d
     #.......................................................................................................
     else if ( select nxt, '>p' ) or ( select nxt, '^blank' )
