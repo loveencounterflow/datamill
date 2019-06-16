@@ -35,7 +35,7 @@ PD                        = require 'pipedreams'
 @types                    = require './types'
 { isa
   validate
-  declare
+  cast
   first_of
   last_of
   size_of
@@ -48,14 +48,13 @@ H                         = require './helpers'
   project_abspath }       = H
 #...........................................................................................................
 DM                        = require '..'
-realm                     = 'html'
 
 #-----------------------------------------------------------------------------------------------------------
 @$decorations = ( S ) -> $ { first, last, }, ( d, send ) =>
   if d is first
-    send H.fresh_datom '^html', { realm, text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
+    send H.fresh_datom '^html', { text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
   if d is last
-    send H.fresh_datom '^html', { realm, text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
+    send H.fresh_datom '^html', { text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
   else
     send d
   return null
@@ -68,11 +67,13 @@ realm                     = 'html'
     text = d.text
     if select prv, '<p'
       text  = "<p>#{text}"
+      send stamp prv
     if select nxt, '>p'
       text  = "#{text}</p>"
+      send stamp nxt
     $vnr = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { realm, text: text, ref: 'rdh/p', $vnr, }
-    send d
+    send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
+    send stamp d
     return null
 
 # #-----------------------------------------------------------------------------------------------------------
@@ -91,47 +92,32 @@ realm                     = 'html'
   $vnr = VNR.deepen d.$vnr
   for _ in [ 1 .. ( d.linecount ? 0 ) ] by +1
     $vnr = VNR.advance $vnr
-    send H.fresh_datom '^html', { realm, text: '', ref: 'rdh/mkts-1', $vnr, }
-  send d
+    send H.fresh_datom '^html', { text: '', ref: 'rdh/mkts-1', $vnr, }
+  send stamp d
+
+#-----------------------------------------------------------------------------------------------------------
+@$set_realm = ( S, realm ) -> $ ( d, send ) =>
+  return send if d.realm? then d else PD.set d, { realm, }
 
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@render = ( S ) -> new Promise ( resolve, reject ) =>
+@settings =
+  from_realm:   'html'
+  to_realm:     'html'
+
+#-----------------------------------------------------------------------------------------------------------
+@$transform = ( S ) ->
   H.register_key    S, '^html', { is_block: false, }
-  H.register_realm  S, realm
+  H.register_realm  S, @settings.to_realm
+  H.copy_realm      S, 'input', 'html'
   pipeline = []
-  # pipeline.push @$line      S
   # pipeline.push @$decorations S
   pipeline.push @$p           S
-  # pipeline.push @$mktscript   S
   pipeline.push @$blank       S
-  DM.run_phase S, PD.pull pipeline...
-  #.........................................................................................................
-  # dbr = S.mirage.dbr
-  # dbw = S.mirage.dbw
-  # { to_width
-  #   width_of }              = require 'to-width'
-  # dbw.create_view_rows_mktscript_and_block_tags()
-  # for row from dbr.$.query "select * from rows_mktscript_and_block_tags;"
-  #   d = H.datom_from_row S, row
-  #   urge 'µ10922', jr d
-  # for row from dbr.texts_preceded_by_block_keys()
-  #   $vnr    = VNR.deepen JSON.parse row.vnr
-  #   text    = "#{row.prv_key}>#{row.text}"
-  #   d       = H.fresh_datom '^html', { text, $vnr, ref: 'rdh/x1', }
-  #   debug 'µ33431', jr d
-  #   dbw.insert H.row_from_datom S, d
-  # for row from dbr.texts_followed_by_block_keys()
-  #   urge 'µ33431', jr row
-  #   $vnr    = VNR.deepen JSON.parse row.vnr
-  #   text    = "#{row.text}</#{row.nxt_key[ 1 .. ]}>"
-  #   d       = H.fresh_datom '^html', { text, $vnr, ref: 'rdh/x2', }
-  #   urge 'µ33431', jr d
-  #   dbw.insert H.row_from_datom S, d
-  #.........................................................................................................
-  resolve()
+  pipeline.push @$set_realm   S, @settings.to_realm
+  return PD.pull pipeline...
 
 
 
