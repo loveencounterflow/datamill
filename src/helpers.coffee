@@ -429,10 +429,7 @@ _color_cache = {}
 
 #-----------------------------------------------------------------------------------------------------------
 @show_html = ( datamill ) ->
-  #.......................................................................................................
-  { to_width
-    width_of }              = require 'to-width'
-  db                        = datamill.mirage.db
+  db = datamill.mirage.db
   for row from db.$.query "select * from main where key = '^html' order by vnr_blob;"
     d         = @datom_from_row datamill, row
     { text
@@ -445,3 +442,7 @@ _color_cache = {}
         echo ( CND.reverse CND.BLUE to_width line, 100 ) + ( CND.grey lnr )
       else
         echo ( CND.reverse CND.BLUE to_width line, 100 )
+  #.........................................................................................................
+  return null
+
+
