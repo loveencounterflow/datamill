@@ -60,12 +60,22 @@ H                         = require './helpers'
   pipeline.push H.$feed_db S
   pipeline.push PD.$drain => resolve()
   R = PD.pull pipeline...
-  H.feed_source S, source
+  H.feed_source S, source, settings.from_realm
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
+@_create_udfs = ( mirage ) ->
+  db = mirage.db
+  ### Placeholder function re-defined by `H.copy_realms()`: ###
+  db.$.function 'datamill_copy_realms_select', { deterministic: false, varargs: false }, ( row ) -> true
   return null
 
 #-----------------------------------------------------------------------------------------------------------
 @create_datamill = ( settings ) ->
   mirage  = await MIRAGE.create settings
+  ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
+  @_create_udfs mirage
   R       =
     mirage:       mirage
     control:
