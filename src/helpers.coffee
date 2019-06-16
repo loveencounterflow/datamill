@@ -158,6 +158,28 @@ DM                        = require '..'
   S.mirage.dbw.register_realm { realm }
   return null
 
+#-----------------------------------------------------------------------------------------------------------
+@copy_realm = ( S, from_realm, to_realm, selector = null ) ->
+  validate.datamill_realm from_realm
+  validate.datamill_realm to_realm
+  validate.function selector if selector?
+  dbw         = S.mirage.dbw
+  #.........................................................................................................
+  if selector?
+    ### TAINT find a way to use fewer positional arguments ###
+    select_row = ( rowid, vnr, dest, sid, realm, ref, key, text, p ) =>
+      row = { vnr, dest, sid, realm, ref, key, text, p, }
+      d   = @datom_from_row S, row
+      return cast.boolean 'number', selector d
+  #.........................................................................................................
+  else
+    select_row = ( rowid, vnr, dest, sid, realm, ref, key, text, p ) => 1
+  #.........................................................................................................
+  dbw.$.function 'datamill_copy_realms_select', { deterministic: false, varargs: false, }, select_row
+  dbw.copy_realms { from_realm, to_realm, }
+  return null
+
+
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
