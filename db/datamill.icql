@@ -175,7 +175,7 @@ query read_unstamped_lines( realm, first_vnr_blob, last_vnr_blob ):
     from main
     where true
       and ( not stamped )
-      and ( realm = $realm, )
+      and ( realm = $realm )
       and ( $first_vnr_blob <= vnr_blob ) and ( vnr_blob <= $last_vnr_blob )
     order by vnr_blob;
 
