@@ -62,6 +62,29 @@ intertype                 = new Intertype module.exports
     "x.is_block is a boolean":        ( x ) -> @isa.boolean   x.is_block
     "x.has_paragraphs is a ?boolean": ( x ) -> ( not x.has_paragraphs? ) or @isa.boolean x.has_paragraphs
 
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_realm', ( x ) ->
+  tests:
+    "x is a nonempty text":           ( x ) -> @isa.nonempty_text x
+
+#-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_run_phase_settings', ( x ) ->
+  tests:
+    "x is a object":                      ( x ) -> @isa.object          x
+    "x.from_realm is a datamill_realm":   ( x ) -> @isa.datamill_realm  x.from_realm
+    # "x.to_realm is a datamill_realm":     ( x ) -> @isa.datamill_realm  x.to_realm
+    # "x.transform is a function":          ( x ) -> @isa.function        x.transform
+
+# #-----------------------------------------------------------------------------------------------------------
+# @declare 'datamill_copy_realms_settings', ( x ) ->
+#   tests:
+#     "x is a object":                      ( x ) -> @isa.object        x
+#     "x.from is a object":                 ( x ) -> @isa.object        x.from
+#     "x.to is a object":                   ( x ) -> @isa.object        x.to
+#     "x.from.realm is a nonempty text":    ( x ) -> @isa.nonempty_text x.from.realm
+#     "x.from.select is a ?function":       ( x ) -> ( not x.from.select?) or ( @isa.function x.from.select )
+#     "x.to.realm is a nonempty text":      ( x ) -> @isa.nonempty_text x.to.realm
+
 
   # tests:
   #   "optional x is function or boolean":
