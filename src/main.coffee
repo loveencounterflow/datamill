@@ -52,7 +52,10 @@ H                         = require './helpers'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@run_phase = ( S, transform ) -> new Promise ( resolve, reject ) =>
+@run_phase = ( S, settings, transform ) -> new Promise ( resolve, reject ) =>
+  defaults = { from_realm: S.mirage.default_realm, }
+  settings = { defaults..., settings..., }
+  validate.datamill_run_phase_settings settings
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
