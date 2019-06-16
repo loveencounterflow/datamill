@@ -72,6 +72,7 @@ query find_eq_pattern( key, pattern ):
       *
     from main
     where true
+      and ( not stamped )
       and ( key = $key )
       and ( text = $pattern )
     order by vnr_blob;
@@ -81,7 +82,9 @@ query find_like_pattern( pattern ):
   select
       *
     from main
-    where text like $pattern
+    where true
+      and ( not stamped )
+      and ( text like $pattern )
     order by vnr_blob;
 
 -- ---------------------------------------------------------------------------------------------------------
