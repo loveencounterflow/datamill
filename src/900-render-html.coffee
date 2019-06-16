@@ -90,9 +90,9 @@ DM                        = require '..'
 @$blank = ( S ) -> $ ( d, send ) =>
   return send d unless select d, '^blank'
   $vnr = VNR.deepen d.$vnr
-  for _ in [ 1 .. ( d.linecount ? 0 ) ] by +1
-    $vnr = VNR.advance $vnr
-    send H.fresh_datom '^html', { text: '', ref: 'rdh/mkts-1', $vnr, }
+  if linecount = d.linecount ? 0
+    text = '\n'.repeat linecount
+    send H.fresh_datom '^html', { text, ref: 'rdh/mkts-1', $vnr, }
   send stamp d
 
 #-----------------------------------------------------------------------------------------------------------
