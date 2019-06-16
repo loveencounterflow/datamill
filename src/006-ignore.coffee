@@ -42,12 +42,12 @@ types                     = require './types'
     return send d unless select d, '^line'
     if d.text is '<ignore>'
       within_ignore = true
-      send stamp d
+      send stamp d, { dest: 'ignore', ref: 'ign', }
     else if d.text is '</ignore>'
       within_ignore = false
-      send stamp d
+      send stamp d, { dest: 'ignore', ref: 'ign', }
     else if within_ignore
-      send stamp d
+      send stamp d, { dest: 'ignore', ref: 'ign', }
     else
       send d
   return null
