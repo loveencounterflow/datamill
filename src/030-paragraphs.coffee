@@ -41,16 +41,6 @@ types                     = require './types'
 #...........................................................................................................
 
 
-  # key_registry    = H.get_key_registry S
-  # block_depth     = 0
-    # is_block  = key_registry[ d.key ].is_block
-    # is_opener = select d, '<'
-    # is_closer = select d, '>'
-    # if is_block
-    #   if is_opener then block_depth++
-    #   else              block_depth--
-    # return send d unless block_depth is 0
-
 #-----------------------------------------------------------------------------------------------------------
 @$paragraphs = ( S ) ->
   H.register_key S, '<p', { is_block: true, }
