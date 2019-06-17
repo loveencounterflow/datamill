@@ -223,8 +223,9 @@ text and general data processing tasks.
 > present in all file formats from which line-oriented data can be derived. For example, one can compress a
 > raster image to obtain a stream of bits with no discernible representation of lines of pixels; when
 > authoring an HTML page, it makes no difference for the rendering whether one puts each word on a line of
-> its own or else the entire HTML page, including styles and JS, on a single line. Form that point of view,
-> 'lines' are merely incidental to data and not essential at all.
+> its own or else the entire HTML page, including styles and JS, on a single line. From that point of view,
+> 'lines' are merely optional and, where they do occur, often just incidental to data and not essential at
+> all.
 
 When working with source files (e.g. an HTML file) and its derivatives (e.g. the display of a browser), file
 paths and line numbers are important tools to keep track of which effects originated from which causes:
@@ -233,7 +234,7 @@ at least file names and line numbers.
 
 In DataMill, lines of text do not only form the basic chunks of data one will typically process within a
 stream transform to accomplish one specific task, their consecutive numbering also forms the backbone
-of the data organization in the database.
+of the organization of the rows in the database.
 
 ## The DataMill Primary Key (LDX)
 
