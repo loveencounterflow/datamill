@@ -84,9 +84,8 @@ following layers—from top to bottom—will emerge:
   are no free positions left between, say, rows `9` and `10`, and adding more material in this spot
   necessitates renumbering all following rows. Vectorial indexes are like rational numbers in that there are
   *infinitely many of them even between any given two distinct values*: `10/1 < 19/2 < 39/4 < 10` etc, or,
-  in vectors, `[9,0] < [9,1] < [10,-1] < [10,0] < [10,1]` and so on. Hollerith imposes an absolute orderings
-  over all arrays of numbers, texts, booleans and dates, so VLXs don't have to be numeric; in fact, you can
-  build your own custom DB index with Hollerith.
+  in vectors, `[9,0] < [9,1] < [10,-1] < [10,0] < [10,1]` and so on. VLXs don't have to be purely numeric,
+  as Hollerith imposes an absolute ordering over all possible arrays of numbers, texts, booleans and dates.
 
 * **[PipeDreams](https://github.com/loveencounterflow/pipedreams)**—A pipestreaming infrastructure designed
   to enable breaking down the processing of data streams into many small steps, laid out in a clear,
@@ -97,7 +96,7 @@ following layers—from top to bottom—will emerge:
   why handling them can be done with confidence (because you can be reasonably sure no-one down the
   processing line will modify the data value you've just acted upon: a fact is a fact).
 
-# Details
+# Parts of Processing
 
 ## Phases
 
@@ -118,6 +117,89 @@ modify the DB directly or work exclusively on the stream of datoms.
 
 > NOTE discuss arrangements where this restriction may be relaxed, e.g. when all DB actions are restricted
 > to the instantiation stage of a regular stream transform.
+
+## Repetition
+
+## Reprise
+
+## Stamping
+
+> i.e. decommissioning of rows
+
+## Row Insertion
+
+> two ways, 'locally' by `recede deepen d`, non-locally by finding the successor of the current line's
+> predecessor with same prefix.
+
+## Realms (RLM)
+
+A 'domain' of processing in the sense that when running a group of phases over a document, typically only
+rows belonging to a given, single realm are considered. The initial realm of a document that has just been
+read in By MKTS Mirage is named `input`. A new realm is created for a specific purpose (e.g. an output
+format) by copying (a subset of unstamped) rows from an existing domain.
+
+For example, assume that a file has been read into RLM `input` and processed to a certain degree, and that
+one wants to produce an HTML page from it. Turning a preprocessed line into HTML entails interpolating
+suitable tags into the source, so one has to modify rows or use the stamp/insert approach to insert new
+content. Either way, the state of the preprocessed material is changed, so if we wanted to also produce a
+TeX output for a PDF version from the same source, we would have to either base *that* transformation on the
+HTML output or else recompute the entire input up to a certain stage anew. Using realms, one can essentially
+freeze the result of one set of transforms in realm `A`, copy whatever data is needed to a new realm `B`,
+and then apply a new set of transforms exclusively on rows belonging to `B`. Later, a derivation from the
+unaltered realm `A` may be applied to obtain another reansformation, `C`.
+
+# Parts of Documents
+
+
+## Vectorial Line Number (VNR)
+
+> Line numbers as vectors; see project overview and Hollerith / Hollerith Codec docs.
+
+
+## Source (SRC)
+
+> All source files get a numerical index and a path. As line numbers (and, by extension, vectorial line
+> numbers (VNRs)) are only locally valid, meaningful and unique (that is, within a given file), VNRs have to
+> be extended by source IDs for global use.
+
+## Layer (LYR)
+
+Having established that line numbers have to be combined with source IDs (SRCs) to make them globally
+unique, we now observe that—apart from uniqueness—another indispensable property—namely, relative ordering
+in the target document—cannot be achieved with `(SRC,VNR)` vectors. The only ordering that `(SRC,VNR)`
+vectors support for any two given documents `a`, `b` is `(a`<sub>`1`</sub>` ...
+a`<sub>`n`</sub>`)(b)`<sub>`1`</sub>` ... b`<sub>`m` (and the reverse arrangement where `b` comes first),
+i.e. concatenation.
+
+
+## Deck (DCK)
+
+Apart from the more obvious parts of paper-based and digital documents such as chapters, sections and
+paragraphs, there are also the less obvious but equally important and, crucially, mandatorily arranged
+'functional' parts.
+
+For example, a book may have a title page, a CIP notice, a preface, a table of contents, a main part, an
+index and so on, all of which should appear in a fixed order. Some of these have fixed lengths, such as the
+single page that shows cataloging data and the publisher's copyright notice; others, like the index, the TOC
+and the table of figures wax and wane as the document is getting read and processed line by line.
+
+As for digital documents, HTML pages have, inter alia, a preparatory part demarcated by `<head> ... </head>`
+tags, and a main part demarcated by `<body> ... </body>` tags. Likewise, in a LaTeX source file, some
+commands like `\\usepackage{xy}` and `\\newcommand{uvw}{...}` may only appear in the document preamble; once
+the preamble has been closed with `\\begin{document}`, such preparatory commands are no longer allowed.
+
+In all three cases, it is often convenient to allow authors to declare resources needed for a particular
+part of the project at the point where, when and if that part comes up for processing.
+
+With decks, it is possible to stipulate that a given portion of the source should be prepended or appended
+to a designated target area of the target.
+
+
+## DataMill Primary Key
+
+`( RLM, DCK, LYR, SRC, VNR)`
+
+
 
 
 
