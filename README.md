@@ -215,9 +215,9 @@ to a designated target area of the target.
 
 Like the other parts that make up the complete LDX, decks are represented by integer numbers.
 
-## LDX: The DataMill Primary Key
+# The DataMill Primary Key (LDX)
 
-`LDX: ( RLM, DCK, PCE, SRC, VNR )`
+`LDX: ( RLM, DCK, PCE, SRC, VNR..., )`
 
 
 
