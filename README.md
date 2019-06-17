@@ -57,8 +57,11 @@ following layers—from top to bottom—will emerge:
   towards processing and typesetting of CJK (Chinese, Japanese, Korean) script material retrieved from
   database queries.
 
-* **[DataMill](https://github.com/loveencounterflow/datamill)**—A line-oriented data processor backed by a
-  relational (SQLite) DB that allows to generate new documents from collections of source texts.
+* **[DataMill](https://github.com/loveencounterflow/datamill)**—A line-oriented multi-pass data processor
+  backed by a relational (SQLite) DB that allows to generate new documents from collections of source texts.
+  Document processing consists in a number of discrete *phases* that may both be looped and confined to
+  parts of a document, thereby enabling the handling of recursive markup (like turning a file with a
+  blockquote that contains markup from another file with a heading and a paragraph and so on).
 
 * **[MKTS Mirage](https://github.com/loveencounterflow/mkts-mirage)**—Mirrors text files into a relational
   DB (SQLite) such that data extraction and CRUD actions—insertions, deletions and modifications—become
@@ -70,9 +73,24 @@ following layers—from top to bottom—will emerge:
 * **[ICQL](https://github.com/loveencounterflow/icql)**—A YeSQL adapter to organize queries against
   relational databases.
 
+* **[Hollerith](https://github.com/loveencounterflow/hollerith)**—A facility to handle the definition of and
+  arithmetics with Vectorial Lexicographic Indexes (VLXs) as well as their encoding into binary and textual
+  forms such that even software not normally built to handle layered lexicographic sorting (such as
+  JavaScript's simple-minded `Array#sort()`, any text editors `sort lines` command, or SQLites `order by
+  blob`) can maintain the proper relative order of records. A particular interesting property of VLXs is
+  akin to the ordering of rational numbers as described by Cantor when compared to integer numbers: Of both
+  there are countably infinetely many, and one can always append or prepend arbitrarily many new elements to
+  any sequence of existing elements. However, with a mere `rowid` integer index, there are no free positions
+  left between, say, rows `9` and `10`, and adding more material in this spot necessitates renumbering all
+  following rows. Vectorial indexes are like rational numbers in that there are infinetely many of them
+  between any given two distinct values: `19/2`, `39/4` etc, or, in vectors, `[9,0] ... [9,1] ... [10,-1]
+  ... [10,0] ... [10,1]` and so on.
+
 * **[PipeDreams](https://github.com/loveencounterflow/pipedreams)**—A pipestreaming infrastructure designed
-  to enable breaking down processing of data streams into many small steps, laid out in a clear, linear plan
-  (the pipeline).
+  to enable breaking down the processing of data streams into many small steps, laid out in a clear,
+  quasi-linear plan (the pipeline). PipeDreams suggestes a standardized data shape—JS/JSON Objects with a
+  `key`, some internal attributes like `$stamped` for book-keeping—called 'datoms' (shamelessly copied from
+  [here](https://docs.datomic.com/cloud/whatis/data-model.html)) and arbitrary properties for the payload—XXX
 
 # Details
 
