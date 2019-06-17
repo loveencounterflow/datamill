@@ -213,10 +213,11 @@ part of the project at the point where, when and if that part comes up for proce
 With decks, it is possible to stipulate that a given portion of the source should be prepended or appended
 to a designated target area of the target.
 
+Like the other parts that make up the complete LDX, decks are represented by integer numbers.
 
-## DataMill Primary Key
+## LDX: The DataMill Primary Key
 
-`( RLM, DCK, LYR, SRC, VNR)`
+`LDX: ( RLM, DCK, PCE, SRC, VNR )`
 
 
 
