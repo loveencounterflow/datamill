@@ -52,13 +52,27 @@ of [MingKwai TypeSetter 明快排字機](https://github.com/loveencounterflow/mi
 at some point in time, it is planned to refactor code such that, in terms of dependencies, roughly the
 following layers—from top to bottom—will emerge:
 
-* **[MingKwai TypeSetter](https://github.com/loveencounterflow/mingkwai-typesetter)**—XXX XXX XXX.
+* **[MingKwai TypeSetter](https://github.com/loveencounterflow/mingkwai-typesetter)**—A text processor that
+  translates from a MarkDown-like markup language to targets like TeX, PDF, and HTML; specifically geared
+  towards processing and typesetting of CJK (Chinese, Japanese, Korean) script material retrieved from
+  database queries.
 
-* **[DataMill](https://github.com/loveencounterflow/datamill)**—XXX XXX XXX.
+* **[DataMill](https://github.com/loveencounterflow/datamill)**—A line-oriented data processor backed by a
+  relational (SQLite) DB that allows to generate new documents from collections of source texts.
 
-* **[MKTS Mirage](https://github.com/loveencounterflow/mkts-mirage)**—XXX XXX XXX.
+* **[MKTS Mirage](https://github.com/loveencounterflow/mkts-mirage)**—Mirrors text files into a relational
+  DB (SQLite) such that data extraction and CRUD actions—insertions, deletions and modifications—become
+  expressable as SQL statements. The multi-layered vectorial index (a Vectorial Lexicographic Index
+  implemented in [Hollerith](https://github.com/loveencounterflow/hollerith)) of Mirage makes it possible to
+  keep line histories and source references while updating data and inserting and and re-arranging document
+  parts while keeping all the data in its proper ordering sequence.
 
-* **[ICQL](https://github.com/loveencounterflow/icql)**—XXX XXX XXX.
+* **[ICQL](https://github.com/loveencounterflow/icql)**—A YeSQL adapter to organize queries against
+  relational databases.
+
+* **[PipeDreams](https://github.com/loveencounterflow/pipedreams)**—A pipestreaming infrastructure designed
+  to enable breaking down processing of data streams into many small steps, laid out in a clear, linear plan
+  (the pipeline).
 
 # Details
 
