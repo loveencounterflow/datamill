@@ -45,6 +45,23 @@ I call 'data mills'), cannot do without them.
 
  -->
 
+# Development Outlook
+
+At the time of this writing, DataMill is growing to become the next version and complete re-write
+of [MingKwai TypeSetter 明快排字機](https://github.com/loveencounterflow/mingkwai-typesetter) and
+at some point in time, it is planned to refactor code such that, in terms of dependencies, roughly the
+following layers—from top to bottom—will emerge:
+
+* **[MingKwai TypeSetter](https://github.com/loveencounterflow/mingkwai-typesetter)**—XXX XXX XXX.
+
+* **[DataMill](https://github.com/loveencounterflow/datamill)**—XXX XXX XXX.
+
+* **[MKTS Mirage](https://github.com/loveencounterflow/mkts-mirage)**—XXX XXX XXX.
+
+* **[ICQL](https://github.com/loveencounterflow/icql)**—XXX XXX XXX.
+
+# Details
+
 ## Phases
 
 A phase should contain either regular stream transforms or else pseudo-transforms. Regular transforms work
