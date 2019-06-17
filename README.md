@@ -91,12 +91,11 @@ following layers—from top to bottom—will emerge:
 * **[PipeDreams](https://github.com/loveencounterflow/pipedreams)**—A pipestreaming infrastructure designed
   to enable breaking down the processing of data streams into many small steps, laid out in a clear,
   quasi-linear plan (the pipeline). PipeDreams proposes a standardized data shape—JS/JSON Objects with a
-  `key`, some internal attributes like `$stamped` for book-keeping—called 'datoms' (shamelessly copied from
-  [here](https://docs.datomic.com/cloud/whatis/data-model.html)) and arbitrary properties for the payload—as
-  well as a set of standard operations over datoms such as selecting them or marking them as fresh or
-  discardable. Datoms are *immutable* (deeply frozen) which is why handling them can be done with confidence
-  (because you can be reasonably sure no-one down the processing line will modify the data value you've just
-  acted upon: a fact is a fact).
+  `key`, some internal attributes like `$stamped` for book-keeping and arbitrary properties for the
+  payload—as well as a set of standard operations. These 'datoms' (a name shamelessly copied from
+  [here](https://docs.datomic.com/cloud/whatis/data-model.html)) are *immutable* (deeply frozen) which is
+  why handling them can be done with confidence (because you can be reasonably sure no-one down the
+  processing line will modify the data value you've just acted upon: a fact is a fact).
 
 # Details
 
