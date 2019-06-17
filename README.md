@@ -151,10 +151,6 @@ unaltered realm `A` may be applied to obtain another reansformation, `C`.
 # Parts of Documents
 
 
-## Vectorial Line Number (VNR)
-
-> Line numbers as vectors; see project overview and Hollerith / Hollerith Codec docs.
-
 
 ## Source (SRC)
 
@@ -215,7 +211,31 @@ to a designated target area of the target.
 
 Like the other parts that make up the complete LDX, decks are represented by integer numbers.
 
-# The DataMill Primary Key (LDX)
+
+## Vectorial Line Number (VNR)
+
+Lines—that is, lines of text, which are made up of individiual characters—are an essential concept for many
+text and general data processing tasks.
+
+> This statement may be surprising when considering that in the real world, lines (of text or other things)
+> do almost not seem to occur (the exception being when a human has stepped in and neatly arranged objects).
+> Even when talking specifically about computer files, lines are neither inevitable nor are they necessarily
+> present in all file formats from which line-oriented data can be derived. For example, one can compress a
+> raster image to obtain a stream of bits with no discernible representation of lines of pixels; when
+> authoring an HTML page, it makes no difference for the rendering whether one puts each word on a line of
+> its own or else the entire HTML page, including styles and JS, on a single line. Form that point of view,
+> 'lines' are merely incidental to data and not essential at all.
+
+When working with source files (e.g. an HTML file) and its derivatives (e.g. the display of a browser), file
+paths and line numbers are important tools to keep track of which effects originated from which causes:
+whether reading error messages or debugging CSS style rules, authors always rely on their tools to give them
+at least file names and line numbers.
+
+In DataMill, lines of text do not only form the basic chunks of data one will typically process within a
+stream transform to accomplish one specific task, their consecutive numbering also forms the backbone
+of the data organization in the database.
+
+## The DataMill Primary Key (LDX)
 
 `LDX: ( RLM, DCK, PCE, SRC, VNR..., )`
 
