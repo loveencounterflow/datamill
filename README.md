@@ -167,9 +167,8 @@ unaltered realm `A` may be applied to obtain another reansformation, `C`.
 Having established that line numbers have to be combined with source IDs (SRCs) to make them globally
 unique, we now observe that—apart from uniqueness—another indispensable property—namely, relative ordering
 in the target document—cannot be achieved with `(SRC,VNR)` vectors. The only ordering that `(SRC,VNR)`
-vectors support for any two given documents `a`, `b` is `(a`<sub>`1`</sub>` ...
-a`<sub>`n`</sub>`)(b)`<sub>`1`</sub>` ... b`<sub>`m` (and the reverse arrangement where `b` comes first),
-i.e. concatenation.
+vectors support for any two given documents `a`, `b` is `a[1], ... a[n], b[1], ... b[m]` (and the reverse
+arrangement where `b` comes first), i.e. concatenation.
 
 
 ## Deck (DCK)
