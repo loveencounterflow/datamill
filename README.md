@@ -174,20 +174,20 @@ prepending an PCE counter to the Lexicographic Index, we get `(PCE,SRC,VNR)` and
 sequences of embedding and embedded lines unambiguously and in an order-preserving manner:
 
 ```
- (PCE,SRC,VNR)
- (1,5,1) first line of file #5
- (1,5,2)
- (1,5,3)
-*(1,5,4) <insert src=1/>
-
- (2,1,1) first line of file #1
- (2,1,2)
- (2,1,3) last line of file #1
-
- (3,5,5) line #5 of file #5
- (3,5,6)
- (3,5,7)
- (3,5,8) last line of file #5
+ ( PCE, SRC, VNR )
+ (   1,   5,   1 )  |  first line of file #5
+ (   1,   5,   2 )  |
+ (   1,   5,   3 )  |
+*(   1,   5,   4 )  |  <insert src=1/>
+                    |
+ (   2,   1,   1 )  |  first line of file #1
+ (   2,   1,   2 )  |
+ (   2,   1,   3 )  |  last line of file #1
+                    |
+ (   3,   5,   5 )  |  line #5 of file #5
+ (   3,   5,   6 )  |
+ (   3,   5,   7 )  |
+ (   3,   5,   8 )  |  last line of file #5
 ```
 
 
