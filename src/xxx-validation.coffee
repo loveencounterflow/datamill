@@ -57,8 +57,9 @@ types                     = require './types'
     if d is last
       unless isa.empty stack
         is_vnr  = jr vnr
+        ref     = if d.ref? then "ref: #{d.ref}" else "(no ref)"
         message = [ 'µ44333', ]
-        message = [ "at document end (VNR #{is_vnr}), encountered dangling open tag(s):", ]
+        message = [ "at document end (VNR #{is_vnr}, #{ref}), encountered dangling open tag(s):", ]
         for entry in stack
           was_vnr = jr entry.$vnr
           message.push "`>#{entry.name}` (VNR #{was_vnr})"
@@ -71,19 +72,20 @@ types                     = require './types'
     key     = d.key
     sigil   = key[ 0 ]
     name    = key[ 1 .. ]
+    ref     = if d.ref? then "ref: #{d.ref}" else "(no ref)"
     #.......................................................................................................
     switch sigil
       when '<'
         stack.push { name, $vnr: d.$vnr, }
       when '>'
         if isa.empty stack
-          message = "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}), stack empty"
+          message = "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}, #{ref}), stack empty"
           send PD.new_datom '~error', { message, $: d, }
         entry = last_of stack
         unless entry.name is name
           ### TAINT make configurable whether to throw or warn ###
           was_vnr = jr entry.$vnr
-          message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr})"
+          message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr}, #{ref})"
           send PD.new_datom '~error', { message, $: d, }
         stack.pop()
       else
