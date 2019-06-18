@@ -146,7 +146,13 @@ DM                        = require '..'
   return @_key_registry_cache if @_key_registry_cache?
   db                    = S.mirage.dbw
   R                     = {}
-  R[ row.key ] = row for row from db.read_key_registry()
+  for row from db.read_key_registry()
+    for key of row
+      row[ key ] = switch row[ key ]
+        when 1 then true
+        when 0 then false
+        else row[ key ]
+    R[ row.key ] = row
   @_key_registry_cache  = PD.freeze R
   return R
 
