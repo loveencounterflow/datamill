@@ -77,6 +77,28 @@ DM                        = require '..'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
+@$blocks = ( S ) ->
+  key_registry    = H.get_key_registry S
+  is_block        = ( d ) -> key_registry[ d.key ]?.is_block
+  return PD.lookaround $ ( d3, send ) =>
+    [ prv, d, nxt, ] = d3
+    return send d unless select d, '^mktscript'
+    text = d.text
+    if is_block prv
+      tagname = prv.key[ 1 .. ]
+      ### TAINT use proper HTML generation ###
+      text    = "<#{tagname}>#{text}"
+      send stamp prv
+    if is_block nxt
+      tagname = nxt.key[ 1 .. ]
+      text    = "#{text}</#{tagname}>"
+      send stamp nxt
+    $vnr = VNR.deepen d.$vnr
+    send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
+    send stamp d
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
 @$blank = ( S ) -> $ ( d, send ) =>
   return send d unless select d, '^blank'
   $vnr = VNR.deepen d.$vnr
@@ -104,7 +126,8 @@ DM                        = require '..'
   H.copy_realm      S, 'input', 'html'
   pipeline = []
   # pipeline.push @$decorations S
-  pipeline.push @$p           S
+  # pipeline.push @$p           S
+  pipeline.push @$blocks      S
   pipeline.push @$blank       S
   pipeline.push @$set_realm   S, @settings.to_realm
   return PD.pull pipeline...
