@@ -360,6 +360,7 @@ DM                        = require '..'
       when '<h'               then  _color  = CND.VIOLET
       when '>h'               then  _color  = CND.VIOLET
       when '^html'            then  _color  = CND.BLUE
+      when '<p', '>p'         then  _color  = CND.grey
       else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
     stamp   = if row.stamped then '*' else ''
@@ -403,13 +404,17 @@ DM                        = require '..'
         color = ( P... ) -> CND.reverse _color P...
     #.......................................................................................................
     ### TAINT experimental, needs better implementation ###
+    if ( properties = row.p )? then properties = ( JSON.parse properties ) ? {}
+    else                            properties = {}
     xxxxx = 56
     if row.stamped
       echo ( color line[ ... xxxxx ] ) + CND.grey line[ xxxxx .. ]
     else if line[ xxxxx ] is '"'
       echo ( color line[ ... xxxxx ] ) + CND.reverse CND.YELLOW line[ xxxxx .. ]
+    else if properties.error?
+      echo ( color line[ ... xxxxx ] ) + CND.reverse CND.pink to_width properties.error, line_width - xxxxx
     else
-      echo ( color line[ ... xxxxx ] ) + CND.RED line[ xxxxx .. ]
+      echo ( color line[ ... xxxxx ] ) + CND.YELLOW line[ xxxxx .. ]
     # echo dent + color line
   #.........................................................................................................
   echo "#{omit_count} rows omitted from this view"
