@@ -42,62 +42,45 @@ types                     = require './types'
 #...........................................................................................................
 
 
-#-----------------------------------------------------------------------------------------------------------
-@$paragraphs = ( S ) ->
-  H.register_key S, '<p', { is_block: true, }
-  H.register_key S, '>p', { is_block: true, }
-  within_p        = false
-  prv_was_blank   = false
-  key_registry    = H.get_key_registry S
-  stack           = []
-  #.........................................................................................................
-  skip = ->
-    return false if stack.length is 0
-    entry = last_of stack
-    return entry.is_block and not entry.has_paragraphs
-  #.........................................................................................................
-  return $ ( d, send ) =>
-    entry           = key_registry[ d.key ]
-    if entry.is_block
-      if d.key.startsWith '<'
-        stack.push entry
-      else
-        stack.pop()
-      debug 'µ77783', stack
-      return send d
-    return send d if skip()
-    #.......................................................................................................
-    if select d, '^blank'
-      if within_p
-        send stamp d
-        ref           = 'pco/p1'
-        dest          = d.dest
-        $vnr          = VNR.deepen d.$vnr, 0
-        send PD.set d, { $vnr, dest, ref, $fresh: true, }
-        send H.fresh_datom '>p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
-        within_p      = false
-      else
-        send d
-      prv_was_blank = true
-    #.......................................................................................................
-    else if select d, '^line'
-      if prv_was_blank
-        ref           = 'pco/p2'
-        dest          = d.dest
-        $vnr          = VNR.deepen d.$vnr, 0
-        send H.fresh_datom '<p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
-        send PD.set d, { $vnr, ref, }
-        within_p      = true
-        send stamp d
-      else
-        send d
-      prv_was_blank = false
-    #.......................................................................................................
-    else
-      send d
-    #.......................................................................................................
-    return null
+H.leapfrog_stamped = ( transform ) ->
+  return PD.leapfrog ( ( d ) -> PD.is_stamped d ), transform
 
+#-----------------------------------------------------------------------------------------------------------
+@$assemble_hunks = ( S ) ->
+  prv_was_line    = false
+  send            = null
+  first_vnr       = null
+  collector       = null
+  H.register_key S, '^hunk', { is_block: false, }
+  #.........................................................................................................
+  collect = ( d ) ->
+    unless collector?
+      first_vnr = d.$vnr
+      collector = []
+    collector.push d
+    send stamp d
+    return null
+  #.........................................................................................................
+  flush = ->
+    return null unless collector?
+    text          = ( x.text for x in collector ).join '\n'
+    collector     = null
+    $vnr          = VNR.deepen first_vnr
+    prv_was_line  = false
+    send H.fresh_datom '^hunk', { text, $vnr, ref: 'pco/asp', }
+    return null
+  #.........................................................................................................
+  return H.leapfrog_stamped $ { last, }, ( d, send_ ) =>
+    send              = send_
+    #.......................................................................................................
+    if d is last
+      return flush()
+    #.......................................................................................................
+    unless select d, '^line'
+      flush()
+      return send d
+    #.......................................................................................................
+    return collect d
 
 
 #===========================================================================================================
@@ -105,6 +88,6 @@ types                     = require './types'
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$paragraphs          S
+  pipeline.push @$assemble_hunks S
   return PD.pull pipeline...
 
