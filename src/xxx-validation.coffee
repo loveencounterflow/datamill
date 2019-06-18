@@ -62,7 +62,8 @@ types                     = require './types'
         for entry in stack
           was_vnr = jr entry.$vnr
           message.push "`>#{entry.name}` (VNR #{was_vnr})"
-        throw new Error message.join ' '
+        message = message.join ' '
+        send PD.new_datom '~error', { message, $: d, }
       return null
     #.......................................................................................................
     vnr     = d.$vnr
@@ -76,22 +77,51 @@ types                     = require './types'
         stack.push { name, $vnr: d.$vnr, }
       when '>'
         if isa.empty stack
-          throw new Error "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}), stack empty"
+          message = "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}), stack empty"
+          send PD.new_datom '~error', { message, $: d, }
         entry = last_of stack
         unless entry.name is name
           ### TAINT make configurable whether to throw or warn ###
           was_vnr = jr entry.$vnr
-          throw new Error "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr})"
+          message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr})"
+          send PD.new_datom '~error', { message, $: d, }
         stack.pop()
       else
         send d
     return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$complain_on_error = ->
+  count = 0
+  return $ { last, }, ( d, send ) =>
+    if d is last
+      if count > 0
+        alert "µ77874 found #{count} faults"
+      return null
+    return send d unless select d, '~error'
+    send PD.set d.$, { error: d.message, }
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$exit_on_error = ->
+  messages = []
+  return $ { last, }, ( d, send ) =>
+    if d is last
+      if messages.length > 0
+        message = messages.join '\n\n'
+        throw new Error "µ77874 found #{messages.length} faults: \n\n#{message}"
+    return send d unless select d, '~error'
+    messages.push d.message
+    return null
+
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 @$transform = ( S ) ->
   pipeline = []
-  pipeline.push @$validate_symmetric_keys  S
+  pipeline.push @$validate_symmetric_keys   S
+  pipeline.push @$complain_on_error         S
+  # pipeline.push @$exit_on_error             S
   return PD.pull pipeline...
 
