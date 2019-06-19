@@ -70,7 +70,7 @@ H                         = require './helpers'
 ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
 @_create_udfs = ( mirage ) ->
   db = mirage.db
-  ### Placeholder function re-defined by `H.copy_realms()`: ###
+  ### Placeholder function re-defined by `H.copy_realm()`: ###
   db.$.function 'datamill_copy_realm_select', { deterministic: false, varargs: false }, ( row ) -> true
   return null
 
@@ -209,9 +209,9 @@ unless module.parent?
   do =>
     #.......................................................................................................
     settings =
-      file_path:      project_abspath './src/tests/demo-short-headlines.md'
+      # file_path:      project_abspath './src/tests/demo-short-headlines.md'
       # file_path:      project_abspath './src/tests/demo.md'
-      # file_path:      project_abspath './src/tests/demo-medium.md'
+      file_path:      project_abspath './src/tests/demo-medium.md'
       # file_path:      project_abspath './src/tests/demo-simple-paragraphs.md'
       # db_path:        ':memory:'
       db_path:        project_abspath './db/datamill.db'
