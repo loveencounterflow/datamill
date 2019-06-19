@@ -63,7 +63,6 @@ types                     = require './types'
         stack.push entry
       else
         stack.pop()
-      debug 'µ77783', stack
       return send d
     return send d if skip()
     #.......................................................................................................
