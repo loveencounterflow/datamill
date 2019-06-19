@@ -301,6 +301,31 @@ DM                        = require '..'
       throw error
     return null
 
+#-----------------------------------------------------------------------------------------------------------
+@$resume_from_db = ( S, settings ) ->
+  ### `$resume_from_db()` will either swallow all datoms or else feed them to the DB when `settings.feed_db` is
+  `true`; when the streram has ended, it will then re-read from the DB (using `settings.from_realm`). This
+  is handy to ensure that no stamped atoms are in the stream below this transform, and that all datoms are
+  properly ordered. ###
+  validate.datamill_resume_from_db_settings settings
+  last      = Symbol 'last'
+  source    = PD.new_push_source()
+  pipeline  = []
+  pipeline.push @$feed_db S if settings.feed_db
+  pipeline.push $ { last, }, ( d, send ) =>
+    return null unless d is last
+    @feed_source S, source, settings.from_realm
+  pipeline.push PD.$wye source
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@resume_from_db = ( S, settings, transform ) ->
+  pipeline  = []
+  pipeline.push @$resume_from_db S, settings
+  pipeline.push transform
+  return PD.pull pipeline...
+
+
 #===========================================================================================================
 # PHASES
 #-----------------------------------------------------------------------------------------------------------
