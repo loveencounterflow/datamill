@@ -59,25 +59,44 @@ DM                        = require '..'
     send d
   return null
 
-#-----------------------------------------------------------------------------------------------------------
-@$p = ( S ) ->
-  return PD.lookaround $ ( d3, send ) =>
-    [ prv, d, nxt, ] = d3
-    return send d unless select d, '^mktscript'
-    text = d.text
-    if select prv, '<p'
-      text  = "<p>#{text}"
-      send stamp prv
-    if select nxt, '>p'
-      text  = "#{text}</p>"
-      send stamp nxt
-    $vnr = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
-    send stamp d
-    return null
+# #-----------------------------------------------------------------------------------------------------------
+# @$p = ( S ) ->
+#   return PD.lookaround $ ( d3, send ) =>
+#     [ prv, d, nxt, ] = d3
+#     return send d unless select d, '^mktscript'
+#     text = d.text
+#     if select prv, '<p'
+#       text  = "<p>#{text}"
+#       send stamp prv
+#     if select nxt, '>p'
+#       text  = "#{text}</p>"
+#       send stamp nxt
+#     $vnr = VNR.deepen d.$vnr
+#     send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
+#     send stamp d
+#     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$blocks = ( S ) ->
+@$codeblocks = ( S ) ->
+  return H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
+    [ prv, d, nxt, ] = d3
+    return send d unless select d, '^literal'
+    if select prv,  '<codeblock'
+      $vnr  = VNR.deepen prv.$vnr
+      text  = "<pre><code>"
+      send H.fresh_datom '^html', { text, ref: 'rdh/cdbl', $vnr, }
+      send stamp prv
+    if select nxt,  '>codeblock'
+      $vnr  = VNR.deepen nxt.$vnr
+      text  = "</code></pre>"
+      send H.fresh_datom '^html', { text, ref: 'rdh/cdbl', $vnr, }
+      send stamp nxt
+    $vnr  = VNR.deepen d.$vnr
+    send H.fresh_datom '^html', { text: d.text, ref: 'rdh/cdbl', $vnr, }
+    send stamp d
+
+#-----------------------------------------------------------------------------------------------------------
+@$blocks_with_mktscript = ( S ) ->
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
   return PD.lookaround $ ( d3, send ) =>
@@ -94,7 +113,22 @@ DM                        = require '..'
       text    = "#{text}</#{tagname}>"
       send stamp nxt
     $vnr = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
+    send H.fresh_datom '^html', { text, ref: 'rdh/bwm', $vnr, }
+    send stamp d
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
+@$other_blocks = ( S ) ->
+  key_registry    = H.get_key_registry S
+  is_block        = ( d ) -> key_registry[ d.key ]?.is_block
+  return $ ( d, send ) =>
+    return send d unless ( select d, '<>' ) and ( is_block d )
+    tagname = d.key[ 1 .. ]
+    ### TAINT use proper HTML generation ###
+    if select d, '<' then text = "<#{tagname}>"
+    else                  text = "</#{tagname}>"
+    $vnr = VNR.deepen d.$vnr
+    send H.fresh_datom '^html', { text: text, ref: 'rdh/ob', $vnr, }
     send stamp d
     return null
 
@@ -115,6 +149,31 @@ DM                        = require '..'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
+preamble = """
+  <style>
+    * { padding: 4px; outline: 2px dotted green; }
+    </style>
+  """
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT refactor to PipeStreams ###
+PD.$send_as_first = ( x ) -> $ { first, }, ( d, send ) -> send if d is first then x else d
+PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  then x else d
+
+#-----------------------------------------------------------------------------------------------------------
+@$write_to_file = ( S ) =>
+  pipeline  = []
+  pipeline.push H.$resume_from_db S, { from_realm: 'html', }
+  pipeline.push PD.$filter ( d ) -> select d, '^html'
+  pipeline.push $ ( d, send ) -> send d.text + '\n'
+  pipeline.push PD.$send_as_first preamble
+  pipeline.push PD.write_to_file '/tmp/datamill.html'
+  return PD.$tee PD.pull pipeline...
+
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
 @settings =
   from_realm:   'html'
   to_realm:     'html'
@@ -126,10 +185,12 @@ DM                        = require '..'
   H.copy_realm      S, 'input', 'html'
   pipeline = []
   # pipeline.push @$decorations S
-  # pipeline.push @$p           S
-  pipeline.push @$blocks      S
-  pipeline.push @$blank       S
-  pipeline.push @$set_realm   S, @settings.to_realm
+  pipeline.push @$codeblocks              S
+  pipeline.push @$blocks_with_mktscript   S
+  # pipeline.push @$other_blocks            S
+  pipeline.push @$blank                   S
+  pipeline.push @$set_realm               S, @settings.to_realm
+  pipeline.push @$write_to_file           S
   return PD.pull pipeline...
 
 
