@@ -16,11 +16,11 @@ codeblock line 2
 <raw>< !-- This will only appear in HTML source code in the `<head>` section --></raw>
 </append>
 
-> a quote
+> a blockquote...
 > ```
-> with code
+> ...with code...
 > ```
-> is possible
+> ...is possible
 
 simple paragraphs;
 some shorter...

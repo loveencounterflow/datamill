@@ -56,6 +56,14 @@ H                         = require './helpers'
   defaults = { from_realm: S.mirage.default_realm, }
   settings = { defaults..., settings..., }
   validate.datamill_run_phase_settings settings
+  # debug 'µ33344', jr S
+  # source    = H.new_db_source S
+  # pipeline  = []
+  # pipeline.push source
+  # pipeline.push transform
+  # pipeline.push H.$feed_db S
+  # pipeline.push PD.$drain => resolve()
+  # R = PD.pull pipeline...
   source    = PD.new_push_source()
   pipeline  = []
   pipeline.push source
@@ -99,6 +107,9 @@ H                         = require './helpers'
         start_vnr:    null
         stop_vnr:     null
         phase:        null  ### name of phase that queued control messages ###
+  #.........................................................................................................
+  ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
+  @_create_udfs mirage
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -213,30 +224,41 @@ H                         = require './helpers'
   #.........................................................................................................
   return null
 
+#-----------------------------------------------------------------------------------------------------------
+@_demo_list_html_rows = ( S ) -> new Promise ( resolve ) =>
+  #.......................................................................................................
+  pipeline  = []
+  pipeline.push H.new_db_source S, 'html'
+  pipeline.push PD.$show()
+  pipeline.push PD.$drain -> resolve()
+  PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@_demo = ->
+  await do => new Promise ( resolve ) =>
+    #.......................................................................................................
+    settings  =
+      # file_path:      project_abspath 'src/tests/demo-short-headlines.md'
+      # file_path:      project_abspath 'src/tests/demo.md'
+      file_path:      project_abspath 'src/tests/demo-medium.md'
+      # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
+    #.......................................................................................................
+    help "using database at #{settings.db_path}"
+    datamill  = await DATAMILL.create settings
+    await DATAMILL.parse_document   datamill
+    await @_demo_list_html_rows     datamill
+    #.......................................................................................................
+    # await H.show_overview           datamill
+    # await H.show_html       datamill
+    # resolve()
+    return null
+  return null
 
 ############################################################################################################
 unless module.parent?
+  DATAMILL = @
   do =>
-    #.......................................................................................................
-    settings =
-      # file_path:      project_abspath './src/tests/demo-short-headlines.md'
-      # file_path:      project_abspath './src/tests/demo.md'
-      file_path:      project_abspath './src/tests/demo-medium.md'
-      # file_path:      project_abspath './src/tests/demo-simple-paragraphs.md'
-      # db_path:        ':memory:'
-      db_path:        project_abspath './db/datamill.db'
-      icql_path:      project_abspath './db/datamill.icql'
-      default_key:    '^line'
-      default_dest:   'main'
-      default_realm:  'input'
-      clear:          true
-    help "using database at #{settings.db_path}"
-    datamill = await @create_datamill settings
-    await @parse_document   datamill
-    await H.show_overview   datamill
-    await H.show_html       datamill
-    return null
-
+    await DATAMILL._demo()
 
 
 
