@@ -10,7 +10,7 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
   -- .......................................................................................................
   create table sources (
     id              integer not null unique primary key, /* alias for system rowid */
-    path            text    not null );
+    path            text );
   insert into sources ( id,  path )
     values            (  1, $path );
   -- .......................................................................................................
