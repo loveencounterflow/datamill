@@ -46,7 +46,6 @@ DM                        = require '..'
 @$codeblocks = ( S ) ->
   ### Recognize codeblocks as regions delimited by triple backticks. Possible extensions include
   markup for source code category and double service as pre-formatted blocks. ###
-  ref               = 'bl/cd'
   pattern           = /// ^ (?<backticks> ``` ) $ ///
   within_codeblock  = false
   H.register_key S, '<codeblock',     { is_block: true,  }
@@ -67,16 +66,16 @@ DM                        = require '..'
       #.....................................................................................................
       if within_codeblock
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref, }
+        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb1', }
       #.....................................................................................................
       else
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref, }
+        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb2', }
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
       if within_codeblock
-        d = PD.set d, { key: '^literal', ref, }
+        d = PD.set d, { key: '^literal', ref: 'blk/cdb3', }
         send d
       else
         send d
@@ -88,7 +87,7 @@ DM                        = require '..'
   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
   in the future. ###
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
-  ref     = 'bl/hd'
+  ref     = 'blk/hd'
   #.........................................................................................................
   H.register_key S, '<h', { is_block: true, }
   H.register_key S, '>h', { is_block: true, }
@@ -123,7 +122,7 @@ DM                        = require '..'
       ### If the previous datom was the last in the document and we're within a blockwuote, close it: ###
       ### TAINT code duplication ###
       if within_quote
-        ref       = 'bl/bq1'
+        ref       = 'blk/bq1'
         send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
         DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
         $vnr      = null
@@ -137,7 +136,7 @@ DM                        = require '..'
       ### TAINT code duplication ###
       ### If we've found a text that has no blockquote markup, the quote has ended: ###
       if within_quote
-        ref       = 'bl/bq2'
+        ref       = 'blk/bq2'
         send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
         DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
         $vnr      = null
@@ -151,14 +150,14 @@ DM                        = require '..'
     $vnr    = VNR.deepen d.$vnr, 0
     #.......................................................................................................
     unless within_quote
-      ref         = 'bl/bq3'
+      ref         = 'blk/bq3'
       dest        = d.dest
       first_vnr   = $vnr
       send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
       send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
     #.......................................................................................................
     else
-      ref   = 'bl/bq4'
+      ref   = 'blk/bq4'
       send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
     #.......................................................................................................
     send stamp d
