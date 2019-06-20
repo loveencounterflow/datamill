@@ -245,8 +245,15 @@ DM                        = require '..'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
+@new_db_source = ( S, P... ) =>
+  R = PD.new_push_source()
+  @feed_source S, R, P...
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
 @feed_source = ( S, source, from_realm ) =>
   dbr           = S.mirage.db
+  from_realm   ?= 'input'
   #.........................................................................................................
   if DM._is_reprising S
     validate.datamill_inclusive_region S.control.reprise
