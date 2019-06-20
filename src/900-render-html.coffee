@@ -49,32 +49,15 @@ H                         = require './helpers'
 #...........................................................................................................
 DM                        = require '..'
 
-#-----------------------------------------------------------------------------------------------------------
-@$decorations = ( S ) -> $ { first, last, }, ( d, send ) =>
-  if d is first
-    send H.fresh_datom '^html', { text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
-  if d is last
-    send H.fresh_datom '^html', { text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
-  else
-    send d
-  return null
-
 # #-----------------------------------------------------------------------------------------------------------
-# @$p = ( S ) ->
-#   return PD.lookaround $ ( d3, send ) =>
-#     [ prv, d, nxt, ] = d3
-#     return send d unless select d, '^mktscript'
-#     text = d.text
-#     if select prv, '<p'
-#       text  = "<p>#{text}"
-#       send stamp prv
-#     if select nxt, '>p'
-#       text  = "#{text}</p>"
-#       send stamp nxt
-#     $vnr = VNR.deepen d.$vnr
-#     send H.fresh_datom '^html', { text: text, ref: 'rdh/p', $vnr, }
-#     send stamp d
-#     return null
+# @$decorations = ( S ) -> $ { first, last, }, ( d, send ) =>
+#   if d is first
+#     send H.fresh_datom '^html', { text: '<html><body>', ref: 'rdh/deco-1', $vnr: [ -Infinity, ], }
+#   if d is last
+#     send H.fresh_datom '^html', { text: '</body></html>', ref: 'rdh/deco-2', $vnr: [ Infinity, ], }
+#   else
+#     send d
+#   return null
 
 #-----------------------------------------------------------------------------------------------------------
 @$codeblocks = ( S ) ->
@@ -84,15 +67,16 @@ DM                        = require '..'
     if select prv,  '<codeblock'
       $vnr  = VNR.deepen prv.$vnr
       text  = "<pre><code>"
-      send H.fresh_datom '^html', { text, ref: 'rdh/cdbl', $vnr, }
+      debug 'µ44455', '$codeblocks', jr prv
+      send H.fresh_datom '^html', { text, ref: 'rdh/cdb1', $vnr, }
       send stamp prv
     if select nxt,  '>codeblock'
       $vnr  = VNR.deepen nxt.$vnr
       text  = "</code></pre>"
-      send H.fresh_datom '^html', { text, ref: 'rdh/cdbl', $vnr, }
+      send H.fresh_datom '^html', { text, ref: 'rdh/cdb2', $vnr, }
       send stamp nxt
     $vnr  = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { text: d.text, ref: 'rdh/cdbl', $vnr, }
+    send H.fresh_datom '^html', { text: d.text, ref: 'rdh/cdb3', $vnr, }
     send stamp d
 
 #-----------------------------------------------------------------------------------------------------------
@@ -121,8 +105,9 @@ DM                        = require '..'
 @$other_blocks = ( S ) ->
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
-  return $ ( d, send ) =>
+  return H.resume_from_db S, { from_realm: 'html', }, $ ( d, send ) =>
     return send d unless ( select d, '<>' ) and ( is_block d )
+    debug 'µ29882', '$other_blocks', jr d
     tagname = d.key[ 1 .. ]
     ### TAINT use proper HTML generation ###
     if select d, '<' then text = "<#{tagname}>"
