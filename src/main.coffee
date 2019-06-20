@@ -75,11 +75,21 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@create_datamill = ( settings ) ->
-  mirage  = await MIRAGE.create settings
-  ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
-  @_create_udfs mirage
-  R       =
+@create = ( settings ) ->
+  defaults =
+    file_path:      null
+    # db_path:        ':memory:'
+    db_path:        project_abspath 'db/datamill.db'
+    icql_path:      project_abspath 'db/datamill.icql'
+    default_key:    '^line'
+    default_dest:   'main'
+    default_realm:  'input'
+    clear:          true
+  #.........................................................................................................
+  settings  = { defaults..., settings..., }
+  mirage    = await MIRAGE.create settings
+  #.........................................................................................................
+  R         =
     mirage:       mirage
     control:
       active_phase: null
