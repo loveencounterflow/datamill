@@ -85,7 +85,6 @@ DM                        = require '..'
     if select prv,  '<codeblock'
       $vnr  = VNR.deepen prv.$vnr
       text  = "<pre><code>"
-      debug 'µ44455', '$codeblocks', jr prv
       send H.fresh_datom '^html', { text, ref: 'rdh/cdb1', $vnr, }
       send stamp prv
     if select nxt,  '>codeblock'
@@ -124,31 +123,31 @@ DM                        = require '..'
   pipeline.push H.$resume_from_db S, { realm: 'html', }
   return PD.pull pipeline...
 
-#-----------------------------------------------------------------------------------------------------------
-@$other_blocks = ( S ) ->
-  key_registry    = H.get_key_registry S
-  is_block        = ( d ) -> key_registry[ d.key ]?.is_block
-  return H.resume_from_db S, { realm: 'html', }, $ ( d, send ) =>
-    return send d unless ( select d, '<>' ) and ( is_block d )
-    debug 'µ29882', '$other_blocks', jr d
-    tagname = d.key[ 1 .. ]
-    ### TAINT use proper HTML generation ###
-    if select d, '<' then text = "<#{tagname}>"
-    else                  text = "</#{tagname}>"
-    $vnr = VNR.deepen d.$vnr
-    send H.fresh_datom '^html', { text: text, ref: 'rdh/ob', $vnr, }
-    send stamp d
-    return null
+# #-----------------------------------------------------------------------------------------------------------
+# @$other_blocks = ( S ) ->
+#   key_registry    = H.get_key_registry S
+#   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
+#   return H.resume_from_db S, { realm: 'html', }, $ ( d, send ) =>
+#     return send d unless ( select d, '<>' ) and ( is_block d )
+#     debug 'µ29882', '$other_blocks', jr d
+#     tagname = d.key[ 1 .. ]
+#     ### TAINT use proper HTML generation ###
+#     if select d, '<' then text = "<#{tagname}>"
+#     else                  text = "</#{tagname}>"
+#     $vnr = VNR.deepen d.$vnr
+#     send H.fresh_datom '^html', { text: text, ref: 'rdh/ob', $vnr, }
+#     send stamp d
+#     return null
 
 #-----------------------------------------------------------------------------------------------------------
-@$blank = ( S ) -> $ ( d, send ) =>
+# @$blank = ( S ) -> $ ( d, send ) =>
+@$blank = ( S ) -> H.resume_from_db_after S, { realm: 'html', }, $ ( d, send ) =>
   return send d unless select d, '^blank'
   $vnr = VNR.deepen d.$vnr
-  debug 'µ34322', ( jr $vnr ), ( jr d )
   send stamp d
-  if ( linecount = d.linecount ? 0 ) > 0
-    text = '\n'.repeat linecount - 1
-    send H.fresh_datom '^html', { text, ref: 'rdh/mkts-1', $vnr, }
+  if ( linecount = ( d.linecount ? 0 ) - 1 ) > -1
+    text = '\n'.repeat linecount
+    send H.fresh_datom '^html', { text, ref: 'rdh/blnk', $vnr, }
   return null
 
 
@@ -193,12 +192,6 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   pipeline.push @$headings                  S
   pipeline.push @$codeblocks                S
   pipeline.push @$blocks_with_mktscript     S
-  pipeline.push $watch ( d ) ->
-    debug 'µ59082', jr d
-    for row from S.mirage.dbw.$.query "select * from main where realm = 'html' order by vnr_blob;"
-      delete row.vnr_blob
-      debug 'µ33221', jr row
-  # pipeline.push @$other_blocks              S
   pipeline.push @$blank                     S
   pipeline.push H.$set_realm_where_missing  S, @settings.to_realm
   pipeline.push @$write_to_file             S
