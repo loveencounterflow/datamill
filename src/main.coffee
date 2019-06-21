@@ -150,41 +150,51 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@render_html = ( S ) -> new Promise ( resolve, reject ) =>
-  resolve await @parse_document S, [ './900-render-html', ]
+@render_html = ( S, settings ) -> new Promise ( resolve, reject ) =>
+  defaults  = { phase_names: [ './900-render-html', ], }
+  settings  = { defaults..., settings..., }
+  resolve await @parse_document S, settings
 
 #-----------------------------------------------------------------------------------------------------------
-@parse_document = ( S, phase_names = null ) -> new Promise ( resolve, reject ) =>
-  phase_names ?= [
-    './000-initialize'
-    './005-start-stop'
-    './006-ignore'
-    './010-1-whitespace'
-    './010-2-whitespace-dst'
-    './020-blocks'
-    './030-paragraphs'
-    './035-hunks'
-    './040-markdown-inline'
-    # # './030-escapes'
-    # # './035-special-forms'
-    './xxx-validation'
-    # './900-render-html'
-    ]
+@parse_document = ( S, settings ) -> new Promise ( resolve, reject ) =>
+  defaults =
+    quiet:        false
+    phase_names:  [
+      './000-initialize'
+      './005-start-stop'
+      './006-ignore'
+      './010-1-whitespace'
+      './010-2-whitespace-dst'
+      './020-blocks'
+      './030-paragraphs'
+      './035-hunks'
+      './040-markdown-inline'
+      # # './030-escapes'
+      # # './035-special-forms'
+      './xxx-validation'
+      # './900-render-html'
+      ]
+  settings  = { defaults..., settings..., }
+  validate.datamill_parse_document_settings settings
   #.........................................................................................................
   msg_1 = ->
+    return if settings.quiet
     nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} p#{pass} "
     help 'µ55567 ' + nrs_txt + ( CND.lime " phase #{phase_name} " )
   #.........................................................................................................
   msg_2 = ( phase_name ) ->
+    return if settings.quiet
     nrs_txt = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
     info 'µ22872', nrs_txt + CND.blue " finished reprise for #{phase_name}"
     info()
   #.........................................................................................................
   msg_2a = ( phase_name ) ->
+    return if settings.quiet
     info 'µ22872', CND.blue "continuing without limits"
     info()
   #.........................................................................................................
   msg_3 = ( message ) ->
+    return if settings.quiet
     nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
     info()
     info 'µ33324', nrs_txt + CND.blue " reprise for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
@@ -194,7 +204,7 @@ H                         = require './helpers'
       # ### TAINT use API ###
       # S.confine_to = null
       # S.confine_from_phase = null
-      for phase_name in phase_names
+      for phase_name in settings.phase_names
         @_set_active_phase S, phase_name
         # length_of_queue = @_length_of_control_queue S
         phase           = require phase_name

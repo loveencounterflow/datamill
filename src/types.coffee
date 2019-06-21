@@ -76,6 +76,13 @@ intertype                 = new Intertype module.exports
     # "x.transform is a function":          ( x ) -> @isa.function        x.transform
 
 #-----------------------------------------------------------------------------------------------------------
+@declare 'datamill_parse_document_settings', ( x ) ->
+  tests:
+    "x is a object":                      ( x ) -> @isa.object          x
+    "x.phase_names is a ?list":           ( x ) -> ( not x.phase_names? ) or ( @isa.list    x.phase_names )
+    "x.quiet is a ?boolean":              ( x ) -> ( not x.quiet?       ) or ( @isa.boolean x.quiet       )
+
+#-----------------------------------------------------------------------------------------------------------
 @declare 'datamill_resume_from_db_settings', ( x ) ->
   tests:
     "x is a object":                      ( x ) -> @isa.object          x
