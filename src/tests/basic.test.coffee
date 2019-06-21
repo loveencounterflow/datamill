@@ -63,21 +63,24 @@ H                         = require '../helpers'
     [ "A short text", "<p>A short text</p>", null, ]
     ["# A Headline","<h1>A Headline</h1>",null]
     ["\nA short text\n\n\n","\n<p>A short text</p>\n\n\n",null]
-    # ["# A Headline\n\nA paragraph","<h1>A Headline</h1>\n\n<p>A paragraph</p>",null]
+    ["First.\nSecond.","<p>First.\nSecond.</p>",null]
+    ["First.\n\nSecond.","<p>First.</p>\n\n<p>Second.</p>",null]
+    ["# A Headline\n\nA paragraph","<h1>A Headline</h1>\n\n<p>A paragraph</p>",null]
+    ["# A Headline\n\n```\nCode\n```","<h1>A Headline</h1>\n\n<pre><code>\nCode\n</code></pre>",null]
     ]
   #.........................................................................................................
   for [ probe, matcher, error, ] in probes_and_matchers
     await T.perform probe, matcher, error, -> new Promise ( resolve ) ->
       settings  = { text: probe, }
       datamill  = await DM.create settings
-      await DM.parse_document datamill
-      await DM.render_html    datamill
+      await DM.parse_document datamill, { quiet: true, }
+      await DM.render_html    datamill, { quiet: true, }
       pipeline  = []
       pipeline.push H.new_db_source datamill, 'html'
       pipeline.push $ ( d, send ) -> send d.text
       pipeline.push PD.$collect()
       pipeline.push $watch ( texts ) -> resolve texts.join '\n'
-      pipeline.push PD.$show()
+      # pipeline.push PD.$show()
       pipeline.push PD.$drain()
       PD.pull pipeline...
     # await H.show_overview   datamill
@@ -92,7 +95,7 @@ H                         = require '../helpers'
 ############################################################################################################
 unless module.parent?
   # test @, { timeout: 5000, }
-  test @[ "xxx" ]
+  test @[ "xxx" ], { timeout: 1e4, }
   # test @[ "wye with duplex pair"            ]
 
 
