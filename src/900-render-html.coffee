@@ -60,6 +60,24 @@ DM                        = require '..'
 #   return null
 
 #-----------------------------------------------------------------------------------------------------------
+@$headings = ( S ) ->
+  pipeline = []
+  pipeline.push H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
+    [ prv, d, nxt, ] = d3
+    return unless ( select prv, '<h' ) and ( select d, '^mktscript' ) and ( select nxt, '>h' )
+    $vnr    = VNR.deepen d.$vnr
+    tagname = "h#{prv.level}"
+    text    = "<#{tagname}>#{d.text}</#{tagname}>"
+    send H.fresh_datom '^html', { text, ref: 'rdh/h', $vnr, }
+    send stamp prv
+    send stamp d
+    send stamp nxt
+  #.........................................................................................................
+  ### Make sure ordering is preserved for downstream transforms: ###
+  pipeline.push H.$resume_from_db S, { realm: 'html', }
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
 @$codeblocks = ( S ) ->
   return H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
@@ -83,7 +101,8 @@ DM                        = require '..'
 @$blocks_with_mktscript = ( S ) ->
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
-  return PD.lookaround $ ( d3, send ) =>
+  pipeline        = []
+  pipeline.push PD.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
     return send d unless select d, '^mktscript'
     text = d.text
@@ -100,12 +119,16 @@ DM                        = require '..'
     send H.fresh_datom '^html', { text, ref: 'rdh/bwm', $vnr, }
     send stamp d
     return null
+  #.........................................................................................................
+  ### Make sure ordering is preserved for downstream transforms: ###
+  pipeline.push H.$resume_from_db S, { realm: 'html', }
+  return PD.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$other_blocks = ( S ) ->
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
-  return H.resume_from_db S, { from_realm: 'html', }, $ ( d, send ) =>
+  return H.resume_from_db S, { realm: 'html', }, $ ( d, send ) =>
     return send d unless ( select d, '<>' ) and ( is_block d )
     debug 'µ29882', '$other_blocks', jr d
     tagname = d.key[ 1 .. ]
@@ -121,14 +144,12 @@ DM                        = require '..'
 @$blank = ( S ) -> $ ( d, send ) =>
   return send d unless select d, '^blank'
   $vnr = VNR.deepen d.$vnr
+  debug 'µ34322', ( jr $vnr ), ( jr d )
+  send stamp d
   if ( linecount = d.linecount ? 0 ) > 0
     text = '\n'.repeat linecount - 1
     send H.fresh_datom '^html', { text, ref: 'rdh/mkts-1', $vnr, }
-  send stamp d
-
-#-----------------------------------------------------------------------------------------------------------
-@$set_realm = ( S, realm ) -> $ ( d, send ) =>
-  return send if d.realm? then d else PD.set d, { realm, }
+  return null
 
 
 #===========================================================================================================
@@ -148,7 +169,7 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
 #-----------------------------------------------------------------------------------------------------------
 @$write_to_file = ( S ) =>
   pipeline  = []
-  pipeline.push H.$resume_from_db S, { from_realm: 'html', }
+  pipeline.push H.$resume_from_db S, { realm: 'html', }
   pipeline.push PD.$filter ( d ) -> select d, '^html'
   pipeline.push $ ( d, send ) -> send d.text + '\n'
   pipeline.push PD.$send_as_first preamble
@@ -169,13 +190,18 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   H.register_realm  S, @settings.to_realm
   H.copy_realm      S, 'input', 'html'
   pipeline = []
-  # pipeline.push @$decorations S
-  pipeline.push @$codeblocks              S
-  pipeline.push @$blocks_with_mktscript   S
-  # pipeline.push @$other_blocks            S
-  pipeline.push @$blank                   S
-  pipeline.push @$set_realm               S, @settings.to_realm
-  pipeline.push @$write_to_file           S
+  pipeline.push @$headings                  S
+  pipeline.push @$codeblocks                S
+  pipeline.push @$blocks_with_mktscript     S
+  pipeline.push $watch ( d ) ->
+    debug 'µ59082', jr d
+    for row from S.mirage.dbw.$.query "select * from main where realm = 'html' order by vnr_blob;"
+      delete row.vnr_blob
+      debug 'µ33221', jr row
+  # pipeline.push @$other_blocks              S
+  pipeline.push @$blank                     S
+  pipeline.push H.$set_realm_where_missing  S, @settings.to_realm
+  pipeline.push @$write_to_file             S
   return PD.pull pipeline...
 
 
