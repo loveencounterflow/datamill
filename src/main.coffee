@@ -84,6 +84,7 @@ H                         = require './helpers'
 
 #-----------------------------------------------------------------------------------------------------------
 @create = ( settings ) ->
+  ### TAINT set active realm ###
   defaults =
     file_path:      null
     # db_path:        ':memory:'
@@ -149,9 +150,12 @@ H                         = require './helpers'
   return null
 
 #-----------------------------------------------------------------------------------------------------------
-@parse_document = ( S ) -> new Promise ( resolve, reject ) =>
-  limit       = Infinity
-  phase_names = [
+@render_html = ( S ) -> new Promise ( resolve, reject ) =>
+  resolve await @parse_document S, [ './900-render-html', ]
+
+#-----------------------------------------------------------------------------------------------------------
+@parse_document = ( S, phase_names = null ) -> new Promise ( resolve, reject ) =>
+  phase_names ?= [
     './000-initialize'
     './005-start-stop'
     './006-ignore'
@@ -164,7 +168,7 @@ H                         = require './helpers'
     # # './030-escapes'
     # # './035-special-forms'
     './xxx-validation'
-    './900-render-html'
+    # './900-render-html'
     ]
   #.........................................................................................................
   msg_1 = ->
