@@ -59,29 +59,30 @@ H                         = require '../helpers'
 
 #-----------------------------------------------------------------------------------------------------------
 @[ "xxx" ] = ( T, done ) ->
-  probes_and_matchers = []
-    # ["A *short* **demonstration** of `MKTScript`.",2,null]
-    # ["A *short **demonstration*** of `MKTScript`.",2,null]
-    # ]
+  probes_and_matchers = [
+    [ "A short text", "<p>A short text</p>", null, ]
+    ["# A Headline","<h1>A Headline</h1>",null]
+    ["\nA short text\n\n\n","\n<p>A short text</p>\n\n\n",null]
+    # ["# A Headline\n\nA paragraph","<h1>A Headline</h1>\n\n<p>A paragraph</p>",null]
+    ]
   #.........................................................................................................
-  await do => new Promise ( resolve ) =>
-    text      = """
-      a short text
-      """
-    settings  = { text, }
-    datamill  = await DM.create settings
-    await DM.parse_document datamill
-    pipeline  = []
-    pipeline.push H.new_db_source datamill, 'html'
-    pipeline.push PD.$show()
-    pipeline.push PD.$drain -> resolve()
-    PD.pull pipeline...
-
-  # await H.show_overview   datamill
-  # await H.show_html       datamill
-  # for [ probe, matcher, error, ] in probes_and_matchers
-  #   await T.perform probe, matcher, error, -> new Promise ( resolve ) ->
-  #     resolve null
+  for [ probe, matcher, error, ] in probes_and_matchers
+    await T.perform probe, matcher, error, -> new Promise ( resolve ) ->
+      settings  = { text: probe, }
+      datamill  = await DM.create settings
+      await DM.parse_document datamill
+      await DM.render_html    datamill
+      pipeline  = []
+      pipeline.push H.new_db_source datamill, 'html'
+      pipeline.push $ ( d, send ) -> send d.text
+      pipeline.push PD.$collect()
+      pipeline.push $watch ( texts ) -> resolve texts.join '\n'
+      pipeline.push PD.$show()
+      pipeline.push PD.$drain()
+      PD.pull pipeline...
+    # await H.show_overview   datamill
+    # await H.show_html       datamill
+    #     resolve null
   #.........................................................................................................
   defer -> done()
   return null
