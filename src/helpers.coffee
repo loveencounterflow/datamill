@@ -310,27 +310,44 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @$resume_from_db = ( S, settings ) ->
-  ### `$resume_from_db()` will either swallow all datoms or else feed them to the DB when `settings.feed_db` is
-  `true`; when the streram has ended, it will then re-read from the DB (using `settings.from_realm`). This
-  is handy to ensure that no stamped atoms are in the stream below this transform, and that all datoms are
-  properly ordered. ###
+  ### `$resume_from_db()` will feed all datoms to the DB when `settings.feed_db`; when the stream has ended,
+  it will then re-read from the DB (using `settings.from_realm`). This is handy to ensure that no stamped
+  datoms are in the stream below this transform, and that all datoms are properly ordered. ###
+  ### TAINT use active realm as soon as it becomes available; use API to retrieve it ###
   validate.datamill_resume_from_db_settings settings
   last      = Symbol 'last'
   source    = PD.new_push_source()
   pipeline  = []
-  pipeline.push @$feed_db S if settings.feed_db
+  ### TAINT make sure realm used here is same as for feed_source ###
+  pipeline.push @$set_realm_where_missing S, settings.realm
+  pipeline.push @$feed_db S
   pipeline.push $ { last, }, ( d, send ) =>
     return null unless d is last
-    @feed_source S, source, settings.from_realm
+    ### TAINT make sure realm used here is same as for set_realm_where_missing ###
+    @feed_source S, source, settings.realm
   pipeline.push PD.$wye source
   return PD.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
-@resume_from_db = ( S, settings, transform ) ->
+@resume_from_db_before = ( S, settings, transform ) ->
   pipeline  = []
   pipeline.push @$resume_from_db S, settings
   pipeline.push transform
   return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@resume_from_db_after = ( S, settings, transform ) ->
+  pipeline  = []
+  pipeline.push transform
+  pipeline.push @$resume_from_db S, settings
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@$set_realm_where_missing = ( S, realm ) ->
+  ### TAINT use active realm as soon as it becomes available; use API to retrieve it ###
+  realm = realm ? S.mirage.default_realm
+  return $ ( d, send ) =>
+    return send if d.realm? then d else PD.set d, { realm, }
 
 
 #===========================================================================================================
