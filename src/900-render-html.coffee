@@ -212,7 +212,7 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   pipeline.push @$blocks_with_mktscript     S
   pipeline.push @$blank                     S
   pipeline.push H.$set_realm_where_missing  S, @settings.to_realm
-  pipeline.push @$write_to_file             S
+  # pipeline.push @$write_to_file             S
   return PD.pull pipeline...
 
 
