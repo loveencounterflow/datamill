@@ -159,6 +159,18 @@ H                         = require './helpers'
   resolve await @parse_document S, settings
 
 #-----------------------------------------------------------------------------------------------------------
+@retrieve_html = ( S ) -> new Promise ( resolve ) =>
+  ### TAINT code duplication with `900-render-html#$write_to_file()` ###
+  collector = []
+  pipeline  = []
+  pipeline.push H.new_db_source S, 'html'
+  pipeline.push PD.$filter ( d ) -> select d, '^html'
+  pipeline.push $ ( d, send ) -> send d.text
+  pipeline.push PD.$collect { collector, }
+  pipeline.push PD.$drain -> resolve collector.join '\n'
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
 @parse_document = ( S, settings ) -> new Promise ( resolve, reject ) =>
   defaults =
     quiet:        false
