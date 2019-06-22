@@ -68,16 +68,16 @@ DM                        = require '..'
       #.....................................................................................................
       if within_codeblock
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb1', }
+        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb2', }
       #.....................................................................................................
       else
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb2', }
+        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb3', }
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
       if within_codeblock
-        d = PD.set d, { key: '^literal', ref: 'blk/cdb3', }
+        d = PD.set d, { key: '^literal', ref: 'blk/cdb4', }
         send d
       else
         send d
@@ -89,7 +89,6 @@ DM                        = require '..'
   check whether both prv and nxt lines are blank and if not so issue a warning; this detail may change
   in the future. ###
   pattern = /// ^ (?<hashes> \#+ ) (?<text> .* ) $ ///
-  ref     = 'blk/hd'
   #.........................................................................................................
   H.register_key S, '<h', { is_block: true, }
   H.register_key S, '>h', { is_block: true, }
@@ -102,9 +101,9 @@ DM                        = require '..'
     text  = match.groups.text.replace /^\s*(.*?)\s*$/g, '$1' ### TAINT use trim method ###
     dest  = d.dest
     $vnr  = VNR.deepen d.$vnr, 0
-    send H.fresh_datom '<h',    { level, $vnr: ( VNR.recede $vnr  ),  dest, ref, }
-    send H.fresh_datom '^line', { text,  $vnr,                        dest, ref, }
-    send H.fresh_datom '>h',    { level, $vnr: ( VNR.advance $vnr ),  dest, ref, }
+    send H.fresh_datom '<h',    { level, $vnr: ( VNR.recede $vnr  ),  dest, ref: 'blk/hd1', }
+    send H.fresh_datom '^line', { text,  $vnr,                        dest, ref: 'blk/hd2', }
+    send H.fresh_datom '>h',    { level, $vnr: ( VNR.advance $vnr ),  dest, ref: 'blk/hd3', }
     return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -124,12 +123,11 @@ DM                        = require '..'
       ### If the previous datom was the last in the document and we're within a blockwuote, close it: ###
       ### TAINT code duplication ###
       if within_quote
-        ref       = 'blk/bq1'
-        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
-        DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
+        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref: 'blk/bq1', }
+        DM.reprise S, { first_vnr, last_vnr: $vnr, ref: 'blk/bq2', }
         $vnr      = null
         first_vnr = null
-      return
+      return null
     #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
@@ -138,9 +136,8 @@ DM                        = require '..'
       ### TAINT code duplication ###
       ### If we've found a text that has no blockquote markup, the quote has ended: ###
       if within_quote
-        ref       = 'blk/bq2'
-        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref, }
-        DM.reprise S, { first_vnr, last_vnr: $vnr, ref, }
+        send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref: 'blk/bq3', }
+        DM.reprise S, { first_vnr, last_vnr: $vnr, ref: 'blk/bq4', }
         $vnr      = null
         first_vnr = null
       #.....................................................................................................
@@ -152,15 +149,14 @@ DM                        = require '..'
     $vnr    = VNR.deepen d.$vnr, 0
     #.......................................................................................................
     unless within_quote
-      ref         = 'blk/bq3'
       dest        = d.dest
       first_vnr   = $vnr
-      send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref, }
-      send H.fresh_datom '^line',       { text, dest, $vnr,                       ref, }
+      send H.fresh_datom '<blockquote', {       dest, $vnr: ( VNR.recede $vnr ),  ref: 'blk/bq5', }
+      send H.fresh_datom '^line',       { text, dest, $vnr,                       ref: 'blk/bq6', }
     #.......................................................................................................
     else
-      ref   = 'blk/bq4'
-      send H.fresh_datom '^line',       { text, dest, $vnr, ref, }
+      dest        = d.dest
+      send H.fresh_datom '^line',       { text, dest, $vnr, ref: 'blk/bq7', }
     #.......................................................................................................
     send stamp d
     within_quote = true
