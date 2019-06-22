@@ -124,7 +124,8 @@ DM                        = require '..'
       ### TAINT code duplication ###
       if within_quote
         send H.fresh_datom '>blockquote', { dest, $vnr: ( VNR.advance $vnr ), ref: 'blk/bq1', }
-        DM.reprise S, { first_vnr, last_vnr: $vnr, ref: 'blk/bq2', }
+        ### TAINT is a single `deepen()` enough to capture proper boundaries? ###
+        DM.reprise S, { first_vnr, last_vnr: ( VNR.deepen $vnr ), ref: 'blk/bq2', }
         $vnr      = null
         first_vnr = null
       return null
