@@ -55,7 +55,6 @@ DM                        = require '..'
   H.register_key S, '^literal-blank', { is_block: false, }
   #.........................................................................................................
   return $ ( d, send ) =>
-    debug 'µ10981', xr d
     if within_codeblock and select d, '^blank'
       return send PD.set d, { key: '^literal-blank', ref: 'blk/cdb1', }
     #.......................................................................................................
