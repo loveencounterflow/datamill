@@ -78,6 +78,23 @@ DM                        = require '..'
   return PD.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
+@$blockquotes = ( S ) ->
+  return $ ( d, send ) =>
+    if select d, '<blockquote'
+      $vnr  = VNR.deepen d.$vnr
+      text  = "<blockquote>"
+      send H.fresh_datom '^html', { text, ref: 'rdh/blqt1', $vnr, }
+      send stamp d
+    else if select d, '>blockquote'
+      $vnr  = VNR.deepen d.$vnr
+      text  = "</blockquote>"
+      send H.fresh_datom '^html', { text, ref: 'rdh/blqt2', $vnr, }
+      send stamp d
+    else
+      send d
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
 @$codeblocks = ( S ) ->
   return H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
@@ -190,6 +207,7 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   H.copy_realm      S, 'input', 'html'
   pipeline = []
   pipeline.push @$headings                  S
+  pipeline.push @$blockquotes               S
   pipeline.push @$codeblocks                S
   pipeline.push @$blocks_with_mktscript     S
   pipeline.push @$blank                     S

@@ -67,13 +67,15 @@ H                         = require '../helpers'
     ["First.\n\nSecond.","<p>First.</p>\n\n<p>Second.</p>",null]
     ["# A Headline\n\nA paragraph","<h1>A Headline</h1>\n\n<p>A paragraph</p>",null]
     ["# A Headline\n\n```\nCode\n```","<h1>A Headline</h1>\n\n<pre><code>\nCode\n</code></pre>",null]
+    ["# A Headline\n\n> Quote","<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote</p>\n</blockquote>",null]
+    ["# A Headline\n\n> Quote\n","<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote</p>\n</blockquote>\n",null]
     ]
   #.........................................................................................................
   for [ probe, matcher, error, ] in probes_and_matchers
     await T.perform probe, matcher, error, -> new Promise ( resolve ) ->
       settings  = { text: probe, }
       datamill  = await DM.create settings
-      await DM.parse_document datamill, { quiet: true, }
+      await DM.parse_document datamill #, { quiet: true, }
       await DM.render_html    datamill, { quiet: true, }
       pipeline  = []
       pipeline.push H.new_db_source datamill, 'html'
