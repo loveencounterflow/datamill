@@ -81,7 +81,8 @@ types                     = require './types'
   ### Make sure to include blanks as first and last lines in document or fragment. ###
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
-  return PD.mark_position $ ( pd, send ) =>
+  # return H.resume_from_db_after S, { realm: 'html', }, PD.mark_position $ ( pd, send ) =>
+  return H.leapfrog_stamped PD.mark_position $ ( pd, send ) =>
     { is_first
       is_last
       d       } = pd
