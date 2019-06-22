@@ -118,16 +118,21 @@ DM                        = require '..'
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
   pipeline        = []
-  pipeline.push PD.lookaround $ ( d3, send ) =>
+  pipeline.push H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
     return send d unless select d, '^mktscript'
     text = d.text
-    if is_block prv
+    ### TAINT use proper API to detect open, close ###
+    if ( is_block prv ) and ( prv.key.startsWith '<' )
       tagname = prv.key[ 1 .. ]
       ### TAINT use proper HTML generation ###
       text    = "<#{tagname}>#{text}"
       send stamp prv
-    if is_block nxt
+    ### TAINT use proper API to detect open, close ###
+    if ( is_block nxt ) and ( nxt.key.startsWith '>' )
+      # debug 'µ10981-1', xr prv
+      # debug 'µ10981-2', xr d
+      # debug 'µ10981-3', xr nxt
       tagname = nxt.key[ 1 .. ]
       text    = "#{text}</#{tagname}>"
       send stamp nxt
