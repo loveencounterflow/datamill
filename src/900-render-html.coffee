@@ -184,6 +184,7 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
 
 #-----------------------------------------------------------------------------------------------------------
 @$write_to_file = ( S ) =>
+  ### TAINT code duplication with `main#$retrieve_html()` ###
   pipeline  = []
   pipeline.push H.$resume_from_db S, { realm: 'html', }
   pipeline.push PD.$filter ( d ) -> select d, '^html'
