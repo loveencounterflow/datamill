@@ -144,9 +144,12 @@ H                         = require './helpers'
 @reprise = ( S, region ) =>
   validate.datamill_inclusive_region  region
   validate.nonempty_text              S.control.active_phase
+  ### TAINT use explicit datatype to test for additional condition ###
+  validate.nonempty_text              region.ref
   { first_vnr
-    last_vnr } = region
-  S.control.queue.push PD.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, }
+    last_vnr
+    ref       } = region
+  S.control.queue.push PD.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, ref, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -197,7 +200,7 @@ H                         = require './helpers'
     return if settings.quiet
     nrs_txt         = CND.reverse CND.yellow " r#{S.control.reprise_nr} "
     info()
-    info 'µ33324', nrs_txt + CND.blue " reprise for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr}"
+    info 'µ33324', nrs_txt + CND.blue " reprise for #{message.phase} with fragment #{jr message.first_vnr} <= vnr <= #{jr message.last_vnr} (ref: #{message.ref})"
   #.........................................................................................................
   loop
     try
