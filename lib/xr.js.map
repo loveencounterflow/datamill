@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "xr.js",
+  "sourceRoot": "..",
+  "sources": [
+    "src/xr.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAMA;EAAA;AAAA,MAAA,OAAA;;;EAIA,CAAA,CAAE,OAAF,CAAA,GAA4B,OAAA,CAAQ,MAAR,CAA5B,EAJA;;;EAQA,IAAC,CAAA,IAAD,GAAQ,QAAA,CAAE,CAAF,CAAA;WAAS,OAAA,CAAQ,CAAR,EACf;MAAA,MAAA,EAAkB,IAAlB;MACA,WAAA,EAAkB,KADlB;MAEA,cAAA,EAAkB,KAFlB;MAGA,KAAA,EAAkB;IAHlB,CADe;EAAT,EARR;;;EAeA,IAAC,CAAA,EAAD,GAAM,QAAA,CAAE,CAAF,CAAA;WAAS,OAAA,CAAQ,CAAR,EACb;MAAA,MAAA,EAAkB,KAAlB;MACA,WAAA,EAAkB,KADlB;MAEA,cAAA,EAAkB,KAFlB;MAGA,KAAA,EAAkB;IAHlB,CADa;EAAT;AAfN",
+  "sourcesContent": [
+    "\n\n\n\n\n\n'use strict'\n\n\n############################################################################################################\n{ inspect, }              = require 'util'\n\n\n#-----------------------------------------------------------------------------------------------------------\n@xrpr = ( x ) -> inspect x,\n  colors:           true\n  breakLength:      Infinity\n  maxArrayLength:   Infinity\n  depth:            Infinity\n\n#-----------------------------------------------------------------------------------------------------------\n@xr = ( x ) -> inspect x,\n  colors:           false\n  breakLength:      Infinity\n  maxArrayLength:   Infinity\n  depth:            Infinity\n\n\n"
+  ]
+}
