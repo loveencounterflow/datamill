@@ -51,9 +51,12 @@ types                     = require './types'
 @$validate_symmetric_keys = ( settings ) ->
   stack = []
   vnr   = null
-  return $ { last, }, ( d, send ) =>
+  return PD.mark_position $ ( pd, send ) =>
+    { is_first
+      is_last
+      d       } = pd
     #.......................................................................................................
-    if d is last
+    if is_last
       unless isa.empty stack
         is_vnr  = jr vnr
         ref     = if d.ref? then "ref: #{d.ref}" else "(no ref)"
