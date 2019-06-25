@@ -24,6 +24,8 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
 VNR                       = require './vnr'
+FS                        = require 'fs'
+PATH                      = require 'path'
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -178,26 +180,38 @@ DM                        = require '..'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-preamble = """
-  <style>
-    * { padding: 4px; outline: 2px dotted green; }
-    </style>
-  """
-
-#-----------------------------------------------------------------------------------------------------------
 ### TAINT refactor to PipeStreams ###
 PD.$send_as_first = ( x ) -> $ { first, }, ( d, send ) -> send if d is first then x else d
 PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  then x else d
 
 #-----------------------------------------------------------------------------------------------------------
-@$write_to_file = ( S ) =>
-  ### TAINT code duplication with `main#$retrieve_html()` ###
+@_get_preamble = ->
+  path = PATH.join __dirname, '../public/preamble.html'
+  return FS.readFileSync path, { encoding: 'utf-8', }
+
+#-----------------------------------------------------------------------------------------------------------
+@retrieve_html = ( S ) -> new Promise ( resolve ) =>
+  ### TAINT code duplication ###
+  collector = []
   pipeline  = []
-  pipeline.push H.$resume_from_db S, { realm: 'html', }
+  pipeline.push H.new_db_source S, 'html'
+  pipeline.push PD.$filter ( d ) -> select d, '^html'
+  pipeline.push $ ( d, send ) -> send d.text
+  pipeline.push PD.$collect { collector, }
+  pipeline.push PD.$send_as_first @_get_preamble S
+  pipeline.push PD.$drain -> resolve collector.join '\n'
+  return PD.pull pipeline...
+
+#-----------------------------------------------------------------------------------------------------------
+@write_to_file = ( S ) => new Promise ( resolve ) =>
+  ### TAINT code duplication ###
+  pipeline  = []
+  pipeline.push H.new_db_source S, 'html'
   pipeline.push PD.$filter ( d ) -> select d, '^html'
   pipeline.push $ ( d, send ) -> send d.text + '\n'
-  pipeline.push PD.$send_as_first preamble
-  pipeline.push PD.write_to_file '/tmp/datamill.html'
+  pipeline.push PD.$send_as_first @_get_preamble S
+  pipeline.push PD.$tee PD.write_to_file '/tmp/datamill.html'
+  pipeline.push PD.$drain -> resolve()
   return PD.$tee PD.pull pipeline...
 
 
