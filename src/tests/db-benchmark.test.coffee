@@ -15,7 +15,8 @@ help                      = CND.get_logger 'help',      badge
 whisper                   = CND.get_logger 'whisper',   badge
 echo                      = CND.echo.bind CND
 #...........................................................................................................
-jr                        = JSON.stringify
+{ jr }                    = CND
+after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
 #...........................................................................................................
 PD                        = require 'pipedreams'
 { $
@@ -157,9 +158,12 @@ unless module.parent?
       # file_path:      project_abspath 'src/tests/demo-medium.md'
       # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
   do =>
-    n        = 1000
-    text     = @get_random_text n, '/usr/share/dict/italian'
-    datamill = await @benchmark { n, text, resume_from_db: true, }
-    datamill = await @benchmark { n, text, resume_from_db: false, }
+    # after 10, =>
+      n        = 2000
+      text     = @get_random_text n, '/usr/share/dict/italian'
+      datamill = await @benchmark { n, text, resume_from_db: true, }
+      datamill = await @benchmark { n, text, resume_from_db: false, }
+
+      # after 1000, =>
     # await H.show_overview datamill
 
