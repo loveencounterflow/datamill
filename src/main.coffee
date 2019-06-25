@@ -262,12 +262,17 @@ H                         = require './helpers'
     #.......................................................................................................
     help "using database at #{settings.db_path}"
     datamill  = await DATAMILL.create settings
-    await DATAMILL.parse_document   datamill
-    await @_demo_list_html_rows     datamill
+    quiet     = false
+    quiet     = true
+    await DATAMILL.parse_document       datamill, { quiet, }
+    await @render_html                  datamill, { quiet, }
+    # await @_demo_list_html_rows         datamill
     #.......................................................................................................
-    # await H.show_overview           datamill
-    # await H.show_html       datamill
-    # resolve()
+    await H.show_overview               datamill
+    await H.show_html                   datamill
+    HTML = require './900-render-html'
+    await HTML.write_to_file datamill
+    resolve()
     return null
   return null
 
