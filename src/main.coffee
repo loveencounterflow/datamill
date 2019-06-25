@@ -88,8 +88,8 @@ H                         = require './helpers'
   defaults =
     file_path:      null
     # db_path:        ':memory:'
-    db_path:        project_abspath 'db/datamill.db'
-    icql_path:      project_abspath 'db/datamill.icql'
+    db_path:        H.project_abspath 'db/datamill.db'
+    icql_path:      H.project_abspath 'db/datamill.icql'
     default_key:    '^line'
     default_dest:   'main'
     default_realm:  'input'
@@ -276,6 +276,7 @@ unless module.parent?
   DATAMILL = @
   do =>
     await DATAMILL._demo()
+
 
 
 

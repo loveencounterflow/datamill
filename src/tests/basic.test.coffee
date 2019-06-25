@@ -106,10 +106,10 @@ as_numbered_lines = ( text ) ->
       if not quiet
         urge 'µ77782', '\n' + as_numbered_lines probe
         info 'µ77782', '\n' + as_numbered_lines result
+        # await H.show_overview   datamill
+        # await H.show_html       datamill
       resolve result
-    # await H.show_overview   datamill
-    # await H.show_html       datamill
-    #     resolve null
+      return null
   #.........................................................................................................
   defer -> done()
   return null
