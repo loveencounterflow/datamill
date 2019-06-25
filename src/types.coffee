@@ -86,7 +86,7 @@ intertype                 = new Intertype module.exports
 @declare 'datamill_resume_from_db_settings', ( x ) ->
   tests:
     "x is a object":                      ( x ) -> @isa.object          x
-    "x.phase is a datamill_realm":        ( x ) -> @isa.datamill_realm  x.realm
+    "x.realm is a datamill_realm":        ( x ) -> @isa.datamill_realm  x.realm
 
 # #-----------------------------------------------------------------------------------------------------------
 # @declare 'datamill_copy_realms_settings', ( x ) ->
