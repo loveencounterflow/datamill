@@ -16,7 +16,8 @@
     "to-width": "^1.0.3"
   },
   "devDependencies": {
-    "guy-test": "^1.4.0"
+    "guy-test": "^1.4.0",
+    "randomatic": "^3.1.1"
   },
   "scripts": {
     "test": "coffee --map -o lib -c src && node lib/tests/main.js"
