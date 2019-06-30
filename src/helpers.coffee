@@ -309,6 +309,39 @@ DM                        = require '..'
     return null
 
 #-----------------------------------------------------------------------------------------------------------
+@$feed_memory = ( S ) =>
+  return $watch ( d ) =>
+    ### TAINT how to convert vnr in ICQL? ###
+    row     = @row_from_datom S, d
+    methods = []
+    try
+      ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
+      ### NOTE Make sure to test first for `$fresh`/inserts, then for `$dirty`/updates, since a `$fresh`
+      datom may have undergone changes (which doesn't make the correct opertion an update). ###
+      if d.$fresh
+        methods.push 'insert fresh'
+        dbw.insert row
+      else if d.$dirty
+        ### NOTE force insert when update was without effect; this happens when `$vnr` was
+        affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        methods.push 'update dirty'
+        { changes, } = dbw.update row
+        if changes is 0
+          methods.push 'insert dirty'
+          dbw.insert row
+    catch error
+      warn 'µ12133', "when trying to #{methods.join ' -> '} row"
+      warn 'µ12133', jr row
+      warn 'µ12133', "an error occurred:"
+      warn 'µ12133', "#{error.message}"
+      if error.message.startsWith 'UNIQUE constraint failed'
+        urge 'µ88768', "conflict occurred because"
+        urge 'µ88768', jr @row_from_vnr S, d.$vnr
+        urge 'µ88768', "is already in DB"
+      throw error
+    return null
+
+#-----------------------------------------------------------------------------------------------------------
 @$resume_from_db = ( S, settings ) ->
   ### `$resume_from_db()` will feed all datoms to the DB when `settings.feed_db`; when the stream has ended,
   it will then re-read from the DB (using `settings.from_realm`). This is handy to ensure that no stamped
