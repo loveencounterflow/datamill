@@ -7,10 +7,10 @@
     "cnd": "^4.6.0",
     "color-convert": "^2.0.0",
     "icepick": "^2.4.0",
-    "icql": "^4.0.0",
+    "icql": "^5.0.0",
     "intertype": "^2.5.0",
     "markdown-it": "^8.4.2",
-    "mkts-mirage": "^4.1.2",
+    "mkts-mirage": "^6.0.0",
     "pipedreams": "^11.1.2",
     "timetunnel": "^1.0.1",
     "to-width": "^1.0.3"
