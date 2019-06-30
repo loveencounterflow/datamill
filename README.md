@@ -166,24 +166,24 @@ in the target document—cannot be achieved with `(SRC,VNR)` vectors. The only o
 vectors support for any two given documents `a`, `b` is `a[1], ... a[n], b[1], ... b[m]` (and the reverse
 arrangement where `b` comes first), i.e. concatenation. That is clearly not good enough if we want to be
 able to insert a file `b` in the middle of a containing file `a`. This is where **pieces** (PCE) come in. By
-prepending an PCE counter to the Lexicographic Index, we get `(PCE,SRC,VNR)` and we now can represent
+prepending an PCE counter to the Lexicographic Index, we get `(PCE,SRC,VNR)` and we can now represent
 sequences of embedding and embedded lines unambiguously and in an order-preserving manner:
 
 ```
- ( PCE, SRC, VNR )
- (   1,   5,   1 )  |  first line of file #5
- (   1,   5,   2 )  |
- (   1,   5,   3 )  |
-*(   1,   5,   4 )  |  <insert src=1/>
-                    |
- (   2,   1,   1 )  |  first line of file #1
- (   2,   1,   2 )  |
- (   2,   1,   3 )  |  last line of file #1
-                    |
- (   3,   5,   5 )  |  line #5 of file #5
- (   3,   5,   6 )  |
- (   3,   5,   7 )  |
- (   3,   5,   8 )  |  last line of file #5
+ ( PCE, SRC, VNR,  )
+ (   1,   1,   1,  )  |  first line of file SRC:1
+ (   1,   1,   2,  )  |
+ (   1,   1,   3,  )  |
+*(   1,   1,   4,  )  |  <insert src=2/>
+                      |
+ (   2,   2,   1,  )  |  first line of file SRC:2
+ (   2,   2,   2,  )  |
+ (   2,   2,   3,  )  |  last line of file SRC:2
+                      |
+ (   3,   5,   5,  )  |  line #5 of file SRC:1
+ (   3,   5,   6,  )  |
+ (   3,   5,   7,  )  |
+ (   3,   5,   8,  )  |  last line of file SRC:1
 ```
 
 
@@ -238,7 +238,17 @@ of the organization of the rows in the database.
 
 ## The DataMill Primary Key (LDX)
 
-`LDX: ( RLM, DCK, PCE, SRC, VNR..., )`
+The Primary Key is called LDX (for Lexicographic Index) as is composed of five or more integers: The Realm
+RLM (which identifies the source and/or target of processing), the Deck DCK (which enumerates the functional
+parts of documents), the Piece PCE (that keeps track of embedded parts), the Source SRC (enumerating the
+source files), and finally, the variable-length Vectorial Number VNR (which starts with the line number of
+the respective source file and has additional positions added wherever a processing step inserted material):
+
+```
+LDX: ( RLM, DCK, PCE, SRC, VNR..., )
+```
+
+
 
 
 
