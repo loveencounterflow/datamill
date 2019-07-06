@@ -64,7 +64,7 @@ types                     = require './types'
     when 1
       lnr = @_get_lnr rows[ 0 ]
       @ignore_rows S, 1, lnr
-      info "µ33421 document start found on line #{lnr}"
+      # info "µ33421 document start found on line #{lnr}"
     else
       lnrs = ( ( @_get_lnr row ) for row in rows ).join ', '
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one allowed (lines #{lnrs})"
@@ -81,7 +81,7 @@ types                     = require './types'
     when 1
       lnr = @_get_lnr rows[ 0 ]
       @ignore_rows S, lnr
-      info "µ33421 document stop found on line #{lnr}"
+      # info "µ33421 document stop found on line #{lnr}"
     else
       lnrs = ( ( @_get_lnr row ) for row in rows ).join ', '
       throw new Error "µ22231 found #{size} #{pattern} tags, only up to one allowed (lines #{lnrs})"
