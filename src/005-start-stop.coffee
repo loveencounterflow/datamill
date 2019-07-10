@@ -21,12 +21,12 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 VNR                       = require './vnr'
 #...........................................................................................................
+SP                        = require 'steampipes'
 PD                        = require 'pipedreams'
 { $
-  $watch
-  $async
-  select
-  stamp }                 = PD
+  $watch }                = SP.export()
+{ select
+  stamp }                 = PD.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -102,5 +102,5 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$mark_start_and_stop   S
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 

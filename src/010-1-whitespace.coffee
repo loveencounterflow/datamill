@@ -22,12 +22,12 @@ last                      = Symbol 'last'
 VNR                       = require './vnr'
 DM                        = require '..'
 #...........................................................................................................
+SP                        = require 'steampipes'
 PD                        = require 'pipedreams'
 { $
-  $watch
-  $async
-  select
-  stamp }                 = PD
+  $watch }                = SP.export()
+{ select
+  stamp }                 = PD.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -74,7 +74,7 @@ types                     = require './types'
   #.........................................................................................................
   pipeline.push $group()
   pipeline.push $unpack()
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$ensure_blanks_at_ends = ( S ) ->
@@ -121,5 +121,5 @@ types                     = require './types'
   pipeline.push @$trim                    S
   pipeline.push @$group_blank_lines       S
   pipeline.push @$ensure_blanks_at_ends   S
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 

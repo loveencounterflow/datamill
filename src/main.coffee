@@ -25,12 +25,12 @@ last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
 VNR                       = require './vnr'
 #...........................................................................................................
+SP                        = require 'steampipes'
 PD                        = require 'pipedreams'
 { $
-  $watch
-  $async
-  select
-  stamp }                 = PD
+  $watch }                = SP.export()
+{ select
+  stamp }                 = PD.export()
 #...........................................................................................................
 @types                    = require './types'
 { isa
@@ -62,15 +62,15 @@ H                         = require './helpers'
   # pipeline.push source
   # pipeline.push transform
   # pipeline.push H.$feed_db S
-  # pipeline.push PD.$drain => resolve()
-  # R = PD.pull pipeline...
-  source    = PD.new_push_source()
+  # pipeline.push SP.$drain => resolve()
+  # R = SP.pull pipeline...
+  source    = SP.new_push_source()
   pipeline  = []
   pipeline.push source
   pipeline.push transform
   pipeline.push H.$feed_db S
-  pipeline.push PD.$drain => resolve()
-  R = PD.pull pipeline...
+  pipeline.push SP.$drain -> resolve()
+  R = SP.pull pipeline...
   H.feed_source S, source, settings.from_realm
   return null
 
@@ -247,8 +247,8 @@ H                         = require './helpers'
   pipeline  = []
   pipeline.push H.new_db_source S, 'html'
   pipeline.push PD.$show()
-  pipeline.push PD.$drain -> resolve()
-  PD.pull pipeline...
+  pipeline.push SP.$drain -> resolve()
+  SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @_demo = ->
@@ -260,8 +260,9 @@ H                         = require './helpers'
       file_path:      project_abspath 'src/tests/demo-medium.md'
       # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
     #.......................................................................................................
-    help "using database at #{settings.db_path}"
     datamill  = await DATAMILL.create settings
+    # debug 'µ55663', ( k for k of datamill.mirage )
+    help "input: #{datamill.mirage.file_path}"
     quiet     = false
     quiet     = true
     await DATAMILL.parse_document       datamill, { quiet, }

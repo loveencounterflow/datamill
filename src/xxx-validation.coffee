@@ -31,7 +31,7 @@ PD                        = require 'pipedreams'
   $watch
   $async
   select
-  stamp }                 = PD
+  stamp }                 = PD.export()
 #...........................................................................................................
 types                     = require './types'
 { isa

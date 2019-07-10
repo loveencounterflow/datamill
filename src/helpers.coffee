@@ -23,12 +23,12 @@ VNR                       = require './vnr'
 { to_width
   width_of }              = require 'to-width'
 #...........................................................................................................
+SP                        = require 'steampipes'
 PD                        = require 'pipedreams'
 { $
-  $watch
-  $async
-  select
-  stamp }                 = PD
+  $watch }                = SP.export()
+{ select
+  stamp }                 = PD.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -94,10 +94,10 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 @leapfrog_stamped = ( transform ) ->
-  return PD.leapfrog ( ( d ) -> PD.is_stamped d ), transform
+  return SP.leapfrog ( ( d ) -> PD.is_stamped d ), transform
 
 #-----------------------------------------------------------------------------------------------------------
-@$filter_stamped = -> PD.$filter ( d ) -> not PD.is_stamped d
+@$filter_stamped = -> SP.$filter ( d ) -> not PD.is_stamped d
 
 
 #===========================================================================================================
@@ -246,7 +246,7 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @new_db_source = ( S, P... ) =>
-  R = PD.new_push_source()
+  R = SP.new_push_source()
   @feed_source S, R, P...
   return R
 
@@ -349,7 +349,7 @@ DM                        = require '..'
   ### TAINT use active realm as soon as it becomes available; use API to retrieve it ###
   validate.datamill_resume_from_db_settings settings
   last      = Symbol 'last'
-  source    = PD.new_push_source()
+  source    = SP.new_push_source()
   pipeline  = []
   ### TAINT make sure realm used here is same as for feed_source ###
   pipeline.push @$set_realm_where_missing S, settings.realm
@@ -358,22 +358,22 @@ DM                        = require '..'
     return null unless d is last
     ### TAINT make sure realm used here is same as for set_realm_where_missing ###
     @feed_source S, source, settings.realm
-  pipeline.push PD.$wye source
-  return PD.pull pipeline...
+  pipeline.push SP.$wye source
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @resume_from_db_before = ( S, settings, transform ) ->
   pipeline  = []
   pipeline.push @$resume_from_db S, settings
   pipeline.push transform
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @resume_from_db_after = ( S, settings, transform ) ->
   pipeline  = []
   pipeline.push transform
   pipeline.push @$resume_from_db S, settings
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$set_realm_where_missing = ( S, realm ) ->
