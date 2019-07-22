@@ -24,7 +24,7 @@ PD                        = require 'pipedreams'
   $show
   $drain
   stamp
-  select }                = PD
+  select }                = PD.export()
 H                         = require '../helpers'
 DATAMILL                  = require '../..'
 { isa
