@@ -18,7 +18,7 @@ PATH                      = require 'path'
 FS                        = require 'fs'
 OS                        = require 'os'
 test                      = require 'guy-test'
-glob                      = require 'globby'
+glob                      = require 'glob'
 
 
 
