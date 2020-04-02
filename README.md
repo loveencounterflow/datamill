@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [DataMill](#datamill)
+- [Development Outlook](#development-outlook)
+- [Parts of Processing](#parts-of-processing)
+  - [Phases](#phases)
+  - [Repetition](#repetition)
+  - [Reprise](#reprise)
+  - [Stamping](#stamping)
+  - [Row Insertion](#row-insertion)
+  - [Realms (RLM)](#realms-rlm)
+- [Parts of Documents](#parts-of-documents)
+  - [Source (SRC)](#source-src)
+  - [Pieces (PCE)](#pieces-pce)
+  - [Deck (DCK)](#deck-dck)
+  - [Vectorial Line Number (VNR)](#vectorial-line-number-vnr)
+  - [The DataMill Primary Key (LDX)](#the-datamill-primary-key-ldx)
+  - [Todo](#todo)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 # DataMill
 
@@ -248,6 +271,13 @@ the respective source file and has additional positions added wherever a process
 LDX: ( RLM, DCK, PCE, SRC, VNR..., )
 ```
 
+
+## Todo
+
+* [ ] use [puppeteer](https://github.com/GoogleChrome/puppeteer) (also see [pptr.dev](https://pptr.dev))
+  to produce PDF output
+* [ ] use SQLite3 `:memory:` DB location to speed up processing, SQL `vacuum to 'file'` to persist data
+  (see also `interplot`)
 
 
 
