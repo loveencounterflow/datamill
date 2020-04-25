@@ -277,10 +277,9 @@ H                         = require './helpers'
   return null
 
 ############################################################################################################
-unless module.parent?
+if module is require.main then do =>
   DATAMILL = @
-  do =>
-    await DATAMILL._demo()
+  await DATAMILL._demo()
 
 
 
