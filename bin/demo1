@@ -1,0 +1,10 @@
+#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+# home="$(realpath "$(realpath "${BASH_SOURCE[0]}" | xargs dirname)"/..)"
+# cd "$home"
+
+
+nodexh lib/main.js 2>&1 | less -SR#5
+
+
