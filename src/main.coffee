@@ -46,6 +46,7 @@ H                         = require './helpers'
   cwd_relpath
   here_abspath
   project_abspath }       = H
+DATAMILL                  = @
 
 
 
@@ -278,7 +279,6 @@ H                         = require './helpers'
 
 ############################################################################################################
 if module is require.main then do =>
-  DATAMILL = @
   await DATAMILL._demo()
 
 
