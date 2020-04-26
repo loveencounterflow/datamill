@@ -1,6 +1,6 @@
 {
   "name": "datamill",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A DB-backed text document processor built on pipedreams, icql and mkts-mirage.",
   "main": "lib/main.js",
   "dependencies": {
