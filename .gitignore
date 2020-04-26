@@ -26,3 +26,8 @@ node_modules
 db/datamill.db
 db/datamill.db-shm
 db/datamill.db-wal
+
+*.sublime-project
+*.sublime-workspace
+
+
