@@ -7,6 +7,7 @@
     "cnd": "^5.3.2",
     "color-convert": "^2.0.1",
     "icql": "^5.1.4",
+    "intertext": "^2.1.0",
     "intertype": "^3.4.1",
     "markdown-it": "^10.0.0",
     "mkts-mirage": "^6.0.1",
