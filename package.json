@@ -4,7 +4,7 @@
   "description": "A DB-backed text document processor built on pipedreams, icql and mkts-mirage.",
   "main": "lib/main.js",
   "dependencies": {
-    "cnd": "^5.3.2",
+    "cnd": "^6.0.0",
     "color-convert": "^2.0.1",
     "icql": "^5.1.4",
     "intertext": "^2.1.0",
