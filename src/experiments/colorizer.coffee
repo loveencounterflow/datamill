@@ -4,7 +4,6 @@
 'use strict'
 
 ############################################################################################################
-H                         = require '../helpers'
 CND                       = require 'cnd'
 rpr                       = CND.rpr
 badge                     = 'DATAMILL/EXPERIMENTS/COLORIZER'
@@ -272,7 +271,7 @@ declare 'hexcolor',
     debug c ( @ansi24bit_code_from_name name ) + "  #{name}  "
   return null
 
-# @demo_truecolor()
+@demo_truecolor()
 
 
 
