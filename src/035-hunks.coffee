@@ -20,7 +20,6 @@ echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
 #...........................................................................................................
-require                   './exception-handler'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
 VNR                       = require './vnr'
