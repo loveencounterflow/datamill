@@ -18,27 +18,14 @@ echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
 #...........................................................................................................
-require                   '../exception-handler'
-first                     = Symbol 'first'
-last                      = Symbol 'last'
-VNR                       = require '../vnr'
-#...........................................................................................................
-PD                        = require 'pipedreams'
-{ $
-  $watch
-  $async
-  select
-  stamp }                 = PD.export()
-#...........................................................................................................
 types                     = require '../types'
 { isa
   validate
   declare
   size_of
   type_of }               = types
-
 convert_color             = require 'color-convert'
-X                         = require 'cnd/lib/TRM-VT100-ANALYZER'
+# X                         = require 'cnd/lib/TRM-VT100-ANALYZER'
 CRYPTO                    = require 'crypto'
 
 
