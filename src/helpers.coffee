@@ -35,6 +35,7 @@ types                     = require './types'
   validate
   cast
   declare
+  equals
   size_of
   type_of }               = types
 XXX_COLORIZER             = require './experiments/colorizer'
@@ -121,8 +122,8 @@ DM                        = require '..'
 @register_new_key = ( S, key, settings ) =>
   validate.datamill_register_key_settings
   db              = S.mirage.dbw
-  is_block        = cast.boolean 'number', ( settings.is_block        ? false )
-  has_paragraphs  = cast.boolean 'number', ( settings.has_paragraphs  ? false )
+  is_block        = cast 'boolean', 'float', ( settings.is_block        ? false )
+  has_paragraphs  = cast 'boolean', 'float', ( settings.has_paragraphs  ? false )
   try
     db.register_key { key, is_block, has_paragraphs, }
   catch error
@@ -142,9 +143,9 @@ DM                        = require '..'
   unless ( entry = db.$.first_row db.get_key_entry { key, } )?
     return @register_new_key S, key, settings
   definition            = { key, is_block, has_paragraphs, }
-  entry.is_block        = cast.number 'boolean', ( entry.is_block       ? 0 )
-  entry.has_paragraphs  = cast.number 'boolean', ( entry.has_paragraphs ? 0 )
-  unless CND.equals definition, entry
+  entry.is_block        = cast 'float', 'boolean', ( entry.is_block       ? 0 )
+  entry.has_paragraphs  = cast 'float', 'boolean', ( entry.has_paragraphs ? 0 )
+  unless equals definition, entry
     throw new Error "µ87332 given key definition #{jr definition} doesn't match esisting entry #{rpr entry}"
   return null
 
@@ -186,7 +187,7 @@ DM                        = require '..'
     select_row = ( rowid, vnr, dest, sid, realm, ref, key, text, p ) =>
       row = { vnr, dest, sid, realm, ref, key, text, p, }
       d   = @datom_from_row S, row
-      return cast.boolean 'number', selector d
+      return cast 'boolean', 'float', selector d
   #.........................................................................................................
   else
     select_row = ( rowid, vnr, dest, sid, realm, ref, key, text, p ) => 1
