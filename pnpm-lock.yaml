@@ -5,9 +5,9 @@ dependencies:
   intertext: 5.0.0
   intertype: 7.6.3
   markdown-it: 12.0.4
-  mkts-mirage: 6.2.0
+  mkts-mirage: 6.2.1
   pipedreams: 12.1.1
-  timetunnel: 1.0.2
+  timetunnel: 1.1.0
   to-width: 1.0.4
 devDependencies:
   glob: 7.1.6
@@ -823,7 +823,7 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
-  /mkts-mirage/6.2.0:
+  /mkts-mirage/6.2.1:
     dependencies:
       cnd: 9.2.1
       icql: 5.2.0
@@ -831,7 +831,7 @@ packages:
       mkdirp: 1.0.4
     dev: false
     resolution:
-      integrity: sha512-AWj/L2RrM1TWIrlmM0NLbNOaQjjImNK8bfUkFdtRziqTtsl/2/fld9BVeOtzC0xDZEY35byIokXSK8J6Jg0h1Q==
+      integrity: sha512-cfUsFZwX8ZqAZrlf8dl9c+en4Kfn4x6SNQERZqDM60WTXZZD5U8hcs44JIiTGuCUAHOaRmPGmuEG8f214yEuuw==
   /ms/2.1.2:
     dev: false
     resolution:
@@ -1354,14 +1354,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==
-  /timetunnel/1.0.2:
+  /timetunnel/1.1.0:
     dependencies:
-      cnd: 5.3.2
-      intertype: 3.4.1
-      multimix: 2.2.1
+      cnd: 9.2.1
+      intertype: 7.6.3
+      multimix: 5.0.0
     dev: false
     resolution:
-      integrity: sha512-L7TM0vv+Sbu5JGhZVZ6Te5NWfDnuqrJvbjes7HlYW1MbD/WCQXHAYW1kfa0S1kQmke2eRWuy8O1DH9Xxov0jFQ==
+      integrity: sha512-2I4ogM6crcBgp9zHtxz5vsNVvUelFBpWZJbiUymhqnIUoCeNxKV1qwxaejGKtph0420e2ClnlQCR0/qYe2LJdQ==
   /timsort/0.3.0:
     dev: false
     resolution:
@@ -1492,7 +1492,7 @@ specifiers:
   intertext: 5.0.0
   intertype: 7.6.3
   markdown-it: 12.0.4
-  mkts-mirage: 6.2.0
+  mkts-mirage: 6.2.1
   pipedreams: ^12.1.1
-  timetunnel: ^1.0.2
+  timetunnel: 1.1.0
   to-width: ^1.0.4
