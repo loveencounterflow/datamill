@@ -13,7 +13,7 @@
     "mkts-mirage": "6.2.1",
     "pipedreams": "^12.1.1",
     "timetunnel": "1.1.0",
-    "to-width": "^1.0.4"
+    "to-width": "1.1.0"
   },
   "devDependencies": {
     "glob": "^7.1.6",

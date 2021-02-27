@@ -8,7 +8,7 @@ dependencies:
   mkts-mirage: 6.2.1
   pipedreams: 12.1.1
   timetunnel: 1.1.0
-  to-width: 1.0.4
+  to-width: 1.1.0
 devDependencies:
   glob: 7.1.6
   guy-test: 4.0.1
@@ -1378,6 +1378,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-jQi7f49PAORVemMB/tM8xQflwh8T186KgPSt07DTUMxldakvb+1qdYxeZ2TDMiMEhJp1inkbb26VUbUzk+yMgw==
+  /to-width/1.1.0:
+    dependencies:
+      cnd: 9.2.1
+      string-width: 4.2.1
+      wcstring: 2.1.1
+    dev: false
+    resolution:
+      integrity: sha512-zN1F5YSsKkI8MW+JGOE3neo3SVGUODZhMqjiEV7a2LSaAFjUkN1hcsv7Y+PJSayxAJ6ZmppfQZc4TuOAW8wIwg==
   /trycatch/1.5.21:
     dependencies:
       hookit: 1.1.3
@@ -1495,4 +1503,4 @@ specifiers:
   mkts-mirage: 6.2.1
   pipedreams: ^12.1.1
   timetunnel: 1.1.0
-  to-width: ^1.0.4
+  to-width: 1.1.0
