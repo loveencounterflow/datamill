@@ -19,17 +19,23 @@ echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
 #...........................................................................................................
+debug '^3334-1^'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
+debug '^3334-2^'
 MIRAGE                    = require 'mkts-mirage'
+debug '^3334-3^'
 VNR                       = require './vnr'
+debug '^3334-4^'
 #...........................................................................................................
 PD                        = require 'pipedreams'
+debug '^3334-5^'
 { $
   $watch
   $async
   select
   stamp }                 = PD.export()
+debug '^3334-6^'
 #...........................................................................................................
 @types                    = require './types'
 { isa
@@ -39,13 +45,16 @@ PD                        = require 'pipedreams'
   last_of
   size_of
   type_of }               = @types
+debug '^3334-7^'
 #...........................................................................................................
 H                         = require './helpers'
+debug '^3334-8^'
 { cwd_abspath
   cwd_relpath
   here_abspath
   project_abspath }       = H
 DATAMILL                  = @
+debug '^3334-9^'
 
 
 
@@ -252,16 +261,21 @@ DATAMILL                  = @
 
 #-----------------------------------------------------------------------------------------------------------
 @_demo = ->
+  debug '^3334-10^'
   await do => new Promise ( resolve ) =>
     #.......................................................................................................
+    debug '^3334-11^'
     settings  =
       # file_path:      project_abspath 'src/tests/demo-short-headlines.md'
       # file_path:      project_abspath 'src/tests/demo.md'
       file_path:      project_abspath 'src/tests/demo-medium.md'
       # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
     #.......................................................................................................
+    debug '^3334-12^'
     help "using database at #{settings.db_path}"
+    debug '^3334-13^'
     datamill  = await DATAMILL.create settings
+    debug '^3334-14^'
     quiet     = false
     quiet     = true
     await DATAMILL.parse_document       datamill, { quiet, }
@@ -278,6 +292,7 @@ DATAMILL                  = @
 
 ############################################################################################################
 if module is require.main then do =>
+  debug '^3334-15^'
   await DATAMILL._demo()
 
 

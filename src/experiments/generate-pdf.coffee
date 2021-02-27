@@ -6,7 +6,6 @@
 
 
 ############################################################################################################
-require                   '../exception-handler'
 CND                       = require 'cnd'
 rpr                       = CND.rpr
 badge                     = 'INTERPLOT/DEMO-PUPPETEER'
