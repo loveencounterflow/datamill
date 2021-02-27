@@ -94,6 +94,7 @@ debug '^3334-9^'
 #-----------------------------------------------------------------------------------------------------------
 @create = ( settings ) ->
   ### TAINT set active realm ###
+  debug '^3334-10^'
   defaults =
     file_path:      null
     # db_path:        ':memory:'
@@ -104,8 +105,10 @@ debug '^3334-9^'
     default_realm:  'input'
     clear:          true
   #.........................................................................................................
+  debug '^3334-11^'
   settings  = { defaults..., settings..., }
   mirage    = await MIRAGE.create settings
+  debug '^3334-12^'
   #.........................................................................................................
   R         =
     mirage:       mirage
@@ -120,6 +123,7 @@ debug '^3334-9^'
   #.........................................................................................................
   ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
   @_create_udfs mirage
+  debug '^3334-13^'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -261,21 +265,21 @@ debug '^3334-9^'
 
 #-----------------------------------------------------------------------------------------------------------
 @_demo = ->
-  debug '^3334-10^'
+  debug '^3334-14^'
   await do => new Promise ( resolve ) =>
     #.......................................................................................................
-    debug '^3334-11^'
+    debug '^3334-15^'
     settings  =
       # file_path:      project_abspath 'src/tests/demo-short-headlines.md'
       # file_path:      project_abspath 'src/tests/demo.md'
       file_path:      project_abspath 'src/tests/demo-medium.md'
       # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
     #.......................................................................................................
-    debug '^3334-12^'
+    debug '^3334-16^'
     help "using database at #{settings.db_path}"
-    debug '^3334-13^'
+    debug '^3334-17^'
     datamill  = await DATAMILL.create settings
-    debug '^3334-14^'
+    debug '^3334-18^'
     quiet     = false
     quiet     = true
     await DATAMILL.parse_document       datamill, { quiet, }
@@ -292,7 +296,7 @@ debug '^3334-9^'
 
 ############################################################################################################
 if module is require.main then do =>
-  debug '^3334-15^'
+  debug '^3334-19^'
   await DATAMILL._demo()
 
 
