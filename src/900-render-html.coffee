@@ -26,7 +26,7 @@ VNR                       = require './vnr'
 FS                        = require 'fs'
 PATH                      = require 'path'
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $async

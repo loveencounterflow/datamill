@@ -23,7 +23,7 @@ VNR                       = require './vnr'
 { to_width
   width_of }              = require 'to-width'
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $async

@@ -21,7 +21,7 @@ FS                        = require 'fs'
 OS                        = require 'os'
 test                      = require 'guy-test'
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $async }                = PD.export()
 #...........................................................................................................
@@ -34,7 +34,7 @@ defer                     = setImmediate
 { inspect, }              = require 'util'
 xrpr                      = ( x ) -> inspect x, { colors: yes, breakLength: Infinity, maxArrayLength: Infinity, depth: Infinity, }
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $async

@@ -25,7 +25,7 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 VNR                       = require './vnr'
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $async
@@ -46,7 +46,7 @@ types                     = require './types'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-### TAINT consider to move this to pipedreams ###
+### TAINT consider to move this to steampipes ###
 @$validate_symmetric_keys = ( settings ) ->
   stack = []
   vnr   = null

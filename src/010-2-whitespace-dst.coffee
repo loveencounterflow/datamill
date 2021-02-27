@@ -21,7 +21,7 @@ last                      = Symbol 'last'
 VNR                       = require './vnr'
 DM                        = require '..'
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $async

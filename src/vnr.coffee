@@ -17,7 +17,7 @@ whisper                   = CND.get_logger 'whisper',   badge
 echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 #...........................................................................................................
 types                     = require './types'
 { isa

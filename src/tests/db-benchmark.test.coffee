@@ -18,7 +18,7 @@ echo                      = CND.echo.bind CND
 { jr }                    = CND
 after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
 #...........................................................................................................
-PD                        = require 'pipedreams'
+PD                        = require 'steampipes'
 { $
   $watch
   $show
