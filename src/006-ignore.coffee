@@ -18,14 +18,18 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SP                        = require 'steampipes'
 { $
   $watch
-  $async
+  $async }                = SP.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ freeze
+  thaw
+  new_datom
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -57,5 +61,5 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$ignore  S
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 

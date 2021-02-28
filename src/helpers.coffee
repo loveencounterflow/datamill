@@ -19,16 +19,22 @@ echo                      = CND.echo.bind CND
   assign }                = CND
 #...........................................................................................................
 PATH                      = require 'path'
-VNR                       = require './vnr'
 { to_width
   width_of }              = require 'to-width'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SP                        = require 'steampipes'
 { $
   $watch
-  $async
+  $async }                = SP.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ freeze
+  thaw
+  new_datom
+  fresh_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -40,6 +46,10 @@ types                     = require './types'
   type_of }               = types
 XXX_COLORIZER             = require './experiments/colorizer'
 DM                        = require '..'
+
+# debug '^555566^', ( k for k of DATOM.VNR ); process.exit 55
+
+
 
 #===========================================================================================================
 #
@@ -67,15 +77,8 @@ DM                        = require '..'
   return jr R
 
 #-----------------------------------------------------------------------------------------------------------
-@new_datom = ( P ... ) =>
-  R = PD.new_datom P...
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@fresh_datom = ( P ... ) =>
-  R = PD.new_datom P...
-  R = PD.set R, '$fresh',    true
-  return R
+@new_datom    = ( P ... ) => new_datom    P...
+@fresh_datom  = ( P ... ) => fresh_datom  P...
 
 #-----------------------------------------------------------------------------------------------------------
 @swap_key = ( d, key, $vnr = null ) ->
@@ -84,10 +87,10 @@ DM                        = require '..'
   ###
   $vnr ?= VNR.new_level d.$vnr, 1
   R     = d
-  R     = PD.set    R, 'key',    key
-  R     = PD.set    R, '$vnr',   $vnr
-  R     = PD.set    R, '$fresh', true
-  R     = PD.unset  R, '$dirty'
+  R     = SP.set    R, 'key',    key
+  R     = SP.set    R, '$vnr',   $vnr
+  R     = SP.set    R, '$fresh', true
+  R     = SP.unset  R, '$dirty'
   return R
 
 
@@ -95,10 +98,10 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 @leapfrog_stamped = ( transform ) ->
-  return PD.leapfrog ( ( d ) -> PD.is_stamped d ), transform
+  return SP.leapfrog ( ( d ) -> is_stamped d ), transform
 
 #-----------------------------------------------------------------------------------------------------------
-@$filter_stamped = -> PD.$filter ( d ) -> not PD.is_stamped d
+@$filter_stamped = -> SP.$filter ( d ) -> not is_stamped d
 
 
 #===========================================================================================================
@@ -164,7 +167,7 @@ DM                        = require '..'
         when 0 then false
         else row[ key ]
     R[ row.key ] = row
-  @_key_registry_cache  = PD.freeze R
+  @_key_registry_cache  = freeze R
   return R
 
 
@@ -204,14 +207,14 @@ DM                        = require '..'
   vnr         = row.vnr
   $vnr        = JSON.parse vnr
   p           = if row.p? then ( JSON.parse row.p ) else {}
-  R           = PD.thaw PD.new_datom row.key, { $vnr, }
+  R           = thaw new_datom row.key, { $vnr, }
   R.dest      = row.dest
   R.ref       = row.ref
   R.realm     = row.realm
   R.text      = row.text  if row.text?
   R.$stamped  = true      if ( row.stamped ? false )
   R[ k ]      = p[ k ] for k of p when p[ k ]?
-  return PD.freeze R
+  return freeze R
 
 #-----------------------------------------------------------------------------------------------------------
 @_properties_from_datom = ( S, d ) =>
@@ -247,7 +250,7 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @new_db_source = ( S, P... ) =>
-  R = PD.new_push_source()
+  R = SP.new_push_source()
   @feed_source S, R, P...
   return R
 
@@ -291,7 +294,7 @@ DM                        = require '..'
         dbw.insert row
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
-        affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        affected by a `SP.set()` call (ex. `VNR.advance $vnr; send SP.set d, '$vnr', $vnr`). ###
         methods.push 'update dirty'
         { changes, } = dbw.update row
         if changes is 0
@@ -324,7 +327,7 @@ DM                        = require '..'
         dbw.insert row
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
-        affected by a `PD.set()` call (ex. `VNR.advance $vnr; send PD.set d, '$vnr', $vnr`). ###
+        affected by a `SP.set()` call (ex. `VNR.advance $vnr; send SP.set d, '$vnr', $vnr`). ###
         methods.push 'update dirty'
         { changes, } = dbw.update row
         if changes is 0
@@ -350,7 +353,7 @@ DM                        = require '..'
   ### TAINT use active realm as soon as it becomes available; use API to retrieve it ###
   validate.datamill_resume_from_db_settings settings
   last      = Symbol 'last'
-  source    = PD.new_push_source()
+  source    = SP.new_push_source()
   pipeline  = []
   ### TAINT make sure realm used here is same as for feed_source ###
   pipeline.push @$set_realm_where_missing S, settings.realm
@@ -359,29 +362,29 @@ DM                        = require '..'
     return null unless d is last
     ### TAINT make sure realm used here is same as for set_realm_where_missing ###
     @feed_source S, source, settings.realm
-  pipeline.push PD.$wye source
-  return PD.pull pipeline...
+  pipeline.push SP.$wye source
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @resume_from_db_before = ( S, settings, transform ) ->
   pipeline  = []
   pipeline.push @$resume_from_db S, settings
   pipeline.push transform
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @resume_from_db_after = ( S, settings, transform ) ->
   pipeline  = []
   pipeline.push transform
   pipeline.push @$resume_from_db S, settings
-  return PD.pull pipeline...
+  return SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$set_realm_where_missing = ( S, realm ) ->
   ### TAINT use active realm as soon as it becomes available; use API to retrieve it ###
   realm = realm ? S.mirage.default_realm
   return $ ( d, send ) =>
-    return send if d.realm? then d else PD.set d, { realm, }
+    return send if d.realm? then d else SP.set d, { realm, }
 
 
 #===========================================================================================================
@@ -462,11 +465,11 @@ DM                        = require '..'
       when '<p', '>p'         then  _color  = CND.grey
       else                          _color  = @color_from_text row.key[ 1 .. ]
     #.......................................................................................................
-    stamp   = if row.stamped then '*' else ''
+    star    = if row.stamped then '*' else ''
     key     = to_width row.key,         15
     sid     = to_width "#{row.sid}",    2
     realm   = to_width row.realm,       6
-    vnr     = to_width stamp + row.vnr, 12
+    vnr     = to_width star + row.vnr,  12
     dest    = to_width row.dest,        4
     ref     = to_width row.ref ? '',    13
     text    = if row.text? then ( jr row.text ) else null

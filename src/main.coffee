@@ -19,23 +19,18 @@ echo                      = CND.echo.bind CND
 { jr
   assign }                = CND
 #...........................................................................................................
-debug '^3334-1^'
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-debug '^3334-2^'
 MIRAGE                    = require 'mkts-mirage'
-debug '^3334-3^'
-VNR                       = require './vnr'
-debug '^3334-4^'
 #...........................................................................................................
-PD                        = require 'steampipes'
-debug '^3334-5^'
+SP                        = require 'steampipes'
 { $
   $watch
-  $async
-  select
-  stamp }                 = PD.export()
-debug '^3334-6^'
+  $async }                = SP.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ select
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 @types                    = require './types'
 { isa
@@ -45,16 +40,13 @@ debug '^3334-6^'
   last_of
   size_of
   type_of }               = @types
-debug '^3334-7^'
 #...........................................................................................................
 H                         = require './helpers'
-debug '^3334-8^'
 { cwd_abspath
   cwd_relpath
   here_abspath
   project_abspath }       = H
 DATAMILL                  = @
-debug '^3334-9^'
 
 
 
@@ -71,15 +63,15 @@ debug '^3334-9^'
   # pipeline.push source
   # pipeline.push transform
   # pipeline.push H.$feed_db S
-  # pipeline.push PD.$drain => resolve()
-  # R = PD.pull pipeline...
-  source    = PD.new_push_source()
+  # pipeline.push SP.$drain => resolve()
+  # R = SP.pull pipeline...
+  source    = SP.new_push_source()
   pipeline  = []
   pipeline.push source
   pipeline.push transform
   pipeline.push H.$feed_db S
-  pipeline.push PD.$drain => resolve()
-  R = PD.pull pipeline...
+  pipeline.push SP.$drain => resolve()
+  R = SP.pull pipeline...
   H.feed_source S, source, settings.from_realm
   return null
 
@@ -94,7 +86,6 @@ debug '^3334-9^'
 #-----------------------------------------------------------------------------------------------------------
 @create = ( settings ) ->
   ### TAINT set active realm ###
-  debug '^3334-10^'
   defaults =
     file_path:      null
     # db_path:        ':memory:'
@@ -105,10 +96,8 @@ debug '^3334-9^'
     default_realm:  'input'
     clear:          true
   #.........................................................................................................
-  debug '^3334-11^'
   settings  = { defaults..., settings..., }
   mirage    = await MIRAGE.create settings
-  debug '^3334-12^'
   #.........................................................................................................
   R         =
     mirage:       mirage
@@ -123,7 +112,6 @@ debug '^3334-9^'
   #.........................................................................................................
   ### TAINT consider to use dedicated DB module akin to mkts-mirage/src/db.coffee ###
   @_create_udfs mirage
-  debug '^3334-13^'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -162,7 +150,7 @@ debug '^3334-9^'
   { first_vnr
     last_vnr
     ref       } = region
-  S.control.queue.push PD.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, ref, }
+  S.control.queue.push SP.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, ref, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -259,27 +247,22 @@ debug '^3334-9^'
   #.......................................................................................................
   pipeline  = []
   pipeline.push H.new_db_source S, 'html'
-  pipeline.push PD.$show()
-  pipeline.push PD.$drain -> resolve()
-  PD.pull pipeline...
+  pipeline.push SP.$show()
+  pipeline.push SP.$drain -> resolve()
+  SP.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @_demo = ->
-  debug '^3334-14^'
   await do => new Promise ( resolve ) =>
     #.......................................................................................................
-    debug '^3334-15^'
     settings  =
       # file_path:      project_abspath 'src/tests/demo-short-headlines.md'
       # file_path:      project_abspath 'src/tests/demo.md'
       file_path:      project_abspath 'src/tests/demo-medium.md'
       # file_path:      project_abspath 'src/tests/demo-simple-paragraphs.md'
     #.......................................................................................................
-    debug '^3334-16^'
     help "using database at #{settings.db_path}"
-    debug '^3334-17^'
     datamill  = await DATAMILL.create settings
-    debug '^3334-18^'
     quiet     = false
     quiet     = true
     await DATAMILL.parse_document       datamill, { quiet, }
@@ -296,7 +279,6 @@ debug '^3334-9^'
 
 ############################################################################################################
 if module is require.main then do =>
-  debug '^3334-19^'
   await DATAMILL._demo()
 
 

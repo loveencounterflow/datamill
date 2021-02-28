@@ -18,15 +18,20 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 DM                        = require '..'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -36,13 +41,14 @@ types                     = require './types'
   type_of }               = types
 
 
+
 #-----------------------------------------------------------------------------------------------------------
 @$trim = ( S ) ->
   ref           = 'ws1/trm'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     if ( new_text = d.text.trimEnd() ) isnt d.text
-      d = PD.set d, { text: new_text, ref, }
+      d = SPX.set d, { text: new_text, ref, }
     send d
     return null
 
@@ -50,7 +56,7 @@ types                     = require './types'
 @$group_blank_lines = ( S ) ->
   pipeline = []
   #.........................................................................................................
-  $group = => PD.$group_by ( d ) ->
+  $group = => SPX.$group_by ( d ) ->
     return 'blank' if ( select d, '^line' ) and ( d.text is '' )
     return 'other'
   #.........................................................................................................
@@ -123,5 +129,5 @@ types                     = require './types'
   pipeline.push @$trim                    S
   pipeline.push @$group_blank_lines       S
   pipeline.push @$ensure_blanks_at_ends   S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
