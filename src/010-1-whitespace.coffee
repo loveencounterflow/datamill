@@ -73,26 +73,29 @@ types                     = require './types'
   #.........................................................................................................
   pipeline.push $group()
   pipeline.push $unpack()
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$ensure_blanks_at_ends = ( S ) ->
   ### Make sure to include blanks as first and last lines in document or fragment. ###
+  # first = Symbol 'first'
+  # last  = Symbol 'last'
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
-  # return H.resume_from_db_after S, { realm: 'html', }, PD.mark_position $ ( pd, send ) =>
-  return H.leapfrog_stamped PD.mark_position $ ( pd, send ) =>
+  # return H.resume_from_db_after S, { realm: 'html', }, SPX.$mark_position $ ( pd, send ) =>
+  return H.leapfrog_stamped SPX.mark_position $ ( pd, send ) =>
     { is_first
       is_last
       d       } = pd
     #.......................................................................................................
     ### Make sure the first thing in document or fragment is a blank: ###
-    if is_first and not select d, '^blank'
+    if ( is_first ) and ( not select d, '^blank' )
       send stamp d
       ref   = 'ws1/ebae1'
+      debug '^ensure_blanks_at_ends@445^', d
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
-      send PD.set d, { $vnr, $fresh: true, ref, }
+      send SPX.set d, { $vnr, $fresh: true, ref, }
       ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
       blank; we do this here and not in the next clause, below, to avoid sending a duplicate of the
       the text line: ###
@@ -100,12 +103,12 @@ types                     = require './types'
         send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
     #.......................................................................................................
     ### Make sure the last thing in document or fragment is a blank: ###
-    else if is_last and not select d, '^blank'
+    else if ( is_last ) and ( not select d, '^blank' )
       send stamp d
       ref   = 'ws1/ebae2'
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
-      send PD.set d, { $vnr, $fresh: true, ref, }
+      send SPX.set d, { $vnr, $fresh: true, ref, }
     else
       send d
     return null
