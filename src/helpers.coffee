@@ -125,7 +125,8 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 @register_new_key = ( S, key, settings ) =>
-  validate.datamill_register_key_settings
+  validate.datamill_register_key_settings settings
+  DATOM.types.validate.datom_key key
   db              = S.mirage.dbw
   is_block        = cast 'boolean', 'float', ( settings.is_block        ? false )
   has_paragraphs  = cast 'boolean', 'float', ( settings.has_paragraphs  ? false )
@@ -141,7 +142,8 @@ DM                        = require '..'
 #-----------------------------------------------------------------------------------------------------------
 @register_key = ( S, key, settings ) =>
   ### TAINT code duplication ###
-  validate.datamill_register_key_settings
+  validate.datamill_register_key_settings settings
+  DATOM.types.validate.datom_key key
   db                    = S.mirage.dbw
   is_block              = ( settings.is_block        ? false )
   has_paragraphs        = ( settings.has_paragraphs  ? false )
