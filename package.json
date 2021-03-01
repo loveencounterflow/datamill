@@ -6,14 +6,14 @@
   "dependencies": {
     "cnd": "9.2.1",
     "color-convert": "^2.0.1",
-    "datom": "^8.0.2",
-    "icql": "5.2.0",
+    "datom": "8.0.3",
+    "icql": "5.2.1",
     "intertext": "5.0.0",
-    "intertype": "7.6.3",
+    "intertype": "7.6.6",
     "markdown-it": "12.0.4",
-    "mkts-mirage": "6.2.1",
-    "steampipes": "^6.7.0",
-    "timetunnel": "1.1.0",
+    "mkts-mirage": "6.2.2",
+    "steampipes": "6.7.1",
+    "timetunnel": "1.1.1",
     "to-width": "1.1.0"
   },
   "devDependencies": {
