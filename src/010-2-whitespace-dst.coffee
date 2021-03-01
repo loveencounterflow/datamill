@@ -18,15 +18,21 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 DM                        = require '..'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -47,7 +53,7 @@ types                     = require './types'
       break if select row, '^blank'
       d = H.datom_from_row S, row
       send stamp d
-      send d = VNR.deepen PD.set d, { $fresh: true, ref, }
+      send d = VNR.deepen DATOM.set d, { $fresh: true, ref, }
       send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.advance d.$vnr ), dest: d.dest, ref, }
   #.........................................................................................................
   do =>
@@ -56,7 +62,7 @@ types                     = require './types'
       break if select row, '^blank'
       d = H.datom_from_row S, row
       send stamp d
-      send d  = VNR.deepen PD.set d, { $fresh: true, ref, }
+      send d  = VNR.deepen DATOM.set d, { $fresh: true, ref, }
       send H.fresh_datom '^blank', { linecount: 0, $vnr: ( VNR.recede d.$vnr ), dest: d.dest, ref, }
   return null
 
@@ -67,5 +73,5 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$blanks_at_dest_changes  S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 

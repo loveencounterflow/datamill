@@ -30,6 +30,7 @@ DATOM                     = require 'datom'
 { freeze
   thaw
   new_datom
+  is_stamped
   select
   stamp }                 = DATOM.export()
 #...........................................................................................................
@@ -48,7 +49,7 @@ types                     = require './types'
   return $ ( d, send ) =>
     return send d unless select d, '^line'
     if ( new_text = d.text.trimEnd() ) isnt d.text
-      d = SPX.set d, { text: new_text, ref, }
+      d = DATOM.set d, { text: new_text, ref, }
     send d
     return null
 
@@ -89,10 +90,13 @@ types                     = require './types'
   H.register_key S, '^blank', { is_block: false, }
   #.........................................................................................................
   # return H.resume_from_db_after S, { realm: 'html', }, SPX.$mark_position $ ( pd, send ) =>
-  return H.leapfrog_stamped SPX.mark_position $ ( pd, send ) =>
+  # return H.leapfrog_stamped SPX.mark_position $ ( pd, send ) =>
+  return SPX.mark_position $ ( pd, send ) =>
     { is_first
       is_last
       d       } = pd
+    #.......................................................................................................
+    return send d if is_stamped d
     #.......................................................................................................
     ### Make sure the first thing in document or fragment is a blank: ###
     if ( is_first ) and ( not select d, '^blank' )
@@ -101,7 +105,7 @@ types                     = require './types'
       debug '^ensure_blanks_at_ends@445^', d
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
-      send SPX.set d, { $vnr, $fresh: true, ref, }
+      send DATOM.set d, { $vnr, $fresh: true, ref, }
       ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
       blank; we do this here and not in the next clause, below, to avoid sending a duplicate of the
       the text line: ###
@@ -114,7 +118,7 @@ types                     = require './types'
       ref   = 'ws1/ebae2'
       $vnr  = VNR.deepen d.$vnr
       send H.fresh_datom '^blank', { $vnr: ( VNR.advance $vnr ), linecount: 0, ref, }
-      send SPX.set d, { $vnr, $fresh: true, ref, }
+      send DATOM.set d, { $vnr, $fresh: true, ref, }
     else
       send d
     return null

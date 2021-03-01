@@ -31,6 +31,7 @@ SP                        = require 'steampipes'
 DATOM                     = require 'datom'
 { select
   stamp }                 = DATOM.export()
+{ VNR }                   = DATOM
 #...........................................................................................................
 @types                    = require './types'
 { isa
