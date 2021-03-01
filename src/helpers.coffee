@@ -87,7 +87,7 @@ DM                        = require '..'
   ###
   $vnr ?= VNR.new_level d.$vnr, 1
   R     = d
-  R     = SP.set    R, 'key',    key
+  R     = SP.set    R, '$key',   key
   R     = SP.set    R, '$vnr',   $vnr
   R     = SP.set    R, '$fresh', true
   R     = SP.unset  R, '$dirty'
@@ -98,6 +98,8 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 @leapfrog_stamped = ( transform ) ->
+  debug '^222332^', transform
+  debug '^222332^', type_of transform
   return SP.leapfrog ( ( d ) -> is_stamped d ), transform
 
 #-----------------------------------------------------------------------------------------------------------
@@ -166,7 +168,7 @@ DM                        = require '..'
         when 1 then true
         when 0 then false
         else row[ key ]
-    R[ row.key ] = row
+    R[ row.$key ] = row
   @_key_registry_cache  = freeze R
   return R
 
@@ -207,6 +209,7 @@ DM                        = require '..'
   vnr         = row.vnr
   $vnr        = JSON.parse vnr
   p           = if row.p? then ( JSON.parse row.p ) else {}
+  debug '^9884234^', { $vnr, p, row, }
   R           = thaw new_datom row.key, { $vnr, }
   R.dest      = row.dest
   R.ref       = row.ref
@@ -221,7 +224,7 @@ DM                        = require '..'
   R     = {}
   count = 0
   for k, v of d
-    continue if k is 'key'
+    continue if k is '$key'
     continue if k is 'text'
     continue if k is 'realm'
     continue if k is 'dest'
@@ -235,7 +238,7 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @row_from_datom = ( S, d ) =>
-  key       = d.key
+  key       = d.$key
   vnr       = d.$vnr
   stamped   = d.$stamped  ? false
   dest      = d.dest      ? S.mirage.default_dest
@@ -403,7 +406,7 @@ DM                        = require '..'
 @$show = ( S ) => $watch ( d ) =>
   if d.$stamped then color = CND.grey
   else
-    switch d.key
+    switch d.$key
       when '^word' then color = CND.gold
       else color = CND.white
   info color jr d
@@ -442,16 +445,16 @@ DM                        = require '..'
     if settings.raw
       info @format_object row
       continue
-    if ( row.key is '^line' ) and ( row.stamped ) and ( row.text is '' )
+    if ( row.$key is '^line' ) and ( row.stamped ) and ( row.text is '' )
       omit_count += +1
       continue
-    if ( not show_blanks ) and ( row.key is '^blank' )
+    if ( not show_blanks ) and ( row.$key is '^blank' )
       omit_count += +1
       continue
     if ( not show_stamped ) and row.stamped
       omit_count += +1
       continue
-    switch row.key
+    switch row.$key
       when '^line'            then  _color  = CND.YELLOW
       when '^block'           then  _color  = CND.gold
       when '^mktscript'       then  _color  = CND.ORANGE
@@ -463,13 +466,13 @@ DM                        = require '..'
       when '>h'               then  _color  = CND.VIOLET
       when '^html'            then  _color  = CND.BLUE
       when '<p', '>p'         then  _color  = CND.grey
-      else                          _color  = @color_from_text row.key[ 1 .. ]
+      else                          _color  = @color_from_text row.$key[ 1 .. ]
     #.......................................................................................................
     star    = if row.stamped then '*' else ''
-    key     = to_width row.key,         15
+    key     = to_width row.$key,        15
     sid     = to_width "#{row.sid}",    2
     realm   = to_width row.realm,       6
-    vnr     = to_width star + row.vnr,  12
+    vnr     = to_width star + row.$vnr, 12
     dest    = to_width row.dest,        4
     ref     = to_width row.ref ? '',    13
     text    = if row.text? then ( jr row.text ) else null
@@ -484,21 +487,21 @@ DM                        = require '..'
     line    = "#{sid}#{realm}#{vnr}│#{dest}│#{ref}│#{key}│#{value}"
     line    = to_width line, line_width
     dent    = '  '.repeat level
-    level   = switch row.key[ 0 ]
+    level   = switch row.$key[ 0 ]
       when '<' then level + 1
       when '>' then level - 1
       else          level
     level   = Math.max level, 0
     #.......................................................................................................
-    if settings.hilite? and ( settings.hilite is row.key )
+    if settings.hilite? and ( settings.hilite is row.$key )
       color = ( P... ) -> CND.reverse CND.pink P...
     else if row.stamped
       color = CND.grey
-    else if row.key is '^blank'
+    else if row.$key is '^blank'
       color = CND.yellow
     else
       if xxx_deemphasize_closing_tags
-        if row.key[ 0 ] is '>'
+        if row.$key[ 0 ] is '>'
           color = ( P... ) -> _color P...
         else
           color = ( P... ) -> CND.reverse _color P...
@@ -521,7 +524,7 @@ DM                        = require '..'
   #.........................................................................................................
   echo "#{omit_count} rows omitted from this view"
   for row from dbr.get_stats()
-    echo "#{row.key}: #{row.count}"
+    echo "#{row.$key}: #{row.count}"
   #.........................................................................................................
   return null
 
