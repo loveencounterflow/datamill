@@ -23,14 +23,20 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -50,7 +56,7 @@ types                     = require './types'
 @$validate_symmetric_keys = ( settings ) ->
   stack = []
   vnr   = null
-  return PD.mark_position $ ( pd, send ) =>
+  return SPX.mark_position $ ( pd, send ) =>
     { is_first
       is_last
       d       } = pd
@@ -65,7 +71,7 @@ types                     = require './types'
           was_vnr = jr entry.$vnr
           message.push "`>#{entry.name}` (VNR #{was_vnr})"
         message = message.join ' '
-        send PD.new_datom '~error', { message, $: d, }
+        send SPX.new_datom '~error', { message, $: d, }
       return null
     #.......................................................................................................
     vnr     = d.$vnr
@@ -81,13 +87,13 @@ types                     = require './types'
       when '>'
         if isa.empty stack
           message = "µ44332 extraneous closing key `>#{name}` found at (VNR #{is_vnr}, #{ref}), stack empty"
-          send PD.new_datom '~error', { message, $: d, }
+          send SPX.new_datom '~error', { message, $: d, }
         entry = last_of stack
         unless entry.name is name
           ### TAINT make configurable whether to throw or warn ###
           was_vnr = jr entry.$vnr
           message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{key}` (VNR #{is_vnr}, #{ref})"
-          send PD.new_datom '~error', { message, $: d, }
+          send SPX.new_datom '~error', { message, $: d, }
         stack.pop()
       else
         send d
@@ -102,7 +108,7 @@ types                     = require './types'
         alert "µ77874 found #{count} faults"
       return null
     return send d unless select d, '~error'
-    send PD.set d.$, { error: d.message, }
+    send SPX.set d.$, { error: d.message, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -126,5 +132,5 @@ types                     = require './types'
   pipeline.push @$validate_symmetric_keys   S
   pipeline.push @$complain_on_error         S
   # pipeline.push @$exit_on_error             S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 

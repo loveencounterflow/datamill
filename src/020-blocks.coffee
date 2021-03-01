@@ -22,14 +22,20 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -55,7 +61,7 @@ DM                        = require '..'
   #.........................................................................................................
   return $ ( d, send ) =>
     if within_codeblock and select d, '^blank'
-      return send PD.set d, { key: '^literal-blank', ref: 'blk/cdb1', }
+      return send SPX.set d, { key: '^literal-blank', ref: 'blk/cdb1', }
     #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
@@ -66,16 +72,16 @@ DM                        = require '..'
       #.....................................................................................................
       if within_codeblock
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb2', }
+        send SPX.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb2', }
       #.....................................................................................................
       else
         send stamp d
-        send PD.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb3', }
+        send SPX.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb3', }
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
       if within_codeblock
-        d = PD.set d, { key: '^literal', ref: 'blk/cdb4', }
+        d = SPX.set d, { key: '^literal', ref: 'blk/cdb4', }
         send d
       else
         send d
@@ -170,5 +176,5 @@ DM                        = require '..'
   pipeline.push @$codeblocks  S
   pipeline.push @$headings    S
   pipeline.push @$blockquotes S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 

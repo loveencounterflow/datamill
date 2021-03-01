@@ -22,16 +22,22 @@ echo                      = CND.echo.bind CND
 first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
-VNR                       = require './vnr'
 FS                        = require 'fs'
 PATH                      = require 'path'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 @types                    = require './types'
 { isa
@@ -65,7 +71,7 @@ DM                        = require '..'
 #-----------------------------------------------------------------------------------------------------------
 @$headings = ( S ) ->
   pipeline = []
-  pipeline.push H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
+  pipeline.push H.leapfrog_stamped SPX.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
     return unless ( select prv, '<h' ) and ( select d, '^mktscript' ) and ( select nxt, '>h' )
     $vnr    = VNR.deepen d.$vnr
@@ -78,7 +84,7 @@ DM                        = require '..'
   #.........................................................................................................
   ### Make sure ordering is preserved for downstream transforms: ###
   pipeline.push H.$resume_from_db S, { realm: 'html', }
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @$blockquotes = ( S ) ->
@@ -99,7 +105,7 @@ DM                        = require '..'
 
 #-----------------------------------------------------------------------------------------------------------
 @$codeblocks = ( S ) ->
-  return H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
+  return H.leapfrog_stamped SPX.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
     return send d unless select d, '^literal'
     if select prv,  '<codeblock'
@@ -121,7 +127,7 @@ DM                        = require '..'
   key_registry    = H.get_key_registry S
   is_block        = ( d ) -> key_registry[ d.key ]?.is_block
   pipeline        = []
-  pipeline.push H.leapfrog_stamped PD.lookaround $ ( d3, send ) =>
+  pipeline.push H.leapfrog_stamped SPX.lookaround $ ( d3, send ) =>
     [ prv, d, nxt, ] = d3
     return send d unless select d, '^mktscript'
     text = d.text
@@ -146,7 +152,7 @@ DM                        = require '..'
   #.........................................................................................................
   ### Make sure ordering is preserved for downstream transforms: ###
   pipeline.push H.$resume_from_db S, { realm: 'html', }
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
 # #-----------------------------------------------------------------------------------------------------------
 # @$other_blocks = ( S ) ->
@@ -180,8 +186,8 @@ DM                        = require '..'
 #
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT refactor to PipeStreams ###
-PD.$send_as_first = ( x ) -> $ { first, }, ( d, send ) -> send if d is first then x else d
-PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  then x else d
+SPX.$send_as_first = ( x ) -> $ { first, }, ( d, send ) -> send if d is first then x else d
+SPX.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  then x else d
 
 #-----------------------------------------------------------------------------------------------------------
 @_get_preamble = ->
@@ -194,24 +200,24 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   collector = []
   pipeline  = []
   pipeline.push H.new_db_source S, 'html'
-  pipeline.push PD.$filter ( d ) -> select d, '^html'
+  pipeline.push SPX.$filter ( d ) -> select d, '^html'
   pipeline.push $ ( d, send ) -> send d.text
-  pipeline.push PD.$collect { collector, }
-  pipeline.push PD.$send_as_first @_get_preamble S
-  pipeline.push PD.$drain -> resolve collector.join '\n'
-  return PD.pull pipeline...
+  pipeline.push SPX.$collect { collector, }
+  pipeline.push SPX.$send_as_first @_get_preamble S
+  pipeline.push SPX.$drain -> resolve collector.join '\n'
+  return SPX.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @write_to_file = ( S ) => new Promise ( resolve ) =>
   ### TAINT code duplication ###
   pipeline  = []
   pipeline.push H.new_db_source S, 'html'
-  pipeline.push PD.$filter ( d ) -> select d, '^html'
+  pipeline.push SPX.$filter ( d ) -> select d, '^html'
   pipeline.push $ ( d, send ) -> send d.text + '\n'
-  pipeline.push PD.$send_as_first @_get_preamble S
-  pipeline.push PD.$tee PD.write_to_file '/tmp/datamill.html'
-  pipeline.push PD.$drain -> resolve()
-  return PD.$tee PD.pull pipeline...
+  pipeline.push SPX.$send_as_first @_get_preamble S
+  pipeline.push SPX.$tee SPX.write_to_file '/tmp/datamill.html'
+  pipeline.push SPX.$drain -> resolve()
+  return SPX.$tee SPX.pull pipeline...
 
 
 #===========================================================================================================
@@ -234,7 +240,7 @@ PD.$send_as_last  = ( x ) -> $ { last,  }, ( d, send ) -> send if d is last  the
   pipeline.push @$blank                     S
   pipeline.push H.$set_realm_where_missing  S, @settings.to_realm
   # pipeline.push @$write_to_file             S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
 
 

@@ -22,14 +22,20 @@ echo                      = CND.echo.bind CND
 #...........................................................................................................
 first                     = Symbol 'first'
 last                      = Symbol 'last'
-VNR                       = require './vnr'
 #...........................................................................................................
-PD                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async
+  $async }                = SPX.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
   select
-  stamp }                 = PD.export()
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 types                     = require './types'
 { isa
@@ -71,7 +77,7 @@ types                     = require './types'
         ref           = 'pco/p1'
         dest          = d.dest
         $vnr          = VNR.deepen d.$vnr, 0
-        send PD.set d, { $vnr, dest, ref, $fresh: true, }
+        send DATOM.set d, { $vnr, dest, ref, $fresh: true, }
         send H.fresh_datom '>p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
         within_p      = false
       else
@@ -84,7 +90,7 @@ types                     = require './types'
         dest          = d.dest
         $vnr          = VNR.deepen d.$vnr, 0
         send H.fresh_datom '<p', { $vnr: ( VNR.recede $vnr ), dest, ref, }
-        send PD.set d, { $vnr, ref, }
+        send DATOM.set d, { $vnr, ref, }
         within_p      = true
         send stamp d
       else
@@ -104,5 +110,5 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$paragraphs          S
-  return PD.pull pipeline...
+  return SPX.pull pipeline...
 
