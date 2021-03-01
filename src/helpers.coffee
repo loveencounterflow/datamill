@@ -170,7 +170,7 @@ DM                        = require '..'
         when 1 then true
         when 0 then false
         else row[ key ]
-    R[ row.$key ] = row
+    R[ row.key ] = row
   @_key_registry_cache  = freeze R
   return R
 
