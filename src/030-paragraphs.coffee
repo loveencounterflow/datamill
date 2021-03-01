@@ -62,9 +62,11 @@ types                     = require './types'
     return entry.is_block and not entry.has_paragraphs
   #.........................................................................................................
   return $ ( d, send ) =>
-    entry           = key_registry[ d.key ]
+    unless ( entry = key_registry[ d.$key ] )?
+      warn '^$paragraphs@4452^', key_registry
+      throw new Error "^$paragraphs@4452^ unregistered key #{rpr d.$key} from #{rpr d}"
     if entry.is_block
-      if d.key.startsWith '<'
+      if d.$key.startsWith '<'
         stack.push entry
       else
         stack.pop()
