@@ -211,7 +211,7 @@ DM                        = require '..'
   vnr         = row.vnr
   $vnr        = JSON.parse vnr
   p           = if row.p? then ( JSON.parse row.p ) else {}
-  debug '^9884234^', { $vnr, p, row, }
+  # debug '^9884234^', { $vnr, p, row, }
   R           = thaw new_datom row.key, { $vnr, }
   R.dest      = row.dest
   R.ref       = row.ref
@@ -278,6 +278,7 @@ DM                        = require '..'
     rows            = dbr.read_unstamped_lines { realm: from_realm, }
   #.........................................................................................................
   for row from rows
+    debug '^helpers/feed_source@668^ datom_from_row', @datom_from_row S, row
     source.send @datom_from_row S, row
   #.........................................................................................................
   source.end()
@@ -289,6 +290,8 @@ DM                        = require '..'
   return $watch ( d ) =>
     ### TAINT how to convert vnr in ICQL? ###
     row     = @row_from_datom S, d
+    debug '^3423423^', { d, }
+    debug '^3423423^', { row, }
     methods = []
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
