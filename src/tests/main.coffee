@@ -31,7 +31,7 @@ do ->
     module = require path
     for key, value of module
       continue if key.startsWith '_'
-      debug '39838', path, key
+      debug '39838', value.length, path, key, L[ key ] ? './.'
       throw new Error "duplicate key #{rpr key}" if L[ key ]?
       L[ key ] = value.bind L
   test L, { timeout: 5000, }
