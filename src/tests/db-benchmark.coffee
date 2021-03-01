@@ -18,13 +18,17 @@ echo                      = CND.echo.bind CND
 { jr }                    = CND
 after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
 #...........................................................................................................
-PD                        = require 'steampipes'
+SP                        = require 'steampipes'
 { $
   $watch
   $show
-  $drain
-  stamp
-  select }                = PD.export()
+  $drain }                = SP.export()
+#...........................................................................................................
+DATOM                     = require 'datom'
+{ select
+  stamp }                 = DATOM.export()
+{ VNR }                   = DATOM
+#...........................................................................................................
 H                         = require '../helpers'
 DATAMILL                  = require '../..'
 { isa
@@ -34,7 +38,6 @@ DATAMILL                  = require '../..'
   last_of
   size_of
   type_of }               = DATAMILL.types
-VNR                       = require '../vnr'
 $fresh                    = true
 first                     = Symbol 'first'
 last                      = Symbol 'last'
@@ -62,7 +65,7 @@ declare 'datamill_db_benchmark_settings', ( x ) ->
   X.count++
   send stamp d
   text = d.text.toUpperCase()
-  send PD.set ( VNR.deepen d ), { text, ref: 'bnch/t1', $fresh, }
+  send SP.set ( VNR.deepen d ), { text, ref: 'bnch/t1', $fresh, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -72,7 +75,7 @@ declare 'datamill_db_benchmark_settings', ( x ) ->
   X.count++
   send stamp d
   text = '*' + d.text + '*'
-  send PD.set ( VNR.deepen d ), { text, ref: 'bnch/t1', $fresh, }
+  send SP.set ( VNR.deepen d ), { text, ref: 'bnch/t1', $fresh, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -94,7 +97,7 @@ declare 'datamill_db_benchmark_settings', ( x ) ->
     pipeline.push H.$feed_db datamill
     pipeline.push $drain -> resolve()
     help 'µ66743', "starting"
-    PD.pull pipeline...
+    SP.pull pipeline...
   #.........................................................................................................
   t1        = Date.now()
   dt        = Math.max 1, t1 - t0
