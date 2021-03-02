@@ -62,6 +62,7 @@ types                     = require './types'
     return entry.is_block and not entry.has_paragraphs
   #.........................................................................................................
   return $ ( d, send ) =>
+    # debug '^paragraphs@2223^', d
     unless ( entry = key_registry[ d.$key ] )?
       warn '^$paragraphs@4452^', key_registry
       throw new Error "^$paragraphs@4452^ unregistered key #{rpr d.$key} from #{rpr d}"
@@ -112,5 +113,6 @@ types                     = require './types'
 @$transform = ( S ) ->
   pipeline = []
   pipeline.push @$paragraphs          S
+  # pipeline.push SPX.$show { title: __filename, }
   return SPX.pull pipeline...
 

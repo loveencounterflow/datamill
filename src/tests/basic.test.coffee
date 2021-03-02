@@ -116,17 +116,18 @@ as_numbered_lines = ( text ) ->
     [ "A short text", "<p>A short text</p>", null, ]
     ]
   #.........................................................................................................
-  quiet = true
-  quiet = false
+  result  = null
+  quiet   = true
+  quiet   = false
   for [ probe, matcher, error, ] in probes_and_matchers
     datamill  = await DM.create { text: probe, }
     # datamill  = await DM.create { text: probe, db_path: ':memory:', }
     debug '^984232-1^', await DM.parse_document datamill, { quiet, }
-    debug '^984232-1^', await DM.render_html    datamill, { quiet, }
-    result    = await DM.retrieve_html  datamill, { quiet: true, }
+    # debug '^984232-1^', await DM.render_html    datamill, { quiet, }
+    # result    = await DM.retrieve_html  datamill, { quiet: true, }
     if not quiet
       urge 'µ77782', '\n' + as_numbered_lines probe
-      info 'µ77782', '\n' + as_numbered_lines result
+      info 'µ77782', '\n' + as_numbered_lines result if result?
       # await H.show_overview   datamill
       # await H.show_html       datamill
   #.........................................................................................................

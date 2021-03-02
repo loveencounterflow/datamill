@@ -100,10 +100,12 @@ types                     = require './types'
     #.......................................................................................................
     ### Make sure the first thing in document or fragment is a blank: ###
     if ( is_first ) and ( not select d, '^blank' )
+      # debug '^ensure_blanks_at_ends@334^', ( stamp d )
       send stamp d
       ref   = 'ws1/ebae1'
-      debug '^ensure_blanks_at_ends@445^', d
       $vnr  = VNR.deepen d.$vnr
+      # debug '^ensure_blanks_at_ends@445^', d
+      # debug '^ensure_blanks_at_ends@445^', { $vnr, VNR_receded: ( VNR.recede $vnr ) }
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
       send DATOM.set d, { $vnr, $fresh: true, ref, }
       ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
