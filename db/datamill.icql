@@ -37,8 +37,11 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
     key       text    not null default $default_key references keys ( key ),
     text      text,
     p         json    default 'null',
-    vnr_blob  blob    not null,
-    primary key ( realm, vnr_blob ) );
+    -- ------------------------------------- debug
+    vnr_blob  blob    not null );
+    -- vnr_blob  blob    not null,
+    -- primary key ( realm, vnr_blob ) );
+    -- ------------------------------------- debug
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
   ( $vnr, json_as_hollerith( $vnr ), $text )
