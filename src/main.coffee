@@ -180,6 +180,7 @@ DATAMILL                  = @
 @parse_document = ( S, settings ) -> new Promise ( resolve, reject ) =>
   defaults =
     quiet:        false
+    ### TAINT use globbing instead of enumeration ###
     phase_names:  [
       './000-initialize'
       './005-start-stop'
