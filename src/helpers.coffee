@@ -249,6 +249,8 @@ DM                        = require '..'
   realm     = d.realm     ? S.mirage.default_realm
   p         = @_properties_from_datom S, d
   R         = { key, realm, vnr, dest, text, p, stamped, ref, }
+  # debug '^row_from_datom@2233-1^', d
+  debug '^row_from_datom@2233-2^', R
   # R         = { key, vnr, vnr_blob, dest, text, p, stamped, }
   # MIRAGE.types.validate.mirage_main_row R if do_validate
   return R

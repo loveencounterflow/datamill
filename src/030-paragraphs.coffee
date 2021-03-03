@@ -62,7 +62,6 @@ types                     = require './types'
     return entry.is_block and not entry.has_paragraphs
   #.........................................................................................................
   return $ ( d, send ) =>
-    # debug '^paragraphs@2223^', d
     unless ( entry = key_registry[ d.$key ] )?
       warn '^$paragraphs@4452^', key_registry
       throw new Error "^$paragraphs@4452^ unregistered key #{rpr d.$key} from #{rpr d}"
