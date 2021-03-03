@@ -71,7 +71,7 @@ types                     = require './types'
           was_vnr = jr entry.$vnr
           message.push "`>#{entry.name}` (VNR #{was_vnr})"
         message = message.join ' '
-        send SPX.new_datom '~error', { message, $: d, }
+        send new_datom '~error', { message, $: d, }
       return null
     #.......................................................................................................
     vnr     = d.$vnr
@@ -85,16 +85,17 @@ types                     = require './types'
       when '<'
         stack.push { name, $vnr: d.$vnr, }
       when '>'
-        if isa.empty stack
+        if stack.length is 0
           message = "µ44332 extraneous closing $key `>#{name}` found at (VNR #{is_vnr}, #{ref}), stack empty"
-          send SPX.new_datom '~error', { message, $: d, }
-        entry = last_of stack
-        unless entry.name is name
-          ### TAINT make configurable whether to throw or warn ###
-          was_vnr = jr entry.$vnr
-          message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{$key}` (VNR #{is_vnr}, #{ref})"
-          send SPX.new_datom '~error', { message, $: d, }
-        stack.pop()
+          send new_datom '~error', { message, $: d, }
+        else
+          entry = stack[ stack.length - 1 ]
+          unless entry.name is name
+            ### TAINT make configurable whether to throw or warn ###
+            was_vnr = jr entry.$vnr
+            message = "µ44332 expected `>#{entry.name}` (VNR #{was_vnr}), found `#{$key}` (VNR #{is_vnr}, #{ref})"
+            send new_datom '~error', { message, $: d, }
+          stack.pop()
       else
         send d
     return null
@@ -108,7 +109,7 @@ types                     = require './types'
         alert "µ77874 found #{count} faults"
       return null
     return send d unless select d, '~error'
-    send SPX.set d.$, { error: d.message, }
+    send DATOM.set d.$, { error: d.message, }
     return null
 
 #-----------------------------------------------------------------------------------------------------------

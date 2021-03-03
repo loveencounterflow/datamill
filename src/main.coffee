@@ -23,15 +23,19 @@ first                     = Symbol 'first'
 last                      = Symbol 'last'
 MIRAGE                    = require 'mkts-mirage'
 #...........................................................................................................
-SP                        = require 'steampipes'
+SPX                       = require './steampipes-extra'
 { $
   $watch
-  $async }                = SP.export()
+  $async }                = SPX.export()
 #...........................................................................................................
 DATOM                     = require 'datom'
-{ select
-  stamp }                 = DATOM.export()
 { VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
+  select
+  stamp }                 = DATOM.export()
 #...........................................................................................................
 @types                    = require './types'
 { isa
@@ -75,16 +79,16 @@ DATAMILL                  = @
   # pipeline.push source
   # pipeline.push transform
   # pipeline.push H.$feed_db S
-  # pipeline.push SP.$drain => resolve()
-  # R = SP.pull pipeline...
-  source    = SP.new_push_source()
+  # pipeline.push SPX.$drain => resolve()
+  # R = SPX.pull pipeline...
+  source    = SPX.new_push_source()
   pipeline  = []
   pipeline.push source
   pipeline.push transform
-  pipeline.push SP.$show { title: "^run_phase@443^ (#{phase_name})", }
+  pipeline.push SPX.$show { title: "^run_phase@443^ (#{phase_name})", }
   pipeline.push H.$feed_db S
-  pipeline.push SP.$drain => resolve()
-  R = SP.pull pipeline...
+  pipeline.push SPX.$drain => resolve()
+  R = SPX.pull pipeline...
   H.feed_source S, source, settings.from_realm
   return null
 
@@ -163,7 +167,7 @@ DATAMILL                  = @
   { first_vnr
     last_vnr
     ref       } = region
-  S.control.queue.push SP.new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, ref, }
+  S.control.queue.push new_datom '~reprise', { first_vnr, last_vnr, phase: S.control.active_phase, ref, }
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -260,9 +264,9 @@ DATAMILL                  = @
   #.......................................................................................................
   pipeline  = []
   pipeline.push H.new_db_source S, 'html'
-  pipeline.push SP.$show()
-  pipeline.push SP.$drain -> resolve()
-  SP.pull pipeline...
+  pipeline.push SPX.$show()
+  pipeline.push SPX.$drain -> resolve()
+  SPX.pull pipeline...
 
 #-----------------------------------------------------------------------------------------------------------
 @_demo = ->

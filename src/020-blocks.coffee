@@ -61,7 +61,7 @@ DM                        = require '..'
   #.........................................................................................................
   return $ ( d, send ) =>
     if within_codeblock and select d, '^blank'
-      return send SPX.set d, { key: '^literal-blank', ref: 'blk/cdb1', }
+      return send DATOM.set d, { key: '^literal-blank', ref: 'blk/cdb1', }
     #.......................................................................................................
     return send d unless select d, '^line'
     #.......................................................................................................
@@ -69,19 +69,20 @@ DM                        = require '..'
     if ( match = d.text.match pattern )?
       within_codeblock  = not within_codeblock
       dest              = d.dest
+      $vnr              = VNR.deepen d.$vnr, 0
       #.....................................................................................................
       if within_codeblock
         send stamp d
-        send SPX.set ( VNR.deepen d ), { key: '<codeblock', ref: 'blk/cdb2', }
+        send DATOM.set d, { $vnr, $key: '<codeblock', ref: 'blk/cdb2', } ### TAINT why not use `fresh_datom()`? ###
       #.....................................................................................................
       else
         send stamp d
-        send SPX.set ( VNR.deepen d ), { key: '>codeblock', ref: 'blk/cdb3', }
+        send DATOM.set d, { $vnr, $key: '>codeblock', ref: 'blk/cdb3', } ### TAINT why not use `fresh_datom()`? ###
     #.......................................................................................................
     ### line is literal within, unchanged outside of codeblock ###
     else
       if within_codeblock
-        d = SPX.set d, { key: '^literal', ref: 'blk/cdb4', }
+        d = DATOM.set d, { $key: '^literal', ref: 'blk/cdb4', } ### TAINT why not use `fresh_datom()`? ###
         send d
       else
         send d
