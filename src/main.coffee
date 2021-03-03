@@ -64,14 +64,6 @@ DATAMILL                  = @
   phase_name  = S.control.active_phase
   validate.datamill_run_phase_settings settings
   #.........................................................................................................
-  ### NOTE skipp ing phases for debugging ###
-  max_phase_nr  = 20
-  phase_nr      = parseInt ( ( require 'path' ).basename phase_name ), 10
-  debug '^33222^', { phase_nr}
-  if phase_nr > max_phase_nr
-    warn CND.reverse "^run_phase@221^ skipping phase #{phase_name}"
-    return resolve()
-  #.........................................................................................................
   # debug 'µ33344', jr S
   # debug 'µ33344', jr settings
   # source    = H.new_db_source S

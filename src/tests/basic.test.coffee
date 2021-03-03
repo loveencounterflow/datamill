@@ -113,7 +113,11 @@ as_numbered_lines = ( text ) ->
 #-----------------------------------------------------------------------------------------------------------
 @_reveal_bug_from_pipestreaming_api_change = ->
   probes_and_matchers = [
-    [ "A short text", "<p>A short text</p>", null, ]
+    # [ "A short text", "<p>A short text</p>", null, ]
+    # ["```\nCODE\n```","<pre><code>\nCODE\n</code></pre>",null]
+    # ["\n# A Headline\n\n> Quote\n> ```\n> CODE\n> ```","\n<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote\n<pre><code>\nCODE\n</code></pre>\n</blockquote>",null]
+    # ["First.\n\nSecond.","<p>First.</p>\n\n<p>Second.</p>",null]
+    ["# A Headline\n\n> Quote\n","<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote</p>\n</blockquote>\n",null]
     ]
   #.........................................................................................................
   result  = null
