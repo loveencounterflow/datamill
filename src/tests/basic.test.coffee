@@ -119,6 +119,7 @@ query_tables = ( dm ) ->
   #.........................................................................................................
   done()
 
+
 #-----------------------------------------------------------------------------------------------------------
 @[ "xxx2" ] = ( T, done ) ->
   probes_and_matchers = [
@@ -164,31 +165,70 @@ query_tables = ( dm ) ->
   defer -> done()
   return null
 
+# #-----------------------------------------------------------------------------------------------------------
+# @[ "VNRs must be unique" ] = ( T, done ) ->
+#   text    = "A short text" # "<p>A short text</p>"
+#   dm      = await DM.create { text, }
+#   { dbw } = dm.mirage
+#   #.........................................................................................................
+#   dbw.$.run "drop index main_pk;"
+#   # dbw.insert H.row_from_datom dm, { '$vnr': [ 2, ], text: 'XXX', '$key': '^line' }
+#   # dbw.insert H.row_from_datom dm, { '$vnr': [ 2, ], text: 'XXX', '$key': '^line' }
+#   #.........................................................................................................
+#   done()
+
 #-----------------------------------------------------------------------------------------------------------
-@_reveal_bug_from_pipestreaming_api_change = ->
+@[ "VNRs must be unique" ] = ( T, done ) ->
   probes_and_matchers = [
-    # [ "A short text", "<p>A short text</p>", null, ]
+    [ "A short text", "<p>A short text</p>", null, ]
     # ["```\nCODE\n```","<pre><code>\nCODE\n</code></pre>",null]
     # ["\n# A Headline\n\n> Quote\n> ```\n> CODE\n> ```","\n<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote\n<pre><code>\nCODE\n</code></pre>\n</blockquote>",null]
     # ["First.\n\nSecond.","<p>First.</p>\n\n<p>Second.</p>",null]
-    ["# A Headline\n\n> Quote\n","<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote</p>\n</blockquote>\n",null]
+    # ["# A Headline\n\n> Quote\n","<h1>A Headline</h1>\n\n<blockquote>\n<p>Quote</p>\n</blockquote>\n",null]
     ]
   #.........................................................................................................
   result  = null
   quiet   = true
   quiet   = false
   for [ probe, matcher, error, ] in probes_and_matchers
-    datamill  = await DM.create { text: probe, }
-    # datamill  = await DM.create { text: probe, db_path: ':memory:', }
-    debug '^984232-1^', await DM.parse_document datamill, { quiet, }
-    # debug '^984232-1^', await DM.render_html    datamill, { quiet, }
-    # result    = await DM.retrieve_html  datamill, { quiet: true, }
+    dm  = await DM.create { text: probe, }
+    # dm  = await DM.create { text: probe, db_path: ':memory:', }
+    #.......................................................................................................
+    ### Drop index so erroneous VNR duplicates won't trigger an error in the DB: ###
+    dm.mirage.dbw.$.run "drop index main_pk;"
+    #.......................................................................................................
+    debug '^984232-1^', await DM.parse_document dm, { quiet, }
+    sql = """
+      with v1 as ( select
+          *,
+          count(*) over ( partition by vnr ) as dcount
+        from main )
+      select * from v1
+        where dcount > 1
+        order by
+          vnr_blob,
+          ref;"""
+    #.......................................................................................................
+    dcount = 0
+    for row from dm.mirage.dbr.$.query sql
+      dcount++
+      delete row.vnr_blob
+      warn row
+    #.......................................................................................................
+    if dcount > 0
+      T.fail "found #{dcount} duplicate rows"
+    else
+      T.ok true
+    #.......................................................................................................
+    # debug '^984232-1^', await DM.render_html    dm, { quiet, }
+    # result    = await DM.retrieve_html  dm, { quiet: true, }
     if not quiet
       urge 'µ77782', '\n' + as_numbered_lines probe
       info 'µ77782', '\n' + as_numbered_lines result if result?
-      # await H.show_overview   datamill
-      # await H.show_html       datamill
+      # await H.show_overview   dm
+      # await H.show_html       dm
   #.........................................................................................................
+  done()
   return null
 
 
@@ -197,7 +237,7 @@ query_tables = ( dm ) ->
 unless module.parent?
   # test @, { timeout: 5000, }
   # test @[ "stamped datoms must be stamped (duh)" ]
-  @_reveal_bug_from_pipestreaming_api_change()
+  test @[ "VNRs must be unique" ]
   # test @[ "xxx2" ], { timeout: 1e4, }
   # test @[ "xxx2" ], { timeout: 1e4, }
   # test @[ "wye with duplex pair"            ]
