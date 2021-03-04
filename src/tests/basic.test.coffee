@@ -37,11 +37,21 @@ SP                        = require 'steampipes'
   select
   stamp }                 = SP.export()
 #...........................................................................................................
+DATOM                     = require 'datom'
+{ VNR }                   = DATOM
+{ freeze
+  thaw
+  new_datom
+  is_stamped
+  select
+  stamp }                 = DATOM.export()
+#...........................................................................................................
 types                     = require '../types'
 { isa
   validate
   declare
   first_of
+  cast
   last_of
   size_of
   type_of }               = types
