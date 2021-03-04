@@ -76,6 +76,50 @@ as_numbered_lines = ( text ) ->
   return R.join '\n'
 
 #-----------------------------------------------------------------------------------------------------------
+query_tables = ( dm ) ->
+  table_names = [
+    'main'
+    'keys'
+    'realms'
+    'sources' ]
+  for table_name in table_names
+    # sql = "select count(*) from #{table_name};"
+    sql = "select * from #{table_name};"
+    for row from dm.mirage.dbr.$.query sql
+      info table_name, row
+  return null
+
+#-----------------------------------------------------------------------------------------------------------
+@[ "stamped datoms must be stamped (duh)" ] = ( T, done ) ->
+  dm    = await DM.create { text: 'some text here', } ### TAINT bug in mirage prevents using empty text ###
+  $vnr  = [ 123, ]
+  d1    = new_datom '^line', { $vnr, text: "XXX" }
+  row   = H.row_from_datom dm, d1
+  T.eq d1,  { '$vnr': [ 123 ], text: 'XXX', '$key': '^line' }
+  T.eq row, { key: '^line', realm: 'input', vnr: [ 123 ], dest: 'main', text: 'XXX', p: 'null', stamped: false, ref: null }
+  d2    = stamp d1
+  T.ok d1 isnt d2
+  row   = H.row_from_datom dm, d2
+  T.eq d2,  { '$vnr': [ 123 ], text: 'XXX', '$key': '^line', '$stamped': true }
+  T.eq row, { key: '^line', realm: 'input', vnr: [ 123 ], dest: 'main', text: 'XXX', p: 'null', stamped: true, ref: null }
+  dbw   = dm.mirage.dbw
+  # urge '^98^', dbw.$.pragma 'foreign_keys = off';
+  # query_tables dm
+  T.eq ( dbw.insert row ), { changes: 1, lastInsertRowid: 2 }
+  # query_tables dm
+  vnr_blob = Buffer.from '4d405ec000000000004c', 'hex'
+  T.eq ( H.row_from_vnr   dm, $vnr ), { vnr: '[123]', stamped: 1, dest: 'main', sid: 1, realm: 'input', ref: null, key: '^line', text: 'XXX', p: 'null', vnr_blob, }
+  T.eq ( H.datom_from_vnr dm, $vnr ), { '$vnr': [ 123 ], '$key': '^line', dest: 'main', ref: null, realm: 'input', text: 'XXX', '$stamped': true }
+  #.........................................................................................................
+  ### Make sure casting between booleans and floats works as expected: ###
+  T.eq ( cast 'boolean',  'float',    false ), 0
+  T.eq ( cast 'boolean',  'float',    true  ), 1
+  T.eq ( cast 'float',    'boolean',  0     ), false
+  T.eq ( cast 'float',    'boolean',  1     ), true
+  #.........................................................................................................
+  done()
+
+#-----------------------------------------------------------------------------------------------------------
 @[ "xxx2" ] = ( T, done ) ->
   probes_and_matchers = [
     [ "A short text", "<p>A short text</p>", null, ]
@@ -152,9 +196,10 @@ as_numbered_lines = ( text ) ->
 ############################################################################################################
 unless module.parent?
   # test @, { timeout: 5000, }
-  # test @[ "xxx2" ], { timeout: 1e4, }
-  # test @[ "xxx2" ], { timeout: 1e4, }
+  # test @[ "stamped datoms must be stamped (duh)" ]
   @_reveal_bug_from_pipestreaming_api_change()
+  # test @[ "xxx2" ], { timeout: 1e4, }
+  # test @[ "xxx2" ], { timeout: 1e4, }
   # test @[ "wye with duplex pair"            ]
 
 
