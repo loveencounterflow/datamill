@@ -37,14 +37,28 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
     key       text    not null default $default_key references keys ( key ),
     text      text,
     p         json    default 'null',
-    -- ------------------------------------- debug
     vnr_blob  blob    not null );
-    -- vnr_blob  blob    not null,
-    -- primary key ( realm, vnr_blob ) );
-    -- ------------------------------------- debug
+  -- create unique index main_pk on main ( realm, vnr_blob );
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
   ( $vnr, json_as_hollerith( $vnr ), $text )
+
+--   create table main (
+--     vnr       json    not null,
+--     stamped   boolean not null default false,
+--     dest      text    not null default $default_dest,
+--     sid       integer not null default 1 references sources ( id ),
+--     realm     text    not null default $default_realm references realms ( realm ),
+--     ref       text    default 'mirage',
+--     key       text    not null default $default_key references keys ( key ),
+--     text      text,
+--     p         json    default 'null',
+--     vnr_blob  blob    not null,
+--     primary key ( realm, vnr_blob ) );
+--   insert into main ( vnr, vnr_blob, text ) values
+-- fragment create_table_main_middle( vnr, text ):
+--   ( $vnr, json_as_hollerith( $vnr ), $text )
+
 
 -- ---------------------------------------------------------------------------------------------------------
 query read_lines( limit ):
