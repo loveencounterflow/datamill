@@ -38,7 +38,7 @@ fragment create_table_main_first( path, default_dest, default_key, default_realm
     text      text,
     p         json    default 'null',
     vnr_blob  blob    not null );
-  -- create unique index main_pk on main ( realm, vnr_blob );
+  create unique index main_pk on main ( realm, vnr_blob );
   insert into main ( vnr, vnr_blob, text ) values
 fragment create_table_main_middle( vnr, text ):
   ( $vnr, json_as_hollerith( $vnr ), $text )
