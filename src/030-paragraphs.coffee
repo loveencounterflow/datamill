@@ -32,7 +32,6 @@ DATOM                     = require 'datom'
 { VNR }                   = DATOM
 { freeze
   thaw
-  new_datom
   is_stamped
   select
   stamp }                 = DATOM.export()

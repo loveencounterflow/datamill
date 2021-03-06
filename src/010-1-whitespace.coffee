@@ -29,7 +29,7 @@ DATOM                     = require 'datom'
 { VNR }                   = DATOM
 { freeze
   thaw
-  new_datom
+  fresh_datom
   is_stamped
   select
   stamp }                 = DATOM.export()
@@ -107,6 +107,8 @@ types                     = require './types'
       # debug '^ensure_blanks_at_ends@445^', d
       # debug '^ensure_blanks_at_ends@445^', { $vnr, VNR_receded: ( VNR.recede $vnr ) }
       send H.fresh_datom '^blank', { $vnr: ( VNR.recede $vnr ), linecount: 0, ref, }
+      debug '^ebae1@9833-1^', d
+      debug '^ebae1@9833-2^', DATOM.set d, { $vnr, $fresh: true, ref, }
       send DATOM.set d, { $vnr, $fresh: true, ref, }
       ### If the sole line in document or fragment is not a blank line, make sure it is followed by a
       blank; we do this here and not in the next clause, below, to avoid sending a duplicate of the

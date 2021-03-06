@@ -46,6 +46,7 @@ types                     = require './types'
   type_of }               = types
 XXX_COLORIZER             = require './experiments/colorizer'
 DM                        = require '..'
+glob                      = require 'glob'
 
 # debug '^555566^', ( k for k of DATOM.VNR ); process.exit 55
 
@@ -65,7 +66,16 @@ DM                        = require '..'
   basename  = PATH.basename filename
   return 'DATAMILL/' + ( basename .replace /^(.*?)\.[^.]+$/, '$1' ).toUpperCase()
 
-
+#-----------------------------------------------------------------------------------------------------------
+@get_phase_names = ( S ) ->
+  debug '^44447^', ( k for k of S )
+  debug '^44447^', ( k for k of S.control )
+  root    = cwd = __dirname
+  pattern = '+([0-9]|x)-*.js'
+  R       = glob.sync pattern, { root, cwd, }
+  R       = ( path.replace /\.js$/, '' for path in R )
+  R       = ( "./#{path}" for path in R )
+  return R
 
 
 #===========================================================================================================
@@ -292,8 +302,7 @@ DM                        = require '..'
   return $watch ( d ) =>
     ### TAINT how to convert vnr in ICQL? ###
     row     = @row_from_datom S, d
-    # debug '^3423423^', { d, }
-    # debug '^3423423^', { row, }
+    debug '^$feed_db@3423423^', { d, }
     methods = []
     try
       ### TAINT consider to use upsert instead https://www.sqlite.org/lang_UPSERT.html ###
@@ -301,14 +310,17 @@ DM                        = require '..'
       datom may have undergone changes (which doesn't make the correct opertion an update). ###
       if d.$fresh
         methods.push 'insert fresh'
+        debug '^3423423^', 'insert fresh', { row, }
         dbw.insert row
       else if d.$dirty
         ### NOTE force insert when update was without effect; this happens when `$vnr` was
         affected by a `SP.set()` call (ex. `VNR.advance $vnr; send SP.set d, '$vnr', $vnr`). ###
         methods.push 'update dirty'
         { changes, } = dbw.update row
+        debug '^3423423^', 'update dirty', { row, }
         if changes is 0
           methods.push 'insert dirty'
+          debug '^3423423^', 'insert dirty', { row, }
           dbw.insert row
     catch error
       warn 'µ12133', "when trying to #{methods.join ' -> '} row"

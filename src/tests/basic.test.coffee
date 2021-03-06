@@ -30,17 +30,16 @@ defer                     = setImmediate
 { inspect, }              = require 'util'
 xrpr                      = ( x ) -> inspect x, { colors: yes, breakLength: Infinity, maxArrayLength: Infinity, depth: Infinity, }
 #...........................................................................................................
-SP                        = require 'steampipes'
+SPX                       = require '../steampipes-extra'
 { $
   $watch
-  $async
-  select
-  stamp }                 = SP.export()
+  $async }                = SPX.export()
 #...........................................................................................................
 DATOM                     = require 'datom'
 { VNR }                   = DATOM
 { freeze
   thaw
+  fresh_datom
   new_datom
   is_stamped
   select
@@ -74,6 +73,12 @@ as_numbered_lines = ( text ) ->
     nr = idx + 1
     R.push ( to_width "#{nr}", 3 ) + CND.reverse line
   return R.join '\n'
+
+#-----------------------------------------------------------------------------------------------------------
+dont_enforce_vnr_uniqueness = ( datamill ) ->
+  ### Drop index so erroneous VNR duplicates won't trigger an error in the DB: ###
+  datamill.mirage.dbw.$.run "drop index main_pk;"
+  return null
 
 #-----------------------------------------------------------------------------------------------------------
 query_tables = ( dm ) ->
@@ -165,20 +170,49 @@ query_tables = ( dm ) ->
   defer -> done()
   return null
 
-# #-----------------------------------------------------------------------------------------------------------
-# @[ "VNRs must be unique" ] = ( T, done ) ->
-#   text    = "A short text" # "<p>A short text</p>"
-#   dm      = await DM.create { text, }
-#   { dbw } = dm.mirage
-#   #.........................................................................................................
-#   dbw.$.run "drop index main_pk;"
-#   # dbw.insert H.row_from_datom dm, { '$vnr': [ 2, ], text: 'XXX', '$key': '^line' }
-#   # dbw.insert H.row_from_datom dm, { '$vnr': [ 2, ], text: 'XXX', '$key': '^line' }
-#   #.........................................................................................................
-#   done()
+#-----------------------------------------------------------------------------------------------------------
+@[ "_may bring own transform" ] = ( T, done ) ->
+  #.........................................................................................................
+  provide = ->
+    #.......................................................................................................
+    @$transform = ( S ) ->
+      pipeline = []
+      pipeline.push SPX.$show()
+      # pipeline.push @$group_blank_lines       S
+      # pipeline.push @$ensure_blanks_at_ends   S
+      return SPX.pull pipeline...
+    #.......................................................................................................
+    return @
+  #.........................................................................................................
+  await do =>
+    { transform } = provide.apply {}
+    quiet         = false
+    text          = "A short text" # "<p>A short text</p>"
+    dm            = await DM.create { text, }
+    { dbw }       = dm.mirage
+    dont_enforce_vnr_uniqueness dm
+    #.......................................................................................................
+    await DM.parse_document dm, { quiet, transform, }
+    #.......................................................................................................
+  done()
 
 #-----------------------------------------------------------------------------------------------------------
 @[ "VNRs must be unique" ] = ( T, done ) ->
+  phase_names = [
+    './000-initialize'
+    './005-start-stop'
+    './006-ignore'
+    './010-1-whitespace'
+    # './010-2-whitespace-dst'
+    # './020-blocks'
+    './030-paragraphs'
+    # './035-hunks'
+    # './040-markdown-inline'
+    # # './030-escapes'
+    # # './035-special-forms'
+    # './xxx-validation'
+    # './900-render-html'
+    ]
   probes_and_matchers = [
     [ "A short text", "<p>A short text</p>", null, ]
     # ["```\nCODE\n```","<pre><code>\nCODE\n</code></pre>",null]
@@ -190,14 +224,12 @@ query_tables = ( dm ) ->
   result  = null
   quiet   = true
   quiet   = false
-  for [ probe, matcher, error, ] in probes_and_matchers
-    dm  = await DM.create { text: probe, }
-    # dm  = await DM.create { text: probe, db_path: ':memory:', }
+  for [ text, matcher, error, ] in probes_and_matchers
+    dm  = await DM.create { text, }
+    dont_enforce_vnr_uniqueness dm
+    # dm  = await DM.create { text, db_path: ':memory:', }
     #.......................................................................................................
-    ### Drop index so erroneous VNR duplicates won't trigger an error in the DB: ###
-    dm.mirage.dbw.$.run "drop index main_pk;"
-    #.......................................................................................................
-    debug '^984232-1^', await DM.parse_document dm, { quiet, }
+    await DM.parse_document dm, { quiet, phase_names, }
     sql = """
       with v1 as ( select
           *,
@@ -223,7 +255,7 @@ query_tables = ( dm ) ->
     # debug '^984232-1^', await DM.render_html    dm, { quiet, }
     # result    = await DM.retrieve_html  dm, { quiet: true, }
     if not quiet
-      urge 'µ77782', '\n' + as_numbered_lines probe
+      urge 'µ77782', '\n' + as_numbered_lines text
       info 'µ77782', '\n' + as_numbered_lines result if result?
       # await H.show_overview   dm
       # await H.show_html       dm
@@ -234,10 +266,12 @@ query_tables = ( dm ) ->
 
 
 ############################################################################################################
-unless module.parent?
+if module is require.main then do =>
   # test @, { timeout: 5000, }
   # test @[ "stamped datoms must be stamped (duh)" ]
   test @[ "VNRs must be unique" ]
+  # test @[ "may bring own transform" ]
+  # await @[ "may bring own transform" ] null, ->
   # test @[ "xxx2" ], { timeout: 1e4, }
   # test @[ "xxx2" ], { timeout: 1e4, }
   # test @[ "wye with duplex pair"            ]

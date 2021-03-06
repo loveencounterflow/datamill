@@ -54,7 +54,6 @@ H                         = require './helpers'
 DATAMILL                  = @
 
 
-
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
@@ -173,22 +172,9 @@ DATAMILL                  = @
   defaults =
     quiet:        false
     ### TAINT use globbing instead of enumeration ###
-    phase_names:  [
-      './000-initialize'
-      './005-start-stop'
-      './006-ignore'
-      './010-1-whitespace'
-      './010-2-whitespace-dst'
-      './020-blocks'
-      './030-paragraphs'
-      './035-hunks'
-      './040-markdown-inline'
-      # # './030-escapes'
-      # # './035-special-forms'
-      './xxx-validation'
-      # './900-render-html'
-      ]
+    # phase_names:  H.get_phase_names S
   settings  = { defaults..., settings..., }
+  debug '^44553^', settings.phase_names
   validate.datamill_parse_document_settings settings
   #.........................................................................................................
   msg_1 = ->
