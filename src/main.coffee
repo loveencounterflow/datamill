@@ -172,7 +172,7 @@ DATAMILL                  = @
   defaults =
     quiet:        false
     ### TAINT use globbing instead of enumeration ###
-    # phase_names:  H.get_phase_names S
+    phase_names:  H.get_phase_names S
   settings  = { defaults..., settings..., }
   debug '^44553^', settings.phase_names
   validate.datamill_parse_document_settings settings
@@ -259,6 +259,7 @@ DATAMILL                  = @
     #.......................................................................................................
     help "using database at #{settings.db_path}"
     datamill  = await DATAMILL.create settings
+    # datamill.mirage.dbw.$.run "drop index main_pk;" ### TAINT for testing only ###
     quiet     = false
     quiet     = true
     await DATAMILL.parse_document       datamill, { quiet, }
