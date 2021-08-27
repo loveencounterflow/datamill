@@ -1,7 +1,7 @@
 {
   "name": "datamill",
   "version": "1.0.2",
-  "description": "A DB-backed text document processor built on pipedreams, icql and mkts-mirage.",
+  "description": "A DB-backed text document processor built on steampipes, icql and mkts-mirage.",
   "main": "lib/main.js",
   "dependencies": {
     "cnd": "9.2.1",
@@ -11,17 +11,13 @@
     "icql": "5.2.1",
     "intertext": "5.0.0",
     "intertype": "7.6.6",
-    "markdown-it": "12.0.4",
     "mkts-mirage": "6.2.2",
     "steampipes": "6.7.1",
     "timetunnel": "1.1.1",
     "to-width": "1.1.0"
   },
-  "devDependencies": {
-    "guy-test": "4.0.1"
-  },
   "scripts": {
-    "test": "coffee --map -o lib -c src && node lib/tests/main.js"
+    "test": "see https://github.com/loveencounterflow/hengist/tree/master/dev/datamill"
   },
   "author": "",
   "license": "MIT"

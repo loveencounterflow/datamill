@@ -6,13 +6,10 @@ dependencies:
   icql: 5.2.1
   intertext: 5.0.0
   intertype: 7.6.6
-  markdown-it: 12.0.4
-  mkts-mirage: link:../mkts-mirage
-  steampipes: link:../steampipes
+  mkts-mirage: 6.2.2
+  steampipes: 6.7.1
   timetunnel: 1.1.1
   to-width: 1.1.0
-devDependencies:
-  guy-test: 4.0.1
 lockfileVersion: 5.2
 packages:
   /@uppy/fs-tail-stream/1.2.0:
@@ -76,10 +73,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-5hYdAkZlcG8tOLujVDTgCT+uPX0VnpAH28gWsLfzpXYm7wP6mp5Q/gYyR7YQ0cKVJcXJnl3j2kpBan13PtQf6w==
-  /argparse/2.0.1:
-    dev: false
-    resolution:
-      integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
   /array-from/2.1.1:
     dev: false
     resolution:
@@ -90,10 +83,6 @@ packages:
     dev: false
     resolution:
       integrity: sha1-SppaidBl7F2OUlS9nulrp2xTK1o=
-  /async/3.2.0:
-    dev: true
-    resolution:
-      integrity: sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw==
   /balanced-match/1.0.0:
     dev: false
     resolution:
@@ -185,6 +174,7 @@ packages:
     resolution:
       integrity: sha512-HZmL11eDy/oreoKTxes07DSPjd9Cjr4qZVEdRu8lK+dxIts2cqUkyde39Ve7PyMh8nWNtSzmvIZ4WHWng1PFow==
   /cnd/9.2.1:
+    dev: false
     hasBin: true
     resolution:
       integrity: sha512-JszZtSlOCxkIvNPKpw1PmIcQUjYO+pBqVoKVH2STHLtG4JHHJ1NHowv39lhyxzlPxUTZk7pZ3qO7CfrfJ8ZSKw==
@@ -363,10 +353,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==
-  /entities/2.1.0:
-    dev: false
-    resolution:
-      integrity: sha512-hCx1oky9PFrJ611mf0ifBLBRW8lUUVRlFolb5gWRfIELabBlbp9xZvrqZLZAs+NxFnbfQoeGd8wDkygjg7U85w==
   /error-callsites/2.0.3:
     dev: false
     resolution:
@@ -538,14 +524,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==
-  /guy-test/4.0.1:
-    dependencies:
-      async: 3.2.0
-      cnd: 9.2.1
-      intertype: 7.6.3
-    dev: true
-    resolution:
-      integrity: sha512-NH2ZCLVFCEGmTe2znmCuflSL8Uo1jTAXTSpYOkijstXFwonLtaScfmkVw5e2dL9GAcQ0GlPZRhdhySbhUCgVSg==
   /has-unicode/2.0.1:
     dev: false
     resolution:
@@ -653,6 +631,7 @@ packages:
   /intertype/7.6.3:
     dependencies:
       multimix: 5.0.0
+    dev: false
     resolution:
       integrity: sha512-77FmgaqGydWBc5OIde+geMj4+dGZ1i5UIFXM4C9QHiEIBjh+Gojycsb7XtRYYLNhNJepa+jotHXfAGPngHatzw==
   /intertype/7.6.5:
@@ -730,12 +709,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-bJwSRsJeAmaZYnkcwl5sCQNfSDAhBuXxb6L27tb+qkBRtUQSSTUa5bcgCPD6hFEkRNlpWHfK7nFMmcANU7ZP1w==
-  /linkify-it/3.0.2:
-    dependencies:
-      uc.micro: 1.0.6
-    dev: false
-    resolution:
-      integrity: sha512-gDBO4aHNZS6coiZCKVhSNh43F9ioIL4JwRjLZPkoLIY4yZFwg264Y5lu2x6rb1Js42Gh6Yqm2f6L2AJcnkzinQ==
   /load-source-map/1.0.0:
     dependencies:
       in-publish: 2.0.1
@@ -764,21 +737,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-sCuTz6pYom8Rlt4ISPFn6wuFodbKMIHUMv4Qko9P17dpxb7s52KJTmRuZZqHdGmLCK9AOcDare039nRIcfdkEg==
-  /markdown-it/12.0.4:
-    dependencies:
-      argparse: 2.0.1
-      entities: 2.1.0
-      linkify-it: 3.0.2
-      mdurl: 1.0.1
-      uc.micro: 1.0.6
-    dev: false
-    hasBin: true
-    resolution:
-      integrity: sha512-34RwOXZT8kyuOJy25oJNJoulO8L0bTHYWXcdZBYZqFnjIy3NgjeoM3FmPXIOFQ26/lSHYMr8oc62B6adxXcb3Q==
-  /mdurl/1.0.1:
-    dev: false
-    resolution:
-      integrity: sha1-/oWy7HWlkDfyrf7BAP1sYBdhFS4=
   /merge-source-map/1.0.4:
     dependencies:
       source-map: 0.5.7
@@ -829,6 +787,15 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
+  /mkts-mirage/6.2.2:
+    dependencies:
+      cnd: 9.2.1
+      icql: 5.2.1
+      intertype: 7.6.5
+      mkdirp: 1.0.4
+    dev: false
+    resolution:
+      integrity: sha512-j1WAD0JUgIT5ptWvVUhKxjHhdavldq8Qw6Ob+ySvcZNZzRBhuxlWMF9gT89mrJ82AdeH6LRrMrlg7t2GqytXMA==
   /ms/2.1.2:
     dev: false
     resolution:
@@ -840,6 +807,7 @@ packages:
     resolution:
       integrity: sha512-GUV1SMXk7ZS/DiLHNYA6G43I+ORymTRvixCXBebR8kIFWy/1Syl7WmoI0dBvPzvs7goIK3VbCRO+EtIEP2R11w==
   /multimix/5.0.0:
+    dev: false
     resolution:
       integrity: sha512-N9cdGSDDD7kxOV7R6e4iZqsHTZ4F4iiSDWqMcVqx4gEH6HBtRXav39Gj3fgT1YqvBcwPCQuf0Oa5R2cDaLWK8A==
   /napi-build-utils/1.0.2:
@@ -1306,10 +1274,6 @@ packages:
     dev: false
     resolution:
       integrity: sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
-  /uc.micro/1.0.6:
-    dev: false
-    resolution:
-      integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==
   /unicode-trie/1.0.0:
     dependencies:
       pako: 0.2.9
@@ -1375,11 +1339,9 @@ specifiers:
   color-convert: ^2.0.1
   datom: 8.0.3
   glob: ^7.1.6
-  guy-test: 4.0.1
   icql: 5.2.1
   intertext: 5.0.0
   intertype: 7.6.6
-  markdown-it: 12.0.4
   mkts-mirage: 6.2.2
   steampipes: 6.7.1
   timetunnel: 1.1.1
