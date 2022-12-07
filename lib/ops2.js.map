@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "../src/ops2.coffee"
+  ],
+  "names": [],
+  "mappings": "AAEA;EAAA;AAAA,MAAA,IAAA,EAAA,GAAA,EAAA,IAAA,EAAA,GAAA,EAAA,KAAA,EAAA;;AAEA;EAAA,KAAA,WAAA;IACE,CAAA,CAAE,KAAF,CAAA,GAAsB,IAAI,CAAC,OAA3B;IACA,KAAA,GAAsB,IAAI,CAAC,KAAL,CAAW,KAAX;IACtB,GAAA,GAAsB,KAAK,CAAC,oBAAN,CAA2B,KAA3B;IACtB,CAAC,CAAC,GAAG,CAAC,MAAN,CAAa,IAAb,EAAmB,GAAnB;EAJF;;AAKA;EAAA,KAAA,YAAA;IACE,CAAA,CAAE,MAAF,CAAA,GAAsB,IAAI,CAAC,OAA3B;IACA,MAAA,GAAsB,IAAI,CAAC,KAAL,CAAW,MAAX;IACtB,GAAA,GAAsB,KAAK,CAAC,iBAAN,CAAwB,MAAxB;IACtB,CAAC,CAAC,GAAG,CAAC,MAAN,CAAa,IAAb,EAAmB,GAAnB;EAJF;;EAOA,UAAU,CAAC,MAAX,GAAoB,EAAA,CAAA;;EACpB,MAAM,CAAC,IAAP,CAAY,SAAZ,EAAuB;IAAE,IAAA,EAAM;EAAR,CAAvB;AAfA",
+  "sourcesContent": [
+    "\n\n'use strict'\n\nfor node from µ.DOM.select_all '.sparkline'\n  { trend           } = node.dataset\n  trend               = JSON.parse trend\n  svg                 = VOGUE.sparkline_from_trend trend\n  µ.DOM.append node, svg\nfor node from µ.DOM.select_all '.trendchart'\n  { trends          } = node.dataset\n  trends              = JSON.parse trends\n  svg                 = VOGUE.chart_from_trends trends\n  µ.DOM.append node, svg\n\n\nglobalThis.socket = io()\nsocket.emit 'message', { with: 'value', }\n\n"
+  ]
+}

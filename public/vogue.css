@@ -1,0 +1,37 @@
+
+body {
+  font-size:              4mm;
+  line-height:            100%;
+  background-image:       url(/public/books.jpg);
+  background-size:        10%;
+}
+
+svg {
+  outline:                1px dotted red; }
+
+td, th {
+  padding:                0.25em;
+  background-color:       #d2f0fe;
+  white-space:            nowrap; }
+
+th {
+  font-family:            sans-serif;
+  text-align:             left; }
+
+.sparkline {
+  min-width:              35mm;
+  max-width:              35mm; }
+
+.sparkline svg {
+  outline:                1px solid orange; }
+
+table table {
+  font-size:              75%; }
+
+table table th,
+table table td {
+  padding:                0; }
+
+.error {
+  color:                  red;
+  font-weight:            bold; }
