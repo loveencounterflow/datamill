@@ -2,9 +2,9 @@
 body {
   font-size:              4mm;
   line-height:            100%;
-  background-image:       url(/public/books.jpg);
-  background-size:        10%;
-}
+/*  background-image:       url(/public/books.jpg);
+  background-size:        10%; */
+  }
 
 svg {
   outline:                1px dotted red; }
@@ -35,3 +35,7 @@ table table td {
 .error {
   color:                  red;
   font-weight:            bold; }
+
+pre {
+  margin-top:             0mm;
+  margin-bottom:          0mm; }
