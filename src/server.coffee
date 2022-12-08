@@ -100,7 +100,7 @@ class @Datamill_server
     @app.use                                          @_s_layout
     #.......................................................................................................
     @router.get   'home',           '/',              @_r_home
-    @router.get   'relations',      '/relations',     @_r_relations
+    @router.get   'relation',       '/relation/:rel', @_r_relation
     # @router.get   'trends',         '/trends',        @_r_trends
     # @router.get   'layout-demo',    '/layout-demo',   @_r_layout_demo
     @router.get   'table_by_name',  '/table/:table',  @_r_table_by_name
@@ -151,36 +151,26 @@ class @Datamill_server
   #---------------------------------------------------------------------------------------------------------
   _r_home: ( ctx ) =>
     ### TAINT generate from DB or load from external file ###
+    relation = @router.url 'relation', 'sqlite_schema'
+    debug '^32234^', { relation, }
     ctx.body = """
       <h1>Datamill</h1>
       <ul>
-        <li><a href=relations>Relations (Tables &amp; Views)</a></li>
+        <li><a href=#{relation}>Relations (Tables &amp; Views)</a></li>
         </ul>
       """
     # help "^datamill/server@7^", ctx.router.url 'home', { query: { foo: 'bar', }, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _r_relations: ( ctx ) =>
-    ### TAINT generate from DB or load from external file ###
-    # public_table_name   = ctx.params.table
-    content = []
-    content.push HDML.open 'table'
-    content.push HDML.open 'tr'
-    content.push HDML.pair 'th', HDML.text 'type'
-    content.push HDML.pair 'th', HDML.text 'name'
-    content.push HDML.pair 'th', HDML.text 'SQL'
-    content.push HDML.close 'tr'
-    for row from @db SQL"""select * from sqlite_schema order by name;"""
-      content.push HDML.open 'tr'
-      content.push HDML.pair 'td', HDML.text row.type
-      content.push HDML.pair 'td', HDML.text row.name
-      content.push HDML.pair 'td', HDML.pair 'pre', HDML.text row.sql ? './.'
-    content.push HDML.close 'table'
-    ctx.body = content.join '\n'
-    rows = @db.all_rows SQL"""select * from sqlite_schema order by name;"""
-    ctx.body += '<hr>'
-    ctx.body += tabulate { rows, ( @_get_table_cfg 'relations' )..., }
+  _r_relation: ( ctx ) =>
+    table_name  = ctx.params.rel ? 'sqlite_schema'
+    table_name  = 'sqlite_schema' if table_name is ''
+    ### TAINT use proper interpolation or API ###
+    rows        = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
+    ### TAINT use proper error handling in case table_name not found ###
+    table_cfg   = @_get_table_cfg table_name
+    ctx.body    = tabulate { rows, table_cfg..., }
     return null
 
   # #---------------------------------------------------------------------------------------------------------
@@ -264,17 +254,23 @@ class @Datamill_server
   _set_table_cfgs: =>
     GUY.props.hide @, 'table_cfgs', {}
     #.......................................................................................................
-    @table_cfgs[ 'relations' ] =
+    @table_cfgs[ 'sqlite_schema' ] =
       fields:
         name:
           hide:     false
+          inner_html: ( d ) =>
+            href = @router.url 'relation', d.value
+            debug '^inner_html@234^', ( rpr d.value ), ( rpr href )
+            return HDML.pair 'a', { href, }, HDML.text d.value ? './.'
+        table_name:
+          hide:     true
         type:
           hide:     false
         rootpage:
           hide:     true
         sql:
           title:  "SQL"
-          inner_html:   ( d ) =>
+          inner_html: ( d ) => HDML.pair 'pre', HDML.text d.value ? './.'
     #.......................................................................................................
     # @table_cfgs[ 'trends' ] =
     #   fields:
@@ -322,7 +318,6 @@ class @Datamill_server
     #             article_url:
     #               hide: true
     #         return summarize cfg
-            return summarize cfg
     return null
 
   # #---------------------------------------------------------------------------------------------------------
