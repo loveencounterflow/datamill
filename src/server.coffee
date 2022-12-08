@@ -275,57 +275,53 @@ class @Datamill_server
         sql:
           title:  "SQL"
           inner_html:   ( d ) =>
-            debug '^3234^', rpr d
-            return HDML.pair 'pre', HDML.text d.value ? './.'
     #.......................................................................................................
-    #.......................................................................................................
-    #.......................................................................................................
-    #.......................................................................................................
-    @table_cfgs[ 'trends' ] =
-      fields:
-        #...................................................................................................
-        dsk:
-          hide: true
-        #...................................................................................................
-        sid_min:
-          hide: true
-        sid_max:
-          title:  "SIDs"
-          inner_html: ( d ) =>
-            { sid_min
-              sid_max } = d.row
-            return sid_min if sid_min is sid_max
-            return "#{sid_min}—#{sid_max}"
-        #...................................................................................................
-        ts:
-          inner_html: ( d ) => @db.dt_format d.value, 'YYYY-MM-DD HH:mm UTC'
-        #...................................................................................................
-        raw_trend:
-          title:  "Trend"
-          outer_html:   ({ value: raw_trend }) =>
-            return HDML.pair 'td.trend.sparkline', { 'data-trend': raw_trend, }
-        #...................................................................................................
-        details:
-          inner_html:   ( d ) =>
-            try row = JSON.parse d.value catch error
-              return HDML.pair 'div.error', HDML.text error.message
-            cfg =
-              row:        row
-              fields:
-                title:
-                  title:      "Title"
-                  inner_html: ({ value: title, row, }) =>
-                    return HDML.pair 'a', { href: row.title_url, }, HDML.text title
-                title_url:
-                  hide: true
-                article:
-                  title:      "Article"
-                  inner_html: ({ value: title, row, }) =>
-                    return Symbol.for 'hide' unless title?
-                    return Symbol.for 'hide' unless row.article_url?
-                    return HDML.pair 'a', { href: row.article_url, }, HDML.text title
-                article_url:
-                  hide: true
+    # @table_cfgs[ 'trends' ] =
+    #   fields:
+    #     #...................................................................................................
+    #     dsk:
+    #       hide: true
+    #     #...................................................................................................
+    #     sid_min:
+    #       hide: true
+    #     sid_max:
+    #       title:  "SIDs"
+    #       inner_html: ( d ) =>
+    #         { sid_min
+    #           sid_max } = d.row
+    #         return sid_min if sid_min is sid_max
+    #         return "#{sid_min}—#{sid_max}"
+    #     #...................................................................................................
+    #     ts:
+    #       inner_html: ( d ) => @db.dt_format d.value, 'YYYY-MM-DD HH:mm UTC'
+    #     #...................................................................................................
+    #     raw_trend:
+    #       title:  "Trend"
+    #       outer_html:   ({ value: raw_trend }) =>
+    #         return HDML.pair 'td.trend.sparkline', { 'data-trend': raw_trend, }
+    #     #...................................................................................................
+    #     details:
+    #       inner_html:   ( d ) =>
+    #         try row = JSON.parse d.value catch error
+    #           return HDML.pair 'div.error', HDML.text error.message
+    #         cfg =
+    #           row:        row
+    #           fields:
+    #             title:
+    #               title:      "Title"
+    #               inner_html: ({ value: title, row, }) =>
+    #                 return HDML.pair 'a', { href: row.title_url, }, HDML.text title
+    #             title_url:
+    #               hide: true
+    #             article:
+    #               title:      "Article"
+    #               inner_html: ({ value: title, row, }) =>
+    #                 return Symbol.for 'hide' unless title?
+    #                 return Symbol.for 'hide' unless row.article_url?
+    #                 return HDML.pair 'a', { href: row.article_url, }, HDML.text title
+    #             article_url:
+    #               hide: true
+    #         return summarize cfg
             return summarize cfg
     return null
 
