@@ -21,8 +21,10 @@ GUY                       = require 'guy'
 { Intertype }             = require 'intertype'
 base_types                = null
 server_types              = null
+document_types            = null
 misfit                    = Symbol 'misfit'
 PATH                      = require 'node:path'
+{ DBay }                  = require 'dbay'
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -81,7 +83,36 @@ get_server_types = ->
   #...........................................................................................................
   return server_types
 
-module.exports = { misfit, get_base_types, get_server_types, }
+#-----------------------------------------------------------------------------------------------------------
+get_document_types = ->
+  return document_types if document_types?
+  #.........................................................................................................
+  document_types                = new Intertype get_base_types()
+  { declare }                 = document_types
+  #.........................................................................................................
+  declare.datamill_document_cfg
+    fields:
+      db:                 'dbay'
+      prefix:             'dbay_prefix'
+    default:
+      db:                 null
+      prefix:             'doc_'
+    create: ( x ) ->
+      return x unless ( not x? ) or ( @isa.object x )
+      R     = { @registry.datamill_document_cfg.default..., x..., }
+      R.db             ?= new DBay()
+      R.file_adapters  ?= ( require './document' ).file_adapters
+      return R
+  #...........................................................................................................
+  declare.new_external_file_cfg
+    isa: 'anything'
+  #...........................................................................................................
+  declare.new_external_text_file_cfg
+    isa: 'anything'
+  #...........................................................................................................
+  return document_types
+
+module.exports = { misfit, get_base_types, get_server_types, get_document_types, }
 
 
 
