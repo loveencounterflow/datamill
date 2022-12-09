@@ -115,7 +115,7 @@ class External_file_abc extends File_adapter_abc
   #---------------------------------------------------------------------------------------------------------
   constructor: ( cfg ) ->
     super()
-    @cfg   @types.create.new_external_file_cfg cfg
+    @cfg   = @types.create.new_external_file_cfg cfg
     return undefined
 
   #---------------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ class External_text_file extends External_file_abc
   #---------------------------------------------------------------------------------------------------------
   constructor: ( cfg ) ->
     super()
-    @cfg   @types.create.new_external_text_file_cfg cfg
+    @cfg   = @types.create.new_external_text_file_cfg cfg
     return undefined
 
   #---------------------------------------------------------------------------------------------------------
