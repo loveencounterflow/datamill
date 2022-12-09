@@ -4,7 +4,6 @@ specifiers:
   '@koa/router': ^12.0.0
   dbay: ^15.1.0
   dbay-tabulator: ^0.2.0
-  fs: 0.0.1-security
   guy: ^12.3.0
   hdml: ^3.0.0
   http: 0.0.1-security
@@ -21,7 +20,6 @@ dependencies:
   '@koa/router': 12.0.0
   dbay: 15.1.0
   dbay-tabulator: 0.2.0
-  fs: 0.0.1-security
   guy: 12.3.0
   hdml: 3.0.0
   http: 0.0.1-security
@@ -325,10 +323,6 @@ packages:
   /fresh/0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
-    dev: false
-
-  /fs/0.0.1-security:
-    resolution: {integrity: sha512-3XY9e1pP0CVEUCdj5BmfIZxRBTSDycnbqhIOGec9QYtmVH2fbLpj86CFWkrNOkt/Fvty4KZG5lTglL9j/gJ87w==}
     dev: false
 
   /get-source/2.0.12:
