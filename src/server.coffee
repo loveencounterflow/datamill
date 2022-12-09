@@ -187,7 +187,7 @@ class Datamill_server extends Datamill_server_base
     super()
     GUY.props.hide @, 'types', get_server_types()
     @cfg        = @types.create.datamill_server_cfg cfg
-    GUY.props.hide @, 'db', @cfg.db; delete cfg.db
+    GUY.props.hide @, 'db', @cfg.db; delete @cfg.db
     @_add_layout()
     @cfg        = GUY.lft.freeze @cfg
     #.......................................................................................................
