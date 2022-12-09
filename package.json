@@ -16,6 +16,7 @@
     "koa-files": "^2.3.1",
     "koa-mount": "^4.0.0",
     "moonriver": "^3.0.0",
+    "nodexh": "^2.2.0",
     "path": "^0.12.7",
     "socket.io": "^4.5.4"
   },
