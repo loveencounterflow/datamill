@@ -33,40 +33,8 @@ get_base_types = ->
   { declare }               = base_types
   #.........................................................................................................
   declare.dbay                  override: true, isa: ( x ) -> x?.constructor?.name is 'DBay'
-  # main                      = require './main'
-  # source_fitting_types      = get_sync_source_fitting_types()
-  # #.........................................................................................................
-  # declare.function0             override: true, isa: ( x ) -> ( @isa.function      x ) and ( x.length is 0 )
-  # declare.function1             override: true, isa: ( x ) -> ( @isa.function      x ) and ( x.length is 1 )
-  # declare.function2             override: true, isa: ( x ) -> ( @isa.function      x ) and ( x.length is 2 )
-  # declare.asyncfunction0        override: true, isa: ( x ) -> ( @isa.asyncfunction x ) and ( x.length is 0 )
-  # declare.asyncfunction1        override: true, isa: ( x ) -> ( @isa.asyncfunction x ) and ( x.length is 1 )
-  # declare.asyncfunction2        override: true, isa: ( x ) -> ( @isa.asyncfunction x ) and ( x.length is 2 )
-  # #.........................................................................................................
-  # declare.pipeline                              isa: ( x ) -> x instanceof main.Pipeline
-  # declare.sync_pipeline         override: true, isa: ( x ) -> ( x instanceof main.Pipeline ) and not \
-  #                                                             ( x instanceof main.Async_pipeline )
-  # declare.async_pipeline        override: true, isa: ( x ) -> x instanceof main.Async_pipeline
-  # #.........................................................................................................
-  # declare.nodejs_writestream    override: true, isa: ( x ) -> x instanceof STREAM.Writable
-  # declare.nodejs_readstream     override: true, isa: ( x ) -> x instanceof STREAM.Readable
-  # #.........................................................................................................
-  # declare.reporting_collector   override: true, isa: ( x ) -> x instanceof main.Reporting_collector
-  # declare.proto_segment         override: true, isa: ( x ) -> x instanceof main.Proto_segment
-  # declare.collector                             isa: 'list.or.reporting_collector'
-  # declare.misfit                override: true, default: misfit, isa: ( x ) -> x is misfit
-  # #.........................................................................................................
-  # declare.modifiers
-  #   fields:
-  #     first:      'anything'
-  #     last:       'anything'
-  #   default:
-  #     first:      misfit
-  #     last:       misfit
-  #   create: ( x ) ->
-  #     return { first: misfit, last: misfit, } unless x?
-  #     return x unless @isa.object x
-  #     return { first: ( GUY.props.get x, 'first', misfit ), last: ( GUY.props.get x, 'last',  misfit ), }
+  ### TAINT should check whether collides with any other prefix ###
+  declare.dbay_prefix                           isa: ( x ) -> ( @isa.text x ) and ( x.endsWith '_' )
   #.........................................................................................................
   return base_types
 
