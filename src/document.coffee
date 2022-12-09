@@ -54,7 +54,7 @@ class Document
   constructor: ( cfg ) ->
     # super()
     GUY.props.hide @, 'types', get_document_types()
-    @cfg        = @types.create.datamill_document_cfg cfg
+    @cfg        = @types.create.doc_document_cfg cfg
     GUY.props.hide @, 'db',             @cfg.db;            delete @cfg.db
     GUY.props.hide @, 'file_adapters',  @cfg.file_adapters; delete @cfg.file_adapters
     @_procure_infrastructure()
@@ -72,36 +72,39 @@ class Document
     # TABLES
     #.......................................................................................................
     @db SQL"""
-      create table #{prefix}file_kinds (
-          doc_file_kind           text not null,
-          doc_file_kind_classname text not null,
-          comment                 text,
-        primary key ( doc_file_kind ) );"""
+      create table #{prefix}fads (
+          doc_fad_id            text not null,
+          doc_fad_name          text not null,
+          comment               text,
+        primary key ( doc_fad_id ) );"""
     #.......................................................................................................
     @db SQL"""
       create table #{prefix}files (
-          doc_file_id         text not null,
-          doc_file_kind       text not null references #{prefix}file_kinds,
-          doc_file_parameters json not null,
+          doc_file_id           text not null,
+          doc_fad_id            text not null references #{prefix}fads,
+          doc_file_parameters   json not null,
         primary key ( doc_file_id ) );"""
     #.......................................................................................................
-    insert_file_kind = @db.prepare_insert { into: "#{prefix}file_kinds", }
+    insert_file_kind = @db.prepare_insert { into: "#{prefix}fads", }
     @db =>
-      for doc_file_kind, clasz of @file_adapters
-        doc_file_kind_classname = clasz.name
-        comment                 = clasz.comment ? null
-        @db insert_file_kind, { doc_file_kind, doc_file_kind_classname, comment, }
+      for doc_fad_id, clasz of @file_adapters
+        doc_fad_name  = clasz.name
+        comment       = clasz.comment ? null
+        @db insert_file_kind, { doc_fad_id, doc_fad_name, comment, }
     #.......................................................................................................
     return null
 
   #---------------------------------------------------------------------------------------------------------
   get_doc_file_ids:   Decorators.get_all_first_values 'files',      'doc_file_id'
-  get_doc_file_kinds: Decorators.get_all_rows         'file_kinds'
+  get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
   new_file: ( cfg ) ->
+    @cfg   = @types.create.doc_new_file_cfg cfg
 
 
+#===========================================================================================================
+# FILE ADAPTERS (FADs)
 #===========================================================================================================
 class File_adapter_abc
   @comment: "abstract base class for files"
