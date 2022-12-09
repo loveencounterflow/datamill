@@ -35,89 +35,11 @@ mount                     = require 'koa-mount'
   summarize }             = require 'dbay-tabulator'
 { get_base_types
   get_server_types }      = require './types'
+NODEXH                    = require '../../nodexh'
 
 
 #===========================================================================================================
-class @Datamill_server
-
-  #---------------------------------------------------------------------------------------------------------
-  constructor: ( cfg ) ->
-    # super()
-    GUY.props.hide @, 'types', get_server_types()
-    @cfg        = @types.create.datamill_server_cfg cfg
-    GUY.props.hide @, 'db', @cfg.db; delete cfg.db
-    @_add_layout()
-    @cfg        = GUY.lft.freeze @cfg
-    #.......................................................................................................
-    GUY.props.hide @, 'app',    new Koa()
-    GUY.props.hide @, 'router', new Router()
-    #.......................................................................................................
-    return undefined
-
-  #---------------------------------------------------------------------------------------------------------
-  _add_layout: ->
-    @cfg.layout ?= {}
-    return null if @cfg.layout.top? and @cfg.layout.bottom?
-    path    = PATH.resolve PATH.join __dirname, '../assets/layout.html'
-    layout  = FS.readFileSync path, { encoding: 'utf-8', }
-    [ layout_top
-      layout_bottom   ] = layout.split '<%content%>'
-    @cfg.layout.top    ?= layout_top
-    @cfg.layout.bottom ?= layout_bottom
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  start: => new Promise ( resolve, reject ) =>
-    { host
-      port  } = @cfg
-    @_create_app()
-    #.......................................................................................................
-    GUY.props.hide @, 'http_server',  HTTP.createServer @app.callback()
-    GUY.props.hide @, 'io',           new Socket_server @http_server
-    #.......................................................................................................
-    @io.on 'connection', ( socket ) =>
-      help "^datamill/server@8^ user connected to socket"
-      socket.on 'message', ( P... ) -> info '^datamill/server@8^', P
-      return null
-    #.......................................................................................................
-    @io.on 'disconnect', ( socket ) =>
-      help "^datamill/server@8^ user disconnected from socket"
-      return null
-    #.......................................................................................................
-    @http_server.listen { host, port, }, ->
-      debug "^datamill/server@9^ listening on #{host}:#{port}"
-      resolve { host, port, }
-    #.......................................................................................................
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  _create_app: =>
-    ###
-    `_r_*`: managed by router
-    `_s_*`: managed by server
-    ###
-    @app.use                                          @_s_log
-    @app.use                                          @_s_layout
-    #.......................................................................................................
-    @router.get   'home',           '/',              @_r_home
-    @router.get   'relation',       '/relation/:rel', @_r_relation
-    # @router.get   'trends',         '/trends',        @_r_trends
-    # @router.get   'layout-demo',    '/layout-demo',   @_r_layout_demo
-    @router.get   'table_by_name',  '/table/:table',  @_r_table_by_name
-    #.......................................................................................................
-    @app.use @router.routes()
-    #.......................................................................................................
-    ### thx to https://stackoverflow.com/a/66377342/7568091 ###
-    debug '^4345^', @cfg.paths.public
-    debug '^4345^', @cfg.file_server
-    # @app.use mount '/favicon.ico', file_server @cfg.paths.favicon, @cfg.file_server
-    @app.use mount '/public', file_server @cfg.paths.public, @cfg.file_server
-    @app.use mount '/src',    file_server @cfg.paths.src,    @cfg.file_server
-    #.......................................................................................................
-    @app.use @_s_default
-    @app.use @router.allowedMethods()
-    return null
-
+class Datamill_server_base
 
   #=========================================================================================================
   #
@@ -163,74 +85,30 @@ class @Datamill_server
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _r_relation: ( ctx ) =>
-    table_name  = ctx.params.rel ? 'sqlite_schema'
-    table_name  = 'sqlite_schema' if table_name is ''
-    ### TAINT use proper interpolation or API ###
-    rows        = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
-    ### TAINT use proper error handling in case table_name not found ###
-    table_cfg   = @_get_table_cfg table_name
-    ctx.body    = tabulate { rows, table_cfg..., }
-    return null
-
-  # #---------------------------------------------------------------------------------------------------------
-  # _r_trends: ( ctx ) =>
-  #   ### TAINT iterate or use stream ###
-  #   ### TAINT chart is per-DSK but trends table is global ###
-  #   R                 = []
-  #   trends_table_name = @db._get_table_name 'trends'
-  #   R.push @_get_dsk_form ctx.query.dsk ? ''
-  #   #.......................................................................................................
-  #   if ctx.query.dsk in [ '', undefined, ]
-  #     for { dsk, scraper, } from @hub.scrapers._XXX_walk_scrapers()
-  #       R.push scraper._XXX_get_details_chart { dsk, }
-  #       # R.push scraper._XXX_get_details_table { dsk, }
-  #     R.push @_table_as_html trends_table_name
-  #   else if ( scraper = @hub.scrapers._scraper_from_dsk ctx.query.dsk, null )?
-  #     table_name_i  = @db.sql.I trends_table_name
-  #     query         = SQL"select * from #{table_name_i} where dsk = $dsk order by rank;"
-  #     parameters    = { dsk: ctx.query.dsk, }
-  #     R.push scraper._XXX_get_details_chart { dsk: ctx.query.dsk, }
-  #     R.push @_query_as_html trends_table_name, query, parameters
-  #   else
-  #     ### TAINT use correct error handling ###
-  #     R.push HDML.pair 'div.error', HDML.text "no such data source: #{rpr ctx.query.dsk}"
-  #   #.......................................................................................................
-  #   ctx.response.type   = 'html'
-  #   ctx.body            = R.join '\n'
-  #   return null
+  _r_tables: ( ctx ) => @_table_by_name ctx, 'sqlite_schema'
 
   #---------------------------------------------------------------------------------------------------------
-  _r_table_by_name: ( ctx ) =>
-    public_table_name   = ctx.params.table
-    table               = @db._get_table_name public_table_name
+  _r_table: ( ctx ) =>
+    table_name  = ctx.params.rel ? 'sqlite_schema'
+    table_name  = 'sqlite_schema' if table_name is ''
+    return @_table_by_name ctx, table_name
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _table_by_name: ( ctx, table_name ) =>
     R                   = []
-    R.push HDML.pair 'h1', HDML.text public_table_name
-    R.push @_table_as_html table
+    R.push HDML.pair 'h1', HDML.text "Table #{table_name}"
+    ### TAINT use proper interpolation or API ###
+    rows                = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
+    ### TAINT use proper error handling in case table_name not found ###
+    unless ( table_cfg = @_get_table_cfg table_name )?
+      ctx.body "no such table: #{table_name}"
+      return null
+    R                   = R.concat tabulate { rows, table_cfg..., }
     #.......................................................................................................
     ctx.response.type   = 'html'
     ctx.body            =  R.join '\n'
     return null
-
-  #---------------------------------------------------------------------------------------------------------
-  _get_dsk_form: ( selected = '' ) =>
-    R                   = []
-    #.......................................................................................................
-    R.push HDML.open  'nav'
-    R.push HDML.open  'form', { method: 'GET', action: '/trends', }
-    R.push HDML.pair  'label', { for: 'dsk', }, "Data Source:"
-    R.push HDML.open  'select', { name: 'dsk', id: 'dsk', onchange: "this.form.submit();", }
-    R.push HDML.pair  'option', { value: '', }, HDML.text "Select a Data Source"
-    for { dsk, url, } from @db._walk_datasources()
-      label           = "#{dsk} (#{url})"
-      atrs            = { value: dsk, }
-      atrs.selected   = 'true' if selected is dsk
-      R.push HDML.pair  'option', atrs, HDML.text label
-    R.push HDML.close 'select'
-    R.push HDML.pair 'button', { type: 'submit', }, HDML.text "submit"
-    R.push HDML.close 'form'
-    R.push HDML.close 'nav'
-    return R.join '\n'
 
   #---------------------------------------------------------------------------------------------------------
   _query_as_html: ( table, query, parameters ) =>
@@ -259,7 +137,7 @@ class @Datamill_server
         name:
           hide:     false
           inner_html: ( d ) =>
-            href = @router.url 'relation', d.value
+            href = @router.url 'table', d.value
             debug '^inner_html@234^', ( rpr d.value ), ( rpr href )
             return HDML.pair 'a', { href, }, HDML.text d.value ? './.'
         table_name:
@@ -272,76 +150,124 @@ class @Datamill_server
           title:  "SQL"
           inner_html: ( d ) => HDML.pair 'pre', HDML.text d.value ? './.'
     #.......................................................................................................
-    # @table_cfgs[ 'trends' ] =
-    #   fields:
-    #     #...................................................................................................
-    #     dsk:
-    #       hide: true
-    #     #...................................................................................................
-    #     sid_min:
-    #       hide: true
-    #     sid_max:
-    #       title:  "SIDs"
-    #       inner_html: ( d ) =>
-    #         { sid_min
-    #           sid_max } = d.row
-    #         return sid_min if sid_min is sid_max
-    #         return "#{sid_min}—#{sid_max}"
-    #     #...................................................................................................
-    #     ts:
-    #       inner_html: ( d ) => @db.dt_format d.value, 'YYYY-MM-DD HH:mm UTC'
-    #     #...................................................................................................
-    #     raw_trend:
-    #       title:  "Trend"
-    #       outer_html:   ({ value: raw_trend }) =>
-    #         return HDML.pair 'td.trend.sparkline', { 'data-trend': raw_trend, }
-    #     #...................................................................................................
-    #     details:
-    #       inner_html:   ( d ) =>
-    #         try row = JSON.parse d.value catch error
-    #           return HDML.pair 'div.error', HDML.text error.message
-    #         cfg =
-    #           row:        row
-    #           fields:
-    #             title:
-    #               title:      "Title"
-    #               inner_html: ({ value: title, row, }) =>
-    #                 return HDML.pair 'a', { href: row.title_url, }, HDML.text title
-    #             title_url:
-    #               hide: true
-    #             article:
-    #               title:      "Article"
-    #               inner_html: ({ value: title, row, }) =>
-    #                 return Symbol.for 'hide' unless title?
-    #                 return Symbol.for 'hide' unless row.article_url?
-    #                 return HDML.pair 'a', { href: row.article_url, }, HDML.text title
-    #             article_url:
-    #               hide: true
-    #         return summarize cfg
     return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _r_layout_demo: ( ctx ) =>
-  #   R                   = []
-  #   #.......................................................................................................
-  #   R.push HDML.open  'nav'
-  #   R.push HDML.open  'menu'
-  #   R.push HDML.pair  'li', HDML.pair 'a', { href: '#', }, HDML.text "one"
-  #   R.push HDML.pair  'li', HDML.pair 'a', { href: '#', }, HDML.text "two"
-  #   R.push HDML.pair  'li', HDML.pair 'a', { href: '#', }, HDML.text "three"
-  #   R.push HDML.close 'menu'
-  #   R.push HDML.close 'nav'
-  #   #.......................................................................................................
-  #   R.push HDML.pair  'header', HDML.text "header"
-  #   #.......................................................................................................
-  #   R.push HDML.open  'main'
-  #   R.push HDML.open  'article'
-  #   R.push HDML.text  "article"
-  #   R.push HDML.close 'article'
-  #   R.push HDML.close 'main'
-  #   #.......................................................................................................
-  #   R.push HDML.pair  'footer', HDML.text "footer"
-  #   #.......................................................................................................
-  #   ctx.response.type   = 'html'
-  #   ctx.body            =  R.join '\n'
-  #   return null
+  #=========================================================================================================
+  # ERROR HANDLING
+  #---------------------------------------------------------------------------------------------------------
+  $error_handler: -> ( error, ctx ) =>
+    if ( url = ctx?.request.url )?
+      prefix = "When trying to retrieve #{rpr url}, an "
+    else
+      prefix = "An "
+    message = prefix + "error with message #{rpr error.message ? "UNKNOWN"} was encountered"
+    warn '^3298572^', error
+    warn GUY.trm.reverse '^3298572^', message
+    # fs = require('fs');
+    # fs.writeSync process.stdout.fd, "\x1B[?25h"
+    # fs.writeSync process.stderr.fd, "\x1B[?25h"
+    # process.stdout.write "\x1B[?25h"
+    # process.stderr.write "\x1B[?25h"
+    debug '^323423^', await NODEXH._exit_handler error
+    if ctx?
+      ctx.response.status = 500
+      ctx.body            = message
+    return null
+
+
+#===========================================================================================================
+class Datamill_server extends Datamill_server_base
+
+  #=========================================================================================================
+  # CONSTRUCTION
+  #---------------------------------------------------------------------------------------------------------
+  constructor: ( cfg ) ->
+    super()
+    GUY.props.hide @, 'types', get_server_types()
+    @cfg        = @types.create.datamill_server_cfg cfg
+    GUY.props.hide @, 'db', @cfg.db; delete cfg.db
+    @_add_layout()
+    @cfg        = GUY.lft.freeze @cfg
+    #.......................................................................................................
+    GUY.props.hide @, 'app',    new Koa()
+    GUY.props.hide @, 'router', new Router()
+    #.......................................................................................................
+    return undefined
+
+  #---------------------------------------------------------------------------------------------------------
+  _add_layout: ->
+    @cfg.layout ?= {}
+    return null if @cfg.layout.top? and @cfg.layout.bottom?
+    path    = PATH.resolve PATH.join __dirname, '../assets/layout.html'
+    layout  = FS.readFileSync path, { encoding: 'utf-8', }
+    [ layout_top
+      layout_bottom   ] = layout.split '<%content%>'
+    @cfg.layout.top    ?= layout_top
+    @cfg.layout.bottom ?= layout_bottom
+    return null
+
+
+  #=========================================================================================================
+  # RUN SERVER
+  #---------------------------------------------------------------------------------------------------------
+  start: -> new Promise ( resolve, reject ) =>
+    { host
+      port  } = @cfg
+    @_create_app()
+    #.......................................................................................................
+    GUY.props.hide @, 'http_server',  HTTP.createServer @app.callback()
+    GUY.props.hide @, 'io',           new Socket_server @http_server
+    #.......................................................................................................
+    @io.on 'connection', ( socket ) =>
+      help "^datamill/server@8^ user connected to socket"
+      socket.on 'message', ( P... ) -> info '^datamill/server@8^', P
+      return null
+    #.......................................................................................................
+    @io.on 'disconnect', ( socket ) =>
+      help "^datamill/server@8^ user disconnected from socket"
+      return null
+    #.......................................................................................................
+    @http_server.listen { host, port, }, ->
+      debug "^datamill/server@9^ listening on #{host}:#{port}"
+      resolve { host, port, }
+    #.......................................................................................................
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _create_app: ->
+    ###
+    `_r_*`: managed by router
+    `_s_*`: managed by server
+    ###
+    @app.use                                          @_s_log
+    @app.use                                          @_s_layout
+    #.......................................................................................................
+    @router.get   'home',           '/',              @_r_home
+    @router.get   'tables',         '/tables',        @_r_tables
+    @router.get   'table',          '/table/:rel',    @_r_table
+    # @router.get   'trends',         '/trends',        @_r_trends
+    # @router.get   'layout-demo',    '/layout-demo',   @_r_layout_demo
+    # @router.get   'table_by_name',  '/table/:table',  @_r_table_by_name
+    #.......................................................................................................
+    @app.use @router.routes()
+    #.......................................................................................................
+    ### thx to https://stackoverflow.com/a/66377342/7568091 ###
+    debug '^4345^', @cfg.paths.public
+    debug '^4345^', @cfg.file_server
+    # @app.use mount '/favicon.ico', file_server @cfg.paths.favicon, @cfg.file_server
+    @app.use mount '/public', file_server @cfg.paths.public, @cfg.file_server
+    @app.use mount '/src',    file_server @cfg.paths.src,    @cfg.file_server
+    #.......................................................................................................
+    @app.use @_s_default
+    @app.use @router.allowedMethods()
+    @app.on 'error', @$error_handler()
+    #.......................................................................................................
+    return null
+
+
+############################################################################################################
+module.exports = { Datamill_server_base, Datamill_server, }
+
+
+
+
