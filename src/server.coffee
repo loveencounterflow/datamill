@@ -98,14 +98,24 @@ class Datamill_server_base
   _table_by_name: ( ctx, table_name ) =>
     R                   = []
     R.push HDML.pair 'h1', HDML.text "Table #{table_name}"
-    ### TAINT use proper interpolation or API ###
-    rows                = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
-    ### TAINT use proper error handling in case table_name not found ###
-    unless ( table_cfg = @_get_table_cfg table_name )?
-      ctx.body "no such table: #{table_name}"
-      return null
-    R                   = R.concat tabulate { rows, table_cfg..., }
     #.......................................................................................................
+    ### TAINT use proper interpolation or API ###
+    try
+      rows = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
+    catch error
+      ctx.response.status = 500
+      ctx.response.type   = 'text/plain'
+      ctx.body            = error.message
+      return null
+    #.......................................................................................................
+    unless ( table_cfg = @_get_table_cfg table_name )?
+      # ctx.response.status = 404
+      # ctx.response.type   = 'text/plain'
+      # ctx.body            = "no such table: #{table_name}"
+      # return null
+      table_cfg = null
+    #.......................................................................................................
+    R                   = R.concat tabulate { rows, table_cfg..., }
     ctx.response.type   = 'html'
     ctx.body            =  R.join '\n'
     return null
@@ -163,15 +173,7 @@ class Datamill_server_base
     message = prefix + "error with message #{rpr error.message ? "UNKNOWN"} was encountered"
     warn '^3298572^', error
     warn GUY.trm.reverse '^3298572^', message
-    # fs = require('fs');
-    # fs.writeSync process.stdout.fd, "\x1B[?25h"
-    # fs.writeSync process.stderr.fd, "\x1B[?25h"
-    # process.stdout.write "\x1B[?25h"
-    # process.stderr.write "\x1B[?25h"
     debug '^323423^', await NODEXH._exit_handler error
-    if ctx?
-      ctx.response.status = 500
-      ctx.body            = message
     return null
 
 
@@ -260,10 +262,9 @@ class Datamill_server extends Datamill_server_base
     #.......................................................................................................
     @app.use @_s_default
     @app.use @router.allowedMethods()
-    @app.on 'error', @$error_handler()
     #.......................................................................................................
+    @app.on 'error', @$error_handler()
     return null
-
 
 ############################################################################################################
 module.exports = { Datamill_server_base, Datamill_server, }
