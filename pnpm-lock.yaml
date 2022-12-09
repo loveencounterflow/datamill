@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@koa/router': ^12.0.0
-  dbay: ^15.1.0
+  dbay: 15.2.0
   dbay-tabulator: ^0.2.0
   guy: ^12.3.0
   hdml: ^3.0.0
@@ -18,7 +18,7 @@ specifiers:
 
 dependencies:
   '@koa/router': 12.0.0
-  dbay: 15.1.0
+  dbay: 15.2.0
   dbay-tabulator: 0.2.0
   guy: 12.3.0
   hdml: 3.0.0
@@ -210,8 +210,8 @@ packages:
       - deasync
     dev: false
 
-  /dbay/15.1.0:
-    resolution: {integrity: sha512-wbXq51t1a5xPl0HujR9Rkcok7CSRZa5J947c3s0py6JfBk33TkUJVD06fIC0fKaRCH5LxafIafzP+e3xPM63QA==}
+  /dbay/15.2.0:
+    resolution: {integrity: sha512-r2f7TQXSqZF6TWUeWA3/ilipqU9h2MWGJL6WDT8yz+aAz5SHSDPlm9+Gild1Piy0GIgnlNTXIlrDOzKaqMJnDA==}
     requiresBuild: true
     dependencies:
       dayjs: 1.11.6
