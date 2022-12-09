@@ -90,7 +90,7 @@ get_document_types = ->
   document_types                = new Intertype get_base_types()
   { declare }                 = document_types
   #.........................................................................................................
-  declare.datamill_document_cfg
+  declare.doc_document_cfg
     fields:
       db:                 'dbay'
       prefix:             'dbay_prefix'
@@ -99,7 +99,7 @@ get_document_types = ->
       prefix:             'doc_'
     create: ( x ) ->
       return x unless ( not x? ) or ( @isa.object x )
-      R     = { @registry.datamill_document_cfg.default..., x..., }
+      R     = { @registry.doc_document_cfg.default..., x..., }
       R.db             ?= new DBay()
       R.file_adapters  ?= ( require './document' ).file_adapters
       return R
