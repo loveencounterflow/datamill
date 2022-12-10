@@ -99,8 +99,13 @@ class Document
   get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
-  new_file: ( cfg ) ->
-    @cfg   = @types.create.doc_new_file_cfg cfg
+  add_file: ( cfg ) ->
+    cfg = @types.create.doc_add_file_cfg cfg
+    debug '^24624^', cfg
+    debug '^24624^', @file_adapters
+    debug '^24624^', clasz = @file_adapters[ cfg.doc_fad_id ]
+    R = new clasz cfg
+    return R
 
 
 #===========================================================================================================
@@ -109,30 +114,35 @@ class Document
 class File_adapter_abc
   @comment: "abstract base class for files"
 
-
-#===========================================================================================================
-class External_file_abc extends File_adapter_abc
-  @comment: "abstract base class for external files"
-
-
   #---------------------------------------------------------------------------------------------------------
-  constructor: ( cfg ) ->
-    super()
-    @cfg   = @types.create.new_external_file_cfg cfg
+  constructor: ->
+    GUY.props.hide @, 'types', get_document_types()
     return undefined
 
-  #---------------------------------------------------------------------------------------------------------
-  write:        null
-  walk_chunks:  null
-  walk_lines:   null
+
+# #===========================================================================================================
+# class External_file_abc extends File_adapter_abc
+#   @comment: "abstract base class for external files"
+
+#   #---------------------------------------------------------------------------------------------------------
+#   constructor: ( cfg ) ->
+#     super cfg
+#     @cfg   = @types.create.new_external_file_cfg cfg
+#     return undefined
+
+#   #---------------------------------------------------------------------------------------------------------
+#   write:        null
+#   walk_chunks:  null
+#   walk_lines:   null
 
 #===========================================================================================================
-class External_text_file extends External_file_abc
+class External_text_file extends File_adapter_abc
   @comment: "adapter for external text files"
 
   #---------------------------------------------------------------------------------------------------------
   constructor: ( cfg ) ->
     super()
+    debug '^354^', { cfg, }
     @cfg   = @types.create.new_external_text_file_cfg cfg
     return undefined
 
@@ -147,8 +157,8 @@ class External_text_file extends External_file_abc
 ### Abstract base classes use class name, instantiable classes short acronym with `x` meaning 'external',
 `txt` being most common file name extension for text files: ###
 file_adapters   =
-  File_adapter_abc:   File_adapter_abc
-  External_file_abc:  External_file_abc
+  # File_adapter_abc:   File_adapter_abc
+  # External_file_abc:  External_file_abc
   xtxt:               External_text_file
 module.exports  = { Document, File_adapter_abc, file_adapters, }
 

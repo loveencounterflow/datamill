@@ -88,7 +88,11 @@ get_document_types = ->
   return document_types if document_types?
   #.........................................................................................................
   document_types                = new Intertype get_base_types()
-  { declare }                 = document_types
+  { declare }                   = document_types
+  #.........................................................................................................
+  declare.doc_fad_id    'nonempty.text'     ### TAINT should check with DB whether known ###
+  declare.doc_file_path 'nonempty.text'     ### TAINT should be more precise ###
+  declare.doc_file_id   'nonempty.text'     ### TAINT should be more precise ###
   #.........................................................................................................
   declare.doc_document_cfg
     fields:
@@ -104,11 +108,27 @@ get_document_types = ->
       R.file_adapters  ?= ( require './document' ).file_adapters
       return R
   #...........................................................................................................
-  declare.new_external_file_cfg
-    isa: 'anything'
+  declare.doc_add_file_cfg
+    fields:
+      doc_file_id:        'doc_file_id'
+      doc_fad_id:         'doc_fad_id'
+    default:
+      doc_file_id:        null
+      doc_fad_id:         null
+  # #...........................................................................................................
+  # declare.new_external_file_cfg
+  #   isa: 'anything'
   #...........................................................................................................
   declare.new_external_text_file_cfg
-    isa: 'anything'
+    fields:
+      doc_file_id:        'doc_file_id'
+      doc_file_path:      'doc_file_path'
+      ### TAINT implement lists as enumerations ###
+      # doc_fad_id:         'doc_file_id' # ( x ) -> x is 'xtxt'
+    default:
+      doc_file_id:        null
+      doc_file_path:      null
+      # doc_fad_id:         'xtxt'
   #...........................................................................................................
   return document_types
 
