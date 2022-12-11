@@ -46,9 +46,12 @@
     dependencies.
   * still looking for an appropriate generic bundling format that allows to treat contents both as a
     monolithic file and a folder hierarchy
-    * SquashFS, UnionFS: probably too obscure, 'insiders-only' style documentation, quite
+    * <del>SquashFS, UnionFS</del>: probably too obscure, 'insiders-only' style documentation, quite
       systems-programming oriented
-    * [SQLite Archives](https://www.sqlite.org/sqlar.html)
+    * [SQLar (SQLite Archives)](https://www.sqlite.org/sqlar.html)
+    * <del>[SQLarfs (SQLite Archives w/ Fuse)](https://www.sqlite.org/sqlar.html)</del>: provides read-only
+      filesystem for an `*.sqlar` archive; write access is a must tho
+    * [Fossil](https://fossil-scm.org)
 
 ## Glossary
 
