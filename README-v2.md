@@ -48,10 +48,29 @@
     monolithic file and a folder hierarchy
     * <del>SquashFS, UnionFS</del>: probably too obscure, 'insiders-only' style documentation, quite
       systems-programming oriented
-    * [SQLar (SQLite Archives)](https://www.sqlite.org/sqlar.html)
+    * <del>[SQLar (SQLite Archives)](https://www.sqlite.org/sqlar.html)</del>: similar to ZIP archives, but
+      using an SQLite DB to store contents. Possible advantages over just using a ZIP archive could include
+      extensibility of that DB (which consists of a single table with one index), e.g. adding content hashes
+      etc. The utility is simple to build on Linux yet is a bit obscure, so probably not a good option
+      (would necessitate building the `sqlar` utility on the target system where other options are either
+      bundled with the OS or are easy to procure)
     * <del>[SQLarfs (SQLite Archives w/ Fuse)](https://www.sqlite.org/sqlar.html)</del>: provides read-only
       filesystem for an `*.sqlar` archive; write access is a must tho
     * [Fossil](https://fossil-scm.org)
+      * a somewhat-popular version management system from the same people who created SQLite
+      * they're using it themselves so as long as SQLite is an option, presumably Fossil will be available,
+        too
+      * free and open source, generous license
+      * binary downloads available for Linux x64, Mac ARM, Mac x64, RaspberryPi, Windows32, Windows64, and
+        as Source
+      * can use existing DBay to obtain high-level access to repo meta data, raw data
+
+<!--
+
+update config set value = $project_name where name = "project-name";
+
+-->
+
 
 ## Glossary
 
