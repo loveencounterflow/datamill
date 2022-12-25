@@ -93,14 +93,18 @@ get_document_types = ->
   declare.doc_fad_id    'nonempty.text'     ### TAINT should check with DB whether known ###
   declare.doc_file_path 'nonempty.text'     ### TAINT should be more precise ###
   declare.doc_file_id   'nonempty.text'     ### TAINT should be more precise ###
+  declare.doc_home      'nonempty.text'     ### TAINT should be more precise ###
+  declare.doc_file_hash ( x ) -> ( @isa.text x ) and ( /^[0-9a-f]{17}$/.test x )
   #.........................................................................................................
   declare.doc_document_cfg
     fields:
       db:                 'dbay'
       prefix:             'dbay_prefix'
+      home:               'doc_home'
     default:
       db:                 null
       prefix:             'doc_'
+      home:               null
     create: ( x ) ->
       return x unless ( not x? ) or ( @isa.object x )
       R     = { @registry.doc_document_cfg.default..., x..., }
@@ -111,10 +115,14 @@ get_document_types = ->
   declare.doc_add_file_cfg
     fields:
       doc_file_id:        'doc_file_id'
-      doc_fad_id:         'doc_fad_id'
+      doc_file_path:      'doc_file_path'
+      doc_file_hash:      'optional.doc_file_hash'
+      # doc_fad_id:         'doc_fad_id'
     default:
       doc_file_id:        null
-      doc_fad_id:         null
+      doc_file_path:      null
+      doc_file_hash:      null
+      # doc_fad_id:         null
   # #...........................................................................................................
   # declare.new_external_file_cfg
   #   isa: 'anything'
