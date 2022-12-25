@@ -24,10 +24,10 @@ types                     = new ( require 'intertype' ).Intertype()
   sql }                   = require 'dbay'
 { I, V, L, }              = sql
 #...........................................................................................................
-# FS                        = require 'node:fs'
+FS                        = require 'node:fs'
 PATH                      = require 'node:path'
 { get_base_types
-  get_document_types }      = require './types'
+  get_document_types }    = require './types'
 
 
 #===========================================================================================================
@@ -78,15 +78,16 @@ class Document
     #       comment               text,
     #     primary key ( doc_fad_id ) );"""
     #.......................................................................................................
-    FS    = require 'node:fs'
-    PATH  = require 'node:path'
-    abspath_cfg =
+    @db.create_function
       name:           'abspath'
       deterministic:  true
       varargs:        false
       call:           @get_doc_file_abspath.bind @
-    @db.create_function abspath_cfg
-    @db.alt.create_function abspath_cfg
+    @db.create_function
+      name:           'is_blank'
+      deterministic:  true
+      varargs:        false
+      call:           ( text ) => if ( @text_is_blank text ) then 1 else 0
     #.......................................................................................................
     @db SQL"""
       create table #{prefix}files (
@@ -98,22 +99,29 @@ class Document
           -- doc_file_parameters   json not null,
         primary key ( doc_file_id ) );"""
     #.......................................................................................................
+    self = @
     @db.create_table_function
       name:         "lines_of"
       parameters:   [ 'doc_file_id', ]
-      columns:      [ 'doc_line_nr', 'doc_line_txt', ]
+      columns:      [ 'doc_line_nr', 'doc_line_txt', 'doc_par_nr', ]
       rows:         ( doc_file_abspath ) ->
-        doc_line_nr = 0
+        doc_line_nr   = 0
+        doc_par_nr    = 0
+        prv_was_blank = true
         for doc_line_txt from GUY.fs.walk_lines doc_file_abspath
+          doc_par_nr++ if ( not ( is_blank = self.text_is_blank doc_line_txt ) ) and prv_was_blank
+          prv_was_blank = is_blank
           doc_line_nr++
-          yield { doc_line_nr, doc_line_txt, }
+          yield { doc_line_nr, doc_par_nr: ( if is_blank then 0 else doc_par_nr ), doc_line_txt, }
         return null
     #.......................................................................................................
     @db SQL"""
       create view #{prefix}lines as select
-          f.doc_file_id,
-          l.doc_line_nr,
-          l.doc_line_txt
+          f.doc_file_id               as doc_file_id,
+          l.doc_line_nr               as doc_line_nr,
+          l.doc_par_nr                as doc_par_nr,
+          l.doc_line_txt              as doc_line_txt
+          -- is_blank( l.doc_line_txt )  as doc_line_is_blank
         from #{prefix}files             as f,
         lines_of( f.doc_file_abspath )  as l
         order by 1, 2;"""
@@ -123,6 +131,7 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   get_doc_file_abspath: ( doc_file_path ) -> PATH.resolve @cfg.home, doc_file_path
+  text_is_blank:        ( text          ) -> text is '' or /^\s*$/.test text
 
   #---------------------------------------------------------------------------------------------------------
   get_doc_file_ids:   Decorators.get_all_first_values 'files',      'doc_file_id'
