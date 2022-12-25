@@ -7,7 +7,7 @@
     "@koa/router": "^12.0.0",
     "dbay": "15.2.2",
     "dbay-tabulator": "^0.2.0",
-    "guy": "^12.4.0",
+    "guy": "^12.5.0",
     "hdml": "^3.0.0",
     "http": "0.0.1-security",
     "intertype": "^0.111.0",

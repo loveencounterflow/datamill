@@ -4,7 +4,7 @@ specifiers:
   '@koa/router': ^12.0.0
   dbay: 15.2.2
   dbay-tabulator: ^0.2.0
-  guy: ^12.4.0
+  guy: ^12.5.0
   hdml: ^3.0.0
   http: 0.0.1-security
   intertype: ^0.111.0
@@ -20,7 +20,7 @@ dependencies:
   '@koa/router': 12.0.0
   dbay: 15.2.2
   dbay-tabulator: 0.2.0
-  guy: 12.4.0
+  guy: 12.5.0
   hdml: 3.0.0
   http: 0.0.1-security
   intertype: 0.111.0
@@ -461,8 +461,8 @@ packages:
       letsfreezethat: 3.1.0
     dev: false
 
-  /guy/12.4.0:
-    resolution: {integrity: sha512-3xSFvOVViO3DA6PzTYXYsEYqhQg8PcRemnj0BRwlkIpRREGe4/dBON1AHENJdZ/ni+XetTwKyf4iKvvx+xNsww==}
+  /guy/12.5.0:
+    resolution: {integrity: sha512-naNI0MZ1zPi6l6RL6kDljrOsBuFzd3jY1EYNzvhibBbwQhOgowAa4yOcqRsdY3UcN6VUVbXNYgNza37ddqd0YQ==}
     peerDependencies:
       acorn: ^8.7.1
       acorn-loose: ^8.3.0
@@ -831,7 +831,7 @@ packages:
     hasBin: true
     dependencies:
       error-callsites: 2.0.4
-      guy: 12.4.0
+      guy: 12.5.0
       intertype: 0.111.0
       load-source-map: 3.0.1
       stacktracey: 2.1.8
