@@ -25,7 +25,7 @@ types                     = new ( require 'intertype' ).Intertype()
 { I, V, L, }              = sql
 #...........................................................................................................
 # FS                        = require 'node:fs'
-# PATH                      = require 'node:path'
+PATH                      = require 'node:path'
 { get_base_types
   get_document_types }      = require './types'
 
@@ -84,8 +84,7 @@ class Document
       name:           'abspath'
       deterministic:  true
       varargs:        false
-      ### TAINT path should be relative to document location, not relative to this module ###
-      call:           ( path ) -> PATH.join __dirname, '..', path
+      call:           @get_doc_file_abspath.bind @
     @db.create_function abspath_cfg
     @db.alt.create_function abspath_cfg
     #.......................................................................................................
@@ -93,55 +92,37 @@ class Document
       create table #{prefix}files (
           doc_file_id           text not null,
           doc_file_path         text not null,
-          -- doc_file_hash         text not null,
+          doc_file_hash         text,
           doc_file_abspath      text not null generated always as ( abspath( doc_file_path ) ) virtual,
           -- doc_fad_id            text not null references #{prefix}fads,
           -- doc_file_parameters   json not null,
         primary key ( doc_file_id ) );"""
-    # #.......................................................................................................
-    # @db SQL"""
-    #   create table #{prefix}lines (
-    #       doc_file_id           text    not null references #{prefix}files,
-    #       doc_line_nr           integer not null,
-    #       doc_line_text         text    not null,
-    #       -- doc_fad_id            text not null references #{prefix}fads,
-    #       -- doc_file_parameters   json not null,
-    #     primary key ( doc_file_id, doc_line_nr ) );"""
     #.......................................................................................................
-    _lines_of = ( doc_file_id ) ->
-      doc_file_abspath = @db.alt.single_value SQL"""
-        select doc_file_abspath from #{prefix}files where doc_file_id = $doc_file_id;""", { doc_file_id, }
-      lines = ( FS.readFileSync doc_file_abspath, { encoding: 'utf-8', } ).split '\n'
-      for line, line_idx in lines
-        yield { path, lnr: line_idx + 1, line, }
-      return null
     @db.create_table_function
-      name:         "_lines_of"
+      name:         "lines_of"
       parameters:   [ 'doc_file_id', ]
-      columns:      [ 'path', 'lnr', 'line', ]
-      rows:         _lines_of.bind @
+      columns:      [ 'doc_line_nr', 'doc_line_txt', ]
+      rows:         ( doc_file_abspath ) ->
+        doc_line_nr = 0
+        for doc_line_txt from GUY.fs.walk_lines doc_file_abspath
+          doc_line_nr++
+          yield { doc_line_nr, doc_line_txt, }
+        return null
     #.......................................................................................................
-    # path          = PATH.resolve PATH.join __dirname, '../../hengist/assets/icql', 'ncrglyphwbf.tsv'
-    # info '^3453^', @db.prepare_insert { into: "#{prefix}files", exclude: [ 'doc_file_abspath', ], returning: '*', }
-    path              = '../hengist/assets/icql/ncrglyphwbf.tsv'
-    @_insert_file     = @db.prepare_insert { into: "#{prefix}files", exclude: [ 'doc_file_abspath', ], returning: '*', }
-    debug '^3223847^', @db.first_row @_insert_file, { doc_file_id: 'f1', doc_file_path: path, }
-    result  = @db.all_rows SQL"""
-      select
-          *
-        from #{prefix}files as f,
-        _lines_of( f.doc_file_id );""" # where lnr between 10 and 14 order by 1, 2, 3;"
-    console.table result
-    # for row from @db SQL"""select * from @"""
+    @db SQL"""
+      create view #{prefix}lines as select
+          f.doc_file_id,
+          l.doc_line_nr,
+          l.doc_line_txt
+        from #{prefix}files             as f,
+        lines_of( f.doc_file_abspath )  as l
+        order by 1, 2;"""
     #.......................................................................................................
-    # insert_file_kind = @db.prepare_insert { into: "#{prefix}fads", }
-    # @db =>
-    #   for doc_fad_id, clasz of @file_adapters
-    #     doc_fad_name  = clasz.name
-    #     comment       = clasz.comment ? null
-    #     @db insert_file_kind, { doc_fad_id, doc_fad_name, comment, }
-    #.......................................................................................................
+    @_insert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
     return null
+
+  #---------------------------------------------------------------------------------------------------------
+  get_doc_file_abspath: ( doc_file_path ) -> PATH.resolve @cfg.home, doc_file_path
 
   #---------------------------------------------------------------------------------------------------------
   get_doc_file_ids:   Decorators.get_all_first_values 'files',      'doc_file_id'
@@ -150,11 +131,12 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   add_file: ( cfg ) ->
     cfg = @types.create.doc_add_file_cfg cfg
-    debug '^24624^', cfg
-    debug '^24624^', @file_adapters
-    debug '^24624^', clasz = @file_adapters[ cfg.doc_fad_id ]
-    R = new clasz cfg
-    return R
+    { doc_file_id
+      doc_file_path
+      doc_file_hash } = cfg
+    doc_file_abspath  = @get_doc_file_abspath doc_file_path
+    doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
+    return @db.first_row @_insert_file, { doc_file_id, doc_file_path, doc_file_hash, }
 
 
 #===========================================================================================================
