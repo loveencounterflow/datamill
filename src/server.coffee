@@ -73,7 +73,7 @@ class Datamill_server_base
   #---------------------------------------------------------------------------------------------------------
   _r_home: ( ctx ) =>
     ### TAINT generate from DB or load from external file ###
-    relation = @router.url 'relation', 'sqlite_schema'
+    relation = @router.url 'table', 'sqlite_schema'
     debug '^32234^', { relation, }
     ctx.body = """
       <h1>Datamill</h1>
