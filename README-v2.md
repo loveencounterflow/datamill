@@ -10,6 +10,7 @@
 - [DataMill V2](#datamill-v2)
   - [File Formats](#file-formats)
   - [Glossary](#glossary)
+  - [Todo](#todo)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -81,4 +82,7 @@ update config set value = $project_name where name = "project-name";
   `fad.walk_lines()`, `fad.walk_chunks()`, `fad.walk_export()` and so on. 
 
 
+## Todo
+
+* **[–]** allow to open document w/out specific location; use random / temporary directory (as with DBay)
    
