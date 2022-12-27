@@ -59,6 +59,7 @@ class Document
     GUY.props.hide @, 'db',             @cfg.db;            delete @cfg.db
     GUY.props.hide @, 'file_adapters',  @cfg.file_adapters; delete @cfg.file_adapters
     @_procure_infrastructure()
+    @_add_layout()
     @_listen_to_signals()
     return undefined
 
@@ -154,6 +155,11 @@ class Document
   update_file: ( cfg ) ->
     cfg = @types.create.doc_update_file_cfg cfg
     return @db.first_row @_upsert_file, cfg
+
+  #---------------------------------------------------------------------------------------------------------
+  _add_layout: ( cfg ) ->
+    doc_file_path = PATH.resolve __dirname, '../assets/layout.html'
+    @add_file { doc_file_id: 'layout', doc_file_path, }
 
 
   #=========================================================================================================
