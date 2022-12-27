@@ -28,6 +28,7 @@ FS                        = require 'node:fs'
 PATH                      = require 'node:path'
 { get_base_types
   get_document_types }    = require './types'
+{ XE }                    = require './_xemitter'
 
 
 #===========================================================================================================
@@ -58,6 +59,7 @@ class Document
     GUY.props.hide @, 'db',             @cfg.db;            delete @cfg.db
     GUY.props.hide @, 'file_adapters',  @cfg.file_adapters; delete @cfg.file_adapters
     @_procure_infrastructure()
+    @_listen_to_signals()
     return undefined
 
   #---------------------------------------------------------------------------------------------------------
@@ -127,6 +129,7 @@ class Document
         order by 1, 2;"""
     #.......................................................................................................
     @_insert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
+    @_upsert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -147,17 +150,55 @@ class Document
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
     return @db.first_row @_insert_file, { doc_file_id, doc_file_path, doc_file_hash, }
 
+  #---------------------------------------------------------------------------------------------------------
+  update_file: ( cfg ) ->
+    cfg = @types.create.doc_update_file_cfg cfg
+    return @db.first_row @_upsert_file, cfg
 
-#===========================================================================================================
-# FILE ADAPTERS (FADs)
-#===========================================================================================================
-class File_adapter_abc
-  @comment: "abstract base class for files"
+
+  #=========================================================================================================
+  # SIGNAL PROCESSING
+  #---------------------------------------------------------------------------------------------------------
+  _listen_to_signals: ->
+    # XE.listen_to          '^mykey',     ( d       ) ->  keys.listen   .push d.$key
+    # XE.contract           '^otherkey',  ( d       ) ->  keys.contract .push d.$key; return "some value"
+    #.......................................................................................................
+    XE.listen_to_all ( key, d ) -> whisper '^23-1^', GUY.trm.reverse "signal: #{rpr d}"
+    XE.listen_to_unheard ( key, d ) -> warn GUY.trm.reverse "unheard signal: #{rpr d}"
+    #.......................................................................................................
+    XE.listen_to '^maybe-file-changed', ( d ) =>
+      ###
+        * test whether file is registered
+        * retrieve content hash
+        * compare with registered content hash
+        * if changed:
+          * update DB content
+          * `XE.emit '^file-changed', { doc_file_id, doc_file_path, }`
+      ###
+      file            = @_file_from_abspath d.doc_file_abspath
+      doc_file_hash   = GUY.fs.get_content_hash file.doc_file_abspath, { fallback: null, }
+      if file.doc_file_hash isnt doc_file_hash
+        file.doc_file_hash = doc_file_hash
+        @update_file file
+        XE.emit '^file-changed', file
+      return null
+    return null
 
   #---------------------------------------------------------------------------------------------------------
-  constructor: ->
-    GUY.props.hide @, 'types', get_document_types()
-    return undefined
+  _file_from_abspath: ( doc_file_abspath ) -> @db.first_row SQL"
+    select * from #{@cfg.prefix}files where doc_file_abspath = $doc_file_abspath", { doc_file_abspath, }
+
+
+# #===========================================================================================================
+# # FILE ADAPTERS (FADs)
+# #===========================================================================================================
+# class File_adapter_abc
+#   @comment: "abstract base class for files"
+
+#   #---------------------------------------------------------------------------------------------------------
+#   constructor: ->
+#     GUY.props.hide @, 'types', get_document_types()
+#     return undefined
 
 
 # #===========================================================================================================
@@ -175,32 +216,33 @@ class File_adapter_abc
 #   walk_chunks:  null
 #   walk_lines:   null
 
-#===========================================================================================================
-class External_text_file extends File_adapter_abc
-  @comment: "adapter for external text files"
+# #===========================================================================================================
+# class External_text_file extends File_adapter_abc
+#   @comment: "adapter for external text files"
 
-  #---------------------------------------------------------------------------------------------------------
-  constructor: ( cfg ) ->
-    super()
-    debug '^354^', { cfg, }
-    @cfg   = @types.create.new_external_text_file_cfg cfg
-    return undefined
+#   #---------------------------------------------------------------------------------------------------------
+#   constructor: ( cfg ) ->
+#     super()
+#     debug '^354^', { cfg, }
+#     @cfg   = @types.create.new_external_text_file_cfg cfg
+#     return undefined
 
-  #---------------------------------------------------------------------------------------------------------
-  walk_lines: ->
-    yield 'helo'
-    yield 'world'
-    return null
+#   #---------------------------------------------------------------------------------------------------------
+#   walk_lines: ->
+#     yield 'helo'
+#     yield 'world'
+#     return null
 
 
 ############################################################################################################
 ### Abstract base classes use class name, instantiable classes short acronym with `x` meaning 'external',
 `txt` being most common file name extension for text files: ###
-file_adapters   =
-  # File_adapter_abc:   File_adapter_abc
-  # External_file_abc:  External_file_abc
-  xtxt:               External_text_file
-module.exports  = { Document, File_adapter_abc, file_adapters, }
+# file_adapters   =
+#   File_adapter_abc:   File_adapter_abc
+#   External_file_abc:  External_file_abc
+#   xtxt:               External_text_file
+# module.exports  = { Document, File_adapter_abc, file_adapters, }
+module.exports  = { Document, }
 
 
 

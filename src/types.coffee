@@ -125,20 +125,30 @@ get_document_types = ->
       doc_file_path:      null
       doc_file_hash:      null
       # doc_fad_id:         null
-  # #...........................................................................................................
-  # declare.new_external_file_cfg
-  #   isa: 'anything'
   #...........................................................................................................
-  declare.new_external_text_file_cfg
+  declare.doc_update_file_cfg
     fields:
       doc_file_id:        'doc_file_id'
       doc_file_path:      'doc_file_path'
-      ### TAINT implement lists as enumerations ###
-      # doc_fad_id:         'doc_file_id' # ( x ) -> x is 'xtxt'
+      doc_file_hash:      'doc_file_hash'
     default:
       doc_file_id:        null
       doc_file_path:      null
-      # doc_fad_id:         'xtxt'
+      doc_file_hash:      null
+  # #...........................................................................................................
+  # declare.new_external_file_cfg
+  #   isa: 'anything'
+  # #...........................................................................................................
+  # declare.new_external_text_file_cfg
+  #   fields:
+  #     doc_file_id:        'doc_file_id'
+  #     doc_file_path:      'doc_file_path'
+  #     ### TAINT implement lists as enumerations ###
+  #     # doc_fad_id:         'doc_file_id' # ( x ) -> x is 'xtxt'
+  #   default:
+  #     doc_file_id:        null
+  #     doc_file_path:      null
+  #     # doc_fad_id:         'xtxt'
   #...........................................................................................................
   return document_types
 

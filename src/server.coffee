@@ -36,10 +36,41 @@ mount                     = require 'koa-mount'
 { get_base_types
   get_server_types }      = require './types'
 NODEXH                    = require '../../nodexh'
+NOTIFIER                  = require 'node-notifier'
+CKD                       = require 'chokidar'
+{ XE }                    = require './_xemitter'
 
 
 #===========================================================================================================
 class Datamill_server_base
+
+  #---------------------------------------------------------------------------------------------------------
+  _watch_doc_files: ->
+    cfg     = { recursive: true, persistent: true, awaitWriteFinish: { stabilityThreshold: 100, }, }
+    watcher = CKD.watch @doc.cfg.home, cfg
+    urge '^3534^', "watching @{doc.cfg.home}"
+    watcher.on 'add',     ( doc_file_abspath ) => info '^3534^', GUY.trm.reverse 'add',     doc_file_abspath
+    watcher.on 'unlink',  ( doc_file_abspath ) => warn '^3534^', GUY.trm.reverse 'unlink',  doc_file_abspath
+    watcher.on 'error',   ( error ) => alter  '^3534^', GUY.trm.reverse 'error',  error
+    #.......................................................................................................
+    watcher.on 'change',  ( doc_file_abspath ) =>
+      urge '^3534^', GUY.trm.reverse 'change', doc_file_abspath
+      @_notify_change doc_file_abspath
+      await XE.emit '^maybe-file-changed', { doc_file_abspath, }
+      return null
+    #.......................................................................................................
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _notify_change: ( path ) ->
+    settings =
+      title:    "File content changed",
+      message:  path
+      wait:     false
+      timeout:  1
+    NOTIFIER.notify settings
+    return null
+
 
   #=========================================================================================================
   #
@@ -251,6 +282,7 @@ class Datamill_server extends Datamill_server_base
     GUY.props.hide @, 'app',    new Koa()
     GUY.props.hide @, 'router', new Router()
     #.......................................................................................................
+    @_watch_doc_files()
     return undefined
 
   #---------------------------------------------------------------------------------------------------------
