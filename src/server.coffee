@@ -38,6 +38,7 @@ mount                     = require 'koa-mount'
 NODEXH                    = require '../../nodexh'
 CKD                       = require 'chokidar'
 { XE }                    = require './_xemitter'
+Stream                    = ( require 'node:stream' ).Readable
 
 
 #===========================================================================================================
@@ -226,15 +227,22 @@ class Datamill_server_base
     ### TAINT use API ###
     ### TAINT respect custom table prefix ###
     ctx.response.type   = 'text/plain'
-    doc_file_id         = ctx.params.dfid
-    lines               =  @doc.db.all_first_values SQL"""
+    ### thx to https://stackoverflow.com/a/51616217/7568091 ###
+    rsp                 = new Stream()
+    ctx.body            = rsp
+    rsp.push '-------------------------------------\n'
+    #.......................................................................................................
+    debug '^35324^', { doc_file_id: ctx.params.dfid, }
+    for doc_line_txt from @doc.db.first_values SQL"""
       select
           doc_line_txt
         from doc_lines
         where doc_file_id = $doc_file_id
-        order by doc_line_nr;""", { doc_file_id, }
-    debug '^3284723894^', { params: ctx.params, doc_file_id, lines, }
-    ctx.body            = lines.join '\n'
+        order by doc_file_id, doc_line_nr;""", { doc_file_id: ctx.params.dfid, }
+      rsp.push doc_line_txt + '\n'
+    #.......................................................................................................
+    rsp.push '-------------------------------------\n'
+    rsp.push null # indicates end of the stream
     return null
 
   #=========================================================================================================
