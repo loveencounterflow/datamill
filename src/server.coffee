@@ -167,6 +167,57 @@ class Datamill_server_base
     #.......................................................................................................
     return null
 
+  #---------------------------------------------------------------------------------------------------------
+  _r_doc: ( ctx ) =>
+    ### TAINT use streaming ###
+    ### TAINT use API ###
+    ### TAINT allow other values for `doc_file_id` ###
+    ### TAINT respect custom table prefix ###
+    ctx.response.type   = 'html'
+    lines               =  @doc.db.all_first_values SQL"""
+      select
+          doc_line_txt
+        from doc_lines
+        where doc_file_id = 'f1'
+        order by doc_line_nr;"""
+    ctx.body            = lines.join '\n'
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _r_files: ( ctx ) =>
+    ### TAINT use layout ###
+    ### TAINT use API ###
+    ### TAINT respect custom table prefix ###
+    ctx.response.type   = 'html'
+    R                   = []
+    R.push HDML.pair 'h1', HDML.text "Datamill"
+    R.push HDML.pair 'h2', HDML.text "Files"
+    R.push HDML.open 'ul'
+    for file from @doc.db SQL"""select * from doc_files order by 1, 2;"""
+      href = @router.url 'file', file.doc_file_id
+      R.push HDML.pair 'li', HDML.pair 'a', { href, }, HDML.text file.doc_file_path
+    R.push HDML.close 'ul'
+    ctx.body            = R.join '\n'
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _r_file: ( ctx ) =>
+    ### TAINT use streaming ###
+    ### TAINT use layout ###
+    ### TAINT use API ###
+    ### TAINT respect custom table prefix ###
+    ctx.response.type   = 'text/plain'
+    doc_file_id         = ctx.params.dfid
+    lines               =  @doc.db.all_first_values SQL"""
+      select
+          doc_line_txt
+        from doc_lines
+        where doc_file_id = $doc_file_id
+        order by doc_line_nr;""", { doc_file_id, }
+    debug '^3284723894^', { params: ctx.params, doc_file_id, lines, }
+    ctx.body            = lines.join '\n'
+    return null
+
   #=========================================================================================================
   # ERROR HANDLING
   #---------------------------------------------------------------------------------------------------------
@@ -192,9 +243,10 @@ class Datamill_server extends Datamill_server_base
     super()
     GUY.props.hide @, 'types', get_server_types()
     @cfg        = @types.create.datamill_server_cfg cfg
-    GUY.props.hide @, 'db', @cfg.db; delete @cfg.db
+    GUY.props.hide @, 'doc', @cfg.doc; delete @cfg.doc
     @_add_layout()
-    @cfg        = GUY.lft.freeze @cfg
+    # debug '^3325936^', @cfg
+    @cfg        = Object.freeze @cfg
     #.......................................................................................................
     GUY.props.hide @, 'app',    new Koa()
     GUY.props.hide @, 'router', new Router()
@@ -252,9 +304,11 @@ class Datamill_server extends Datamill_server_base
     @router.get   'home',           '/',              @_r_home
     @router.get   'tables',         '/tables',        @_r_tables
     @router.get   'table',          '/table/:rel',    @_r_table
-    # @router.get   'trends',         '/trends',        @_r_trends
-    # @router.get   'layout-demo',    '/layout-demo',   @_r_layout_demo
-    # @router.get   'table_by_name',  '/table/:table',  @_r_table_by_name
+    @router.get   'files',          '/files',         @_r_files
+    @router.get   'file',           '/file/:dfid',    @_r_file
+    ### TAINT differentiate between 'documents' and 'files' ###
+    # @router.get   'docs',           '/docs',          @_r_docs
+    @router.get   'doc',            '/doc/:dfid',     @_r_doc
     #.......................................................................................................
     @app.use @router.routes()
     #.......................................................................................................

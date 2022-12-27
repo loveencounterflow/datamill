@@ -33,10 +33,12 @@ get_base_types = ->
   #.........................................................................................................
   base_types                = new Intertype()
   { declare }               = base_types
+  { Document }              = require './document'
   #.........................................................................................................
   declare.dbay                  override: true, isa: ( x ) -> x?.constructor?.name is 'DBay'
   ### TAINT should check whether collides with any other prefix ###
   declare.dbay_prefix                           isa: ( x ) -> ( @isa.text x ) and ( x.endsWith '_' )
+  declare.datamill_document     override: true, isa: ( x ) -> x instanceof Document
   #.........................................................................................................
   return base_types
 
@@ -57,7 +59,7 @@ get_server_types = ->
     fields:
       host:               'datamill_host'
       port:               'datamill_port'
-      db:                 'dbay'
+      doc:                'datamill_document'
     default:
       host:               'localhost'
       port:               3456
