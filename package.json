@@ -5,6 +5,8 @@
   "main": "lib/main.js",
   "dependencies": {
     "@koa/router": "^12.0.0",
+    "chokidar": "^3.5.3",
+    "datom": "^10.0.1",
     "dbay": "16.0.0",
     "dbay-tabulator": "^0.2.0",
     "guy": "^12.6.0",
@@ -15,6 +17,7 @@
     "koa-files": "^2.3.1",
     "koa-mount": "^4.0.0",
     "moonriver": "^3.0.0",
+    "node-notifier": "^10.0.1",
     "nodexh": "^2.2.0",
     "path": "^0.12.7",
     "socket.io": "^4.5.4"
