@@ -84,5 +84,7 @@ update config set value = $project_name where name = "project-name";
 
 ## Todo
 
+* **[–]** allow live-reloading on server
+* **[–]** allow auto-reloading on client
 * **[–]** allow to open document w/out specific location; use random / temporary directory (as with DBay)
    
