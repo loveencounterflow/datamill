@@ -101,7 +101,7 @@ class Document
     #.......................................................................................................
     self = @
     @db.create_table_function
-      name:         "lines_of"
+      name:         "read_file_lines"
       parameters:   [ 'doc_file_id', ]
       columns:      [ 'doc_line_nr', 'doc_line_txt', 'doc_par_nr', ]
       rows:         ( doc_file_abspath ) ->
@@ -117,13 +117,13 @@ class Document
     #.......................................................................................................
     @db SQL"""
       create view #{prefix}lines as select
-          f.doc_file_id               as doc_file_id,
-          l.doc_line_nr               as doc_line_nr,
-          l.doc_par_nr                as doc_par_nr,
-          l.doc_line_txt              as doc_line_txt
-          -- is_blank( l.doc_line_txt )  as doc_line_is_blank
-        from #{prefix}files             as f,
-        lines_of( f.doc_file_abspath )  as l
+          F.doc_file_id               as doc_file_id,
+          L.doc_line_nr               as doc_line_nr,
+          L.doc_par_nr                as doc_par_nr,
+          L.doc_line_txt              as doc_line_txt
+          -- is_blank( L.doc_line_txt )  as doc_line_is_blank
+        from #{prefix}files                   as F,
+        read_file_lines( F.doc_file_abspath ) as L
         order by 1, 2;"""
     #.......................................................................................................
     @_insert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
