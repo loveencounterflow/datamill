@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "../src/_xemitter.coffee"
+  ],
+  "names": [],
+  "mappings": "AAEA;EAAA,IAAC,CAAA,KAAD,GAAU,OAAA,CAAQ,OAAR;;EACV,IAAC,CAAA,EAAD,GAAU,IAAC,CAAA,KAAK,CAAC,YAAP,CAAA;;EADV;;AAAA",
+  "sourcesContent": [
+    "\n\n@DATOM  = require 'datom'\n@XE     = @DATOM.new_xemitter()\n# await XE.emit '^mykey', 42\n# await XE.emit { $key: '^mykey', $value: 42, }\n"
+  ]
+}
