@@ -6,8 +6,8 @@
     "../src/_xemitter.coffee"
   ],
   "names": [],
-  "mappings": "AAEA;EAAA,IAAC,CAAA,KAAD,GAAU,OAAA,CAAQ,OAAR;;EACV,IAAC,CAAA,EAAD,GAAU,IAAC,CAAA,KAAK,CAAC,YAAP,CAAA;;EADV;;AAAA",
+  "mappings": "AACA;EAAA,aAAA;;EAGA,IAAC,CAAA,KAAD,GAA4B,OAAA,CAAQ,OAAR;;EAC5B,IAAC,CAAA,EAAD,GAA4B,IAAC,CAAA,KAAK,CAAC,YAAP,CAAA;;EAC5B,IAAC,CAAA,QAAD,GAA4B,OAAA,CAAQ,eAAR,EAL5B;;;EAQA,IAAC,CAAA,cAAD,GAAkB,QAAA,CAAE,IAAF,CAAA;AAClB,QAAA;IAAE,QAAA,GACE;MAAA,KAAA,EAAU,sBAAV;MACA,OAAA,EAAU,IADV;MAEA,IAAA,EAAU,KAFV;MAGA,OAAA,EAAU;IAHV;IAIF,IAAC,CAAA,QAAQ,CAAC,MAAV,CAAiB,QAAjB;AACA,WAAO;EAPS,EARlB;;;EAkBA,IAAC,CAAA,EAAE,CAAC,SAAJ,CAAc,eAAd,EAA+B,CAAE,CAAF,CAAA,GAAA;WAAS,IAAC,CAAA,cAAD,CAAgB,CAAC,CAAC,aAAlB;EAAT,CAA/B;AAlBA",
   "sourcesContent": [
-    "\n\n@DATOM  = require 'datom'\n@XE     = @DATOM.new_xemitter()\n# await XE.emit '^mykey', 42\n# await XE.emit { $key: '^mykey', $value: 42, }\n"
+    "\n'use strict'\n\n#-----------------------------------------------------------------------------------------------------------\n@DATOM                    = require 'datom'\n@XE                       = @DATOM.new_xemitter()\n@NOTIFIER                 = require 'node-notifier'\n\n#-----------------------------------------------------------------------------------------------------------\n@_notify_change = ( path ) ->\n  settings =\n    title:    \"File content changed\",\n    message:  path\n    wait:     false\n    timeout:  1\n  @NOTIFIER.notify settings\n  return null\n\n#-----------------------------------------------------------------------------------------------------------\n@XE.listen_to '^file-changed', ( d ) => @_notify_change d.doc_file_path\n"
   ]
 }
