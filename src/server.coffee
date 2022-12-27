@@ -106,7 +106,7 @@ class Datamill_server_base
     #.......................................................................................................
     ### TAINT use proper interpolation or API ###
     try
-      rows = @db.all_rows SQL"""select * from #{table_name} order by 1;"""
+      rows = @doc.db.all_rows SQL"""select * from #{table_name} order by 1;"""
     catch error
       ctx.response.status = 500
       ctx.response.type   = 'text/plain'
@@ -128,14 +128,14 @@ class Datamill_server_base
   #---------------------------------------------------------------------------------------------------------
   _query_as_html: ( table, query, parameters ) =>
     table_cfg = @_get_table_cfg table
-    rows      = @db query, parameters
+    rows      = @doc.db query, parameters
     return tabulate { rows, table_cfg..., }
 
   #---------------------------------------------------------------------------------------------------------
   _table_as_html: ( table ) =>
     table_cfg   = @_get_table_cfg table
-    query       = SQL"select * from #{@db.sql.I table};"
-    rows        = @db query
+    query       = SQL"select * from #{@doc.db.sql.I table};"
+    rows        = @doc.db query
     return tabulate { rows, table_cfg..., }
 
   #---------------------------------------------------------------------------------------------------------
