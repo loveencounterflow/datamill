@@ -36,7 +36,6 @@ mount                     = require 'koa-mount'
 { get_base_types
   get_server_types }      = require './types'
 NODEXH                    = require '../../nodexh'
-NOTIFIER                  = require 'node-notifier'
 CKD                       = require 'chokidar'
 { XE }                    = require './_xemitter'
 
@@ -55,20 +54,9 @@ class Datamill_server_base
     #.......................................................................................................
     watcher.on 'change',  ( doc_file_abspath ) =>
       urge '^3534^', GUY.trm.reverse 'change', doc_file_abspath
-      @_notify_change doc_file_abspath
       await XE.emit '^maybe-file-changed', { doc_file_abspath, }
       return null
     #.......................................................................................................
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  _notify_change: ( path ) ->
-    settings =
-      title:    "File content changed",
-      message:  path
-      wait:     false
-      timeout:  1
-    NOTIFIER.notify settings
     return null
 
 
