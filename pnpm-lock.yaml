@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@koa/router': ^12.0.0
-  dbay: 15.2.2
+  dbay: 16.0.0
   dbay-tabulator: ^0.2.0
   guy: ^12.6.0
   hdml: ^3.0.0
@@ -18,7 +18,7 @@ specifiers:
 
 dependencies:
   '@koa/router': 12.0.0
-  dbay: 15.2.2
+  dbay: 16.0.0
   dbay-tabulator: 0.2.0
   guy: 12.6.0
   hdml: 3.0.0
@@ -247,8 +247,8 @@ packages:
       - deasync
     dev: false
 
-  /dbay/15.2.2:
-    resolution: {integrity: sha512-CTr71/meEtswq2S96jejeukK0pugYg/fQTnTyVSrRvEVVhvwd5IL6fJBiktpl7I85VZIze1BAdaMhQoVMUyeoA==}
+  /dbay/16.0.0:
+    resolution: {integrity: sha512-xbzzVQqhfj5eJglAzuToza6SMXTqreKSoLW2m31MeW1Ox4aglCYUt4y0S3+i9A5nv04cyn020g9WjMdLZfIdZg==}
     dependencies:
       better-sqlite3: 8.0.1
       dayjs: 1.11.6
