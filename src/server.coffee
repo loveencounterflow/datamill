@@ -73,12 +73,17 @@ class Datamill_server_base
   #---------------------------------------------------------------------------------------------------------
   _r_home: ( ctx ) =>
     ### TAINT generate from DB or load from external file ###
-    relation = @router.url 'table', 'sqlite_schema'
-    debug '^32234^', { relation, }
-    ctx.body = """
+    table_url = @router.url 'table',  'sqlite_schema'
+    ### TAINT differentiate between documents and files ###
+    doc_url   = @router.url 'doc',    'f1'
+    files_url = @router.url 'files'
+    debug '^32234^', { table_url, doc_url, files_url, }
+    ctx.body  = """
       <h1>Datamill</h1>
       <ul>
-        <li><a href=#{relation}>Relations (Tables &amp; Views)</a></li>
+        <li><a href=#{doc_url}>Document</a></li>
+        <li><a href=#{files_url}>Files</a></li>
+        <li><a href=#{table_url}>Relations (Tables &amp; Views)</a></li>
         </ul>
       """
     # help "^datamill/server@7^", ctx.router.url 'home', { query: { foo: 'bar', }, }
