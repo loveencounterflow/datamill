@@ -110,6 +110,8 @@ class Document
           -- doc_file_parameters   json not null,
         primary key ( doc_file_id ) );"""
     #.......................................................................................................
+    @db SQL"""
+      create view #{prefix}raw_lines as select
           F.doc_file_id               as doc_file_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
