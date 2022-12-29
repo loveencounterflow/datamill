@@ -158,7 +158,8 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   _add_layout: ( cfg ) ->
-    doc_file_path = PATH.resolve __dirname, '../assets/layout.html'
+    ### TAINT put path to layout into cfg ###
+    doc_file_path = PATH.resolve __dirname, '../assets/layout.dm.html'
     @add_file { doc_file_id: 'layout', doc_file_path, }
 
 
