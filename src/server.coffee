@@ -38,11 +38,31 @@ mount                     = require 'koa-mount'
 NODEXH                    = require '../../nodexh'
 CKD                       = require 'chokidar'
 { XE }                    = require './_xemitter'
-Stream                    = ( require 'node:stream' ).Readable
+{ Readable }              = require 'node:stream'
+
+
+#===========================================================================================================
+class Stream extends Readable
+  # constructor:            -> @s = new Readable();       undefined
+  push:         ( data  ) => super data;              null
+  write:        ( data  ) => @push data; @push '\n';  null
+  end:          ( data  ) => @push null;              null
 
 
 #===========================================================================================================
 class Datamill_server_base
+
+  #---------------------------------------------------------------------------------------------------------
+  with_html_stream: ( ctx, f ) ->
+    ctx.response.type = 'html'
+    ctx.body          = stream = new Stream()
+    for line from @doc.db.first_values SQL"""select doc_line_txt from doc_lines"""
+      stream.write line
+    f.call @, stream
+    for line from @doc.db.first_values SQL"""select doc_line_txt from doc_lines"""
+      stream.write line
+    stream.end()
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _watch_doc_files: ->
@@ -72,13 +92,6 @@ class Datamill_server_base
     line  = "#{ctx.method} #{ctx.origin}#{ctx.path}#{querystring} -> #{ctx.status} #{ctx.message}"
     echo ( GUY.trm.grey "^datamill/server@7^" ), ( GUY.trm[ color ] line )
     # warn "^datamill/server@7^", "#{ctx.status} #{ctx.message}"
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  _s_layout: ( ctx, next ) =>
-    await next()
-    if ( ctx.type is 'text/html' ) and ( not ctx.body?.startswith? "<!DOCTYPE html>" )
-      ctx.body = @cfg.layout.top + ctx.body + @cfg.layout.bottom
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -208,16 +221,15 @@ class Datamill_server_base
     ### TAINT use layout ###
     ### TAINT use API ###
     ### TAINT respect custom table prefix ###
-    ctx.response.type   = 'html'
-    R                   = []
-    R.push HDML.pair 'h1', HDML.text "Datamill"
-    R.push HDML.pair 'h2', HDML.text "Files"
-    R.push HDML.open 'ul'
-    for file from @doc.db SQL"""select * from doc_files order by 1, 2;"""
-      href = @router.url 'file', file.doc_file_id
-      R.push HDML.pair 'li', HDML.pair 'a', { href, }, HDML.text file.doc_file_path
-    R.push HDML.close 'ul'
-    ctx.body            = R.join '\n'
+    @with_html_stream ctx, ({ push, write, }) ->
+      debug '^_rfiles@397324^', @types.type_of ctx.body
+      write HDML.pair 'h1', HDML.text "Datamill"
+      write HDML.pair 'h2', HDML.text "Files"
+      write HDML.open 'ul'
+      for file from @doc.db SQL"""select * from doc_files order by 1, 2;"""
+        href = @router.url 'file', file.doc_file_id
+        write HDML.pair 'li', HDML.pair 'a', { href, }, HDML.text file.doc_file_path
+      write HDML.close 'ul'
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -228,8 +240,7 @@ class Datamill_server_base
     ### TAINT respect custom table prefix ###
     ctx.response.type   = 'text/plain'
     ### thx to https://stackoverflow.com/a/51616217/7568091 ###
-    rsp                 = new Stream()
-    ctx.body            = rsp
+    rsp                 = ctx.body = new Stream()
     rsp.push '-------------------------------------\n'
     #.......................................................................................................
     debug '^35324^', { doc_file_id: ctx.params.dfid, }
@@ -271,8 +282,6 @@ class Datamill_server extends Datamill_server_base
     GUY.props.hide @, 'types', get_server_types()
     @cfg        = @types.create.datamill_server_cfg cfg
     GUY.props.hide @, 'doc', @cfg.doc; delete @cfg.doc
-    @_add_layout()
-    # debug '^3325936^', @cfg
     @cfg        = Object.freeze @cfg
     #.......................................................................................................
     GUY.props.hide @, 'app',    new Koa()
@@ -280,18 +289,6 @@ class Datamill_server extends Datamill_server_base
     #.......................................................................................................
     @_watch_doc_files()
     return undefined
-
-  #---------------------------------------------------------------------------------------------------------
-  _add_layout: ->
-    @cfg.layout ?= {}
-    return null if @cfg.layout.top? and @cfg.layout.bottom?
-    path    = PATH.resolve PATH.join __dirname, '../assets/layout.html'
-    layout  = FS.readFileSync path, { encoding: 'utf-8', }
-    [ layout_top
-      layout_bottom   ] = layout.split '<%content%>'
-    @cfg.layout.top    ?= layout_top
-    @cfg.layout.bottom ?= layout_bottom
-    return null
 
 
   #=========================================================================================================
@@ -327,7 +324,6 @@ class Datamill_server extends Datamill_server_base
     `_s_*`: managed by server
     ###
     @app.use                                          @_s_log
-    @app.use                                          @_s_layout
     #.......................................................................................................
     @router.get   'home',           '/',              @_r_home
     @router.get   'tables',         '/tables',        @_r_tables
