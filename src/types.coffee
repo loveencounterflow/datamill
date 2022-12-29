@@ -138,6 +138,12 @@ get_document_types = ->
       doc_file_id:        null
       doc_file_path:      null
       doc_file_hash:      null
+  #...........................................................................................................
+  declare.walk_raw_lines_cfg
+    isa:        'optional.list.of.nonempty.text'
+    create:     ( x ) ->
+      return [] unless x
+      return x
   # #...........................................................................................................
   # declare.new_external_file_cfg
   #   isa: 'anything'

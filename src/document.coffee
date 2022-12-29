@@ -142,6 +142,19 @@ class Document
   # get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
+  walk_raw_lines: ( cfg, P... ) ->
+    return @walk_raw_lines [ arguments..., ] if ( P.length isnt 0 )
+    cfg ?= []
+    cfg = @types.create.walk_raw_lines_cfg cfg
+    return @db @_raw_lines_ps if cfg.length is 0
+    sql   = []
+    { L } = @db.sql
+    ### TAINT can probably may simpler by using a join ###
+    for doc_file_id, idx in cfg
+      sql.push SQL"""select #{L idx + 1} as doc_file_nr, * from doc_raw_lines where doc_file_id = #{L doc_file_id}\n"""
+    return @db sql.join 'union all\n'
+
+  #---------------------------------------------------------------------------------------------------------
   add_file: ( cfg ) ->
     cfg = @types.create.doc_add_file_cfg cfg
     { doc_file_id
