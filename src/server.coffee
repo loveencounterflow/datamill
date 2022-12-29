@@ -56,12 +56,17 @@ class Datamill_server_base
   with_html_stream: ( ctx, f ) ->
     ctx.response.type = 'html'
     ctx.body          = stream = new Stream()
-    for line from @doc.db.first_values SQL"""select doc_line_txt from doc_lines"""
-      stream.write line
     f.call @, stream
-    for line from @doc.db.first_values SQL"""select doc_line_txt from doc_lines"""
-      stream.write line
     stream.end()
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  with_layouted_html_stream: ( ctx, f ) ->
+    @with_html_stream ctx, ( stream ) =>
+      stream.write row.doc_line_txt for row from @doc.walk_raw_lines [ 'layout', ]
+      f.call @, stream
+      stream.write row.doc_line_txt for row from @doc.walk_raw_lines [ 'layout', ]
+      return null
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -221,7 +226,7 @@ class Datamill_server_base
     ### TAINT use layout ###
     ### TAINT use API ###
     ### TAINT respect custom table prefix ###
-    @with_html_stream ctx, ({ push, write, }) ->
+    @with_layouted_html_stream ctx, ({ push, write, }) ->
       debug '^_rfiles@397324^', @types.type_of ctx.body
       write HDML.pair 'h1', HDML.text "Datamill"
       write HDML.pair 'h2', HDML.text "Files"
