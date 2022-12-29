@@ -170,7 +170,7 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   update_file: ( cfg ) ->
     cfg = @types.create.doc_update_file_cfg cfg
-    return @db.first_row @_upsert_file, cfg
+    return @db.first_row @_upsert_file_ps, cfg
 
   #---------------------------------------------------------------------------------------------------------
   _add_layout: ( cfg ) ->
