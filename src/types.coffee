@@ -103,10 +103,13 @@ get_document_types = ->
       db:                 'dbay'
       prefix:             'dbay_prefix'
       home:               'doc_home'
+      loc_marker:         'regex'
     default:
       db:                 null
       prefix:             'doc_'
       home:               null
+      ### TAINT use more permissive identifier syntax ###
+      loc_marker:         /<dm:loc#(?<name>[-_a-zA-Z0-9]*)\/>/ug
     create: ( x ) ->
       return x unless ( not x? ) or ( @isa.object x )
       R     = { @registry.doc_document_cfg.default..., x..., }
