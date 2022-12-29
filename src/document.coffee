@@ -129,8 +129,9 @@ class Document
         read_file_lines( F.doc_file_abspath ) as L
         order by 1, 2;"""
     #.......................................................................................................
-    @_insert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
-    @_upsert_file     = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
+    @_insert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
+    @_upsert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
+    @_delete_file_ps  = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -149,7 +150,10 @@ class Document
       doc_file_hash } = cfg
     doc_file_abspath  = @get_doc_file_abspath doc_file_path
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
-    return @db.first_row @_insert_file, { doc_file_id, doc_file_path, doc_file_hash, }
+    return @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
+
+  #---------------------------------------------------------------------------------------------------------
+  _delete_file: ( doc_file_id ) -> @db @_delete_file_ps, { doc_file_id, }
 
   #---------------------------------------------------------------------------------------------------------
   update_file: ( cfg ) ->
