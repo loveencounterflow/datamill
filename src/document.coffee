@@ -72,35 +72,17 @@ class Document
       drop table if exists #{prefix}file;"""
     @db.set_foreign_keys_state true
     #-------------------------------------------------------------------------------------------------------
-    # TABLES
-    # #.......................................................................................................
-    # @db SQL"""
-    #   create table #{prefix}fads (
-    #       doc_fad_id            text not null,
-    #       doc_fad_name          text not null,
-    #       comment               text,
-    #     primary key ( doc_fad_id ) );"""
-    #.......................................................................................................
     @db.create_function
       name:           'abspath'
       deterministic:  true
       varargs:        false
       call:           @get_doc_file_abspath.bind @
+    #.......................................................................................................
     @db.create_function
       name:           'is_blank'
       deterministic:  true
       varargs:        false
       call:           ( text ) => if ( @text_is_blank text ) then 1 else 0
-    #.......................................................................................................
-    @db SQL"""
-      create table #{prefix}files (
-          doc_file_id           text not null,
-          doc_file_path         text not null,
-          doc_file_hash         text,
-          doc_file_abspath      text not null generated always as ( abspath( doc_file_path ) ) virtual,
-          -- doc_fad_id            text not null references #{prefix}fads,
-          -- doc_file_parameters   json not null,
-        primary key ( doc_file_id ) );"""
     #.......................................................................................................
     self = @
     @db.create_table_function
@@ -119,7 +101,15 @@ class Document
         return null
     #.......................................................................................................
     @db SQL"""
-      create view #{prefix}lines as select
+      create table #{prefix}files (
+          doc_file_id           text not null,
+          doc_file_path         text not null,
+          doc_file_hash         text,
+          doc_file_abspath      text not null generated always as ( abspath( doc_file_path ) ) virtual,
+          -- doc_fad_id            text not null references #{prefix}fads,
+          -- doc_file_parameters   json not null,
+        primary key ( doc_file_id ) );"""
+    #.......................................................................................................
           F.doc_file_id               as doc_file_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
