@@ -112,6 +112,7 @@ class Document
     #.......................................................................................................
     @db SQL"""
       create view #{prefix}raw_lines as select
+          dense_rank() over w         as doc_file_nr,
           F.doc_file_id               as doc_file_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
@@ -119,18 +120,19 @@ class Document
           -- is_blank( L.doc_line_txt )  as doc_line_is_blank
         from #{prefix}files                   as F,
         read_file_lines( F.doc_file_abspath ) as L
-        order by 1, 2;"""
+        window w as ( order by F.doc_file_id )
+        order by F.doc_file_id, doc_line_nr;"""
     #.......................................................................................................
     @_insert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
     @_upsert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
     @_delete_file_ps  = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
-    @_raw_lines_ps    = @db.prepare SQL"""
-        select
-            dense_rank() over w as doc_file_nr,
-            *
-          from doc_raw_lines
-          window w as ( order by doc_file_id )
-          order by doc_file_id, doc_line_nr;"""
+    @_raw_lines_ps    = @db.prepare SQL"""select * from #{prefix}raw_lines"""
+    #     select
+    #         dense_rank() over w as doc_file_nr,
+    #         *
+    #       from doc_raw_lines
+    #       window w as ( order by doc_file_id )
+    #       order by doc_file_id, doc_line_nr;"""
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -151,7 +153,9 @@ class Document
     { L } = @db.sql
     ### TAINT can probably may simpler by using a join ###
     for doc_file_id, idx in cfg
-      sql.push SQL"""select #{L idx + 1} as doc_file_nr, * from doc_raw_lines where doc_file_id = #{L doc_file_id}\n"""
+      sql.push \
+        SQL"select #{L idx + 1} as doc_file_nr, R.doc_file_id, R.doc_line_nr, R.doc_par_nr, R.doc_line_txt " + \
+          SQL"from #{@cfg.prefix}raw_lines as R where R.doc_file_id = #{L doc_file_id}\n"
     return @db sql.join 'union all\n'
 
   #---------------------------------------------------------------------------------------------------------
