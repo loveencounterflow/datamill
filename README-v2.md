@@ -68,6 +68,8 @@
     * conclusion: one may use Fossil or Git or another version control system to manage one's DataMill
       documents, as seen fit; this is external to DataMill (although routines to export/import documents may
       be provided)
+  * also see [*The decades long quagmire of encapsulated
+    HTML*](https://www.russellbeattie.com/notes/posts/the-decades-long-html-bundle-quagmire.html)
 
 <!--
 
