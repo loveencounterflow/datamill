@@ -124,6 +124,13 @@ class Document
     @_insert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
     @_upsert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
     @_delete_file_ps  = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
+    @_raw_lines_ps    = @db.prepare SQL"""
+        select
+            dense_rank() over w as doc_file_nr,
+            *
+          from doc_raw_lines
+          window w as ( order by doc_file_id )
+          order by doc_file_id, doc_line_nr;"""
     return null
 
   #---------------------------------------------------------------------------------------------------------
