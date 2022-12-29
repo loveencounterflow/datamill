@@ -122,6 +122,10 @@ class Document
         read_file_lines( F.doc_file_abspath ) as L
         window w as ( order by F.doc_file_id )
         order by F.doc_file_id, doc_line_nr;"""
+    # #.......................................................................................................
+    # @db SQL"""
+    #   create table #{prefix}locs (
+    #     );"""
     #.......................................................................................................
     @_insert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
     @_upsert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
@@ -160,7 +164,52 @@ class Document
       doc_file_hash } = cfg
     doc_file_abspath  = @get_doc_file_abspath doc_file_path
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
-    return @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
+    R                 = @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
+    @_add_locs R
+    return R
+
+  #---------------------------------------------------------------------------------------------------------
+  _add_locs: ( file ) ->
+    for loc from @_walk_locs file
+      urge '^56-1^', loc
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _walk_locs: ( file ) ->
+    { doc_file_id, } = file
+    for line from @walk_raw_lines [ doc_file_id, ]
+      { doc_line_nr } = line
+      for match from line.doc_line_txt.matchAll @cfg.loc_marker_re
+        { left_slash, \
+          name: doc_loc_name, \
+          right_slash           } = match.groups
+        [ text ]                  = match
+        length                    = text.length
+        { index: doc_loc_start, } = match
+        doc_loc_stop              = doc_loc_start + length
+        doc_loc_mark              = null
+        doc_loc_kind              = null
+        # debug '^57-1^', line.doc_file_id, line.doc_line_nr, { doc_loc_start, length, left_slash, right_slash, name, }
+        if ( left_slash is '' ) and ( right_slash is '' )
+          doc_loc_kind  = 'start'
+          doc_loc_mark  = doc_loc_stop
+        else if ( left_slash is '/' ) and ( right_slash is '' )
+          doc_loc_kind  = 'stop'
+          doc_loc_mark  = doc_loc_start
+        else if ( left_slash is '' ) and ( right_slash is '/' )
+          doc_loc_kind  = 'start'
+          doc_loc_mark  = doc_loc_stop
+          yield {
+            doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
+              doc_loc_start, doc_loc_stop, doc_loc_mark, }
+          doc_loc_kind  = 'stop'
+        else
+          ### TAINT use custom error class, proper source file location data ###
+          throw new Error "^datamill/document@1^ illegal location marker: #{rpr text}"
+        yield {
+          doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
+            doc_loc_start, doc_loc_stop, doc_loc_mark, }
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _delete_file: ( doc_file_id ) -> @db @_delete_file_ps, { doc_file_id, }
