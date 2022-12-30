@@ -139,7 +139,7 @@ class Document
     @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
     @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""select * from #{prefix}raw_lines"""
-    @_insert_loc_alt_ps = @db.alt.prepare_insert { into: "#{prefix}locs", }
+    @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ class Document
   _add_locs_for_file: ( file ) ->
     @db.alt =>
       for loc from @_walk_locs_of_file file
-        @db.alt @_insert_loc_alt_ps, loc
+        @db.alt @_insert_loc_2ps, loc
       return null
     return null
 
