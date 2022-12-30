@@ -122,15 +122,24 @@ class Document
         read_file_lines( F.doc_file_abspath ) as L
         window w as ( order by F.doc_file_id )
         order by F.doc_file_id, doc_line_nr;"""
-    # #.......................................................................................................
-    # @db SQL"""
-    #   create table #{prefix}locs (
-    #     );"""
     #.......................................................................................................
-    @_insert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
-    @_upsert_file_ps  = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
-    @_delete_file_ps  = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
-    @_raw_lines_ps    = @db.prepare SQL"""select * from #{prefix}raw_lines"""
+    @db SQL"""
+      create table #{prefix}locs (
+          doc_file_id   text    not null references #{prefix}files on delete cascade,
+          doc_loc_name  text    not null,
+          doc_loc_kind  text    not null,
+          doc_line_nr   integer not null /* references #{prefix}raw_lines */,
+          doc_loc_start integer not null,
+          doc_loc_stop  integer not null,
+          doc_loc_mark  integer not null,
+        primary key ( doc_file_id, doc_loc_name, doc_loc_kind ),
+        check ( doc_loc_kind in ( 'start', 'stop' ) ) );"""
+    #.......................................................................................................
+    @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
+    @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
+    @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
+    @_raw_lines_ps      = @db.prepare SQL"""select * from #{prefix}raw_lines"""
+    @_insert_loc_alt_ps = @db.alt.prepare_insert { into: "#{prefix}locs", }
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -165,23 +174,26 @@ class Document
     doc_file_abspath  = @get_doc_file_abspath doc_file_path
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
     R                 = @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
-    @_add_locs R
+    ### TAINT only when licensed by extension `*.dm.*` or settings ###
+    @_add_locs_for_file R
     return R
 
   #---------------------------------------------------------------------------------------------------------
-  _add_locs: ( file ) ->
-    for loc from @_walk_locs file
-      urge '^56-1^', loc
+  _add_locs_for_file: ( file ) ->
+    @db.alt =>
+      for loc from @_walk_locs_of_file file
+        @db.alt @_insert_loc_alt_ps, loc
+      return null
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _walk_locs: ( file ) ->
+  _walk_locs_of_file: ( file ) ->
     { doc_file_id, } = file
     for line from @walk_raw_lines [ doc_file_id, ]
       { doc_line_nr } = line
       for match from line.doc_line_txt.matchAll @cfg.loc_marker_re
-        { left_slash, \
-          name: doc_loc_name, \
+        { left_slash
+          doc_loc_name
           right_slash           } = match.groups
         [ text ]                  = match
         length                    = text.length
