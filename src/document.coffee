@@ -111,8 +111,7 @@ class Document
         primary key ( doc_file_id ) );"""
     #.......................................................................................................
     @db SQL"""
-      create view #{prefix}raw_lines as select
-          dense_rank() over w         as doc_file_nr,
+      create view #{prefix}live_raw_lines as select
           F.doc_file_id               as doc_file_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
@@ -120,8 +119,15 @@ class Document
           -- is_blank( L.doc_line_txt )  as doc_line_is_blank
         from #{prefix}files                   as F,
         read_file_lines( F.doc_file_abspath ) as L
-        window w as ( order by F.doc_file_id )
         order by F.doc_file_id, doc_line_nr;"""
+    #.......................................................................................................
+    @db SQL"""
+      create table #{prefix}raw_lines (
+          doc_file_id   text    not null references #{prefix}files on delete cascade,
+          doc_line_nr   integer not null,
+          doc_par_nr    integer not null,
+          doc_line_txt  text    not null,
+        primary key ( doc_file_id, doc_line_nr ) );"""
     #.......................................................................................................
     @db SQL"""
       create table #{prefix}locs (
@@ -138,6 +144,10 @@ class Document
     @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
     @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
     @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
+    @_insert_lines_2ps  = @db.alt.prepare SQL"""
+      insert into #{prefix}raw_lines
+        select * from #{prefix}live_raw_lines
+          where doc_file_id = $doc_file_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""select * from #{prefix}raw_lines"""
     @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
     return null
@@ -153,15 +163,15 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   walk_raw_lines: ( cfg, P... ) ->
     return @walk_raw_lines [ arguments..., ] if ( P.length isnt 0 )
-    cfg ?= []
-    cfg = @types.create.walk_raw_lines_cfg cfg
-    return @db @_raw_lines_ps if cfg.length is 0
+    cfg  ?= []
+    cfg   = @types.create.walk_raw_lines_cfg cfg
+    return [] if cfg.length is 0
     sql   = []
     { L } = @db.sql
     ### TAINT can probably may simpler by using a join ###
     for doc_file_id, idx in cfg
       sql.push \
-        SQL"select #{L idx + 1} as doc_file_nr, R.doc_file_id, R.doc_line_nr, R.doc_par_nr, R.doc_line_txt " + \
+        SQL"select #{L idx + 1} as doc_file_nr, * " + \
           SQL"from #{@cfg.prefix}raw_lines as R where R.doc_file_id = #{L doc_file_id}\n"
     return @db sql.join 'union all\n'
 
@@ -173,10 +183,11 @@ class Document
       doc_file_hash } = cfg
     doc_file_abspath  = @get_doc_file_abspath doc_file_path
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
-    R                 = @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
+    file              = @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
+    @db.alt @_insert_lines_2ps, { doc_file_id, }
     ### TAINT only when licensed by extension `*.dm.*` or settings ###
-    @_add_locs_for_file R
-    return R
+    @_add_locs_for_file file
+    return file
 
   #---------------------------------------------------------------------------------------------------------
   _add_locs_for_file: ( file ) ->
