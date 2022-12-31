@@ -6,7 +6,7 @@ specifiers:
   datom: ^10.0.1
   dbay: 16.0.0
   dbay-tabulator: ^0.2.0
-  guy: ^12.6.0
+  guy: ^12.6.2
   hdml: ^3.0.0
   http: 0.0.1-security
   intertype: ^0.111.0
@@ -25,7 +25,7 @@ dependencies:
   datom: 10.0.1
   dbay: 16.0.0
   dbay-tabulator: 0.2.0
-  guy: 12.6.0
+  guy: 12.6.2
   hdml: 3.0.0
   http: 0.0.1-security
   intertype: 0.111.0
@@ -552,8 +552,8 @@ packages:
       letsfreezethat: 3.1.0
     dev: false
 
-  /guy/12.6.0:
-    resolution: {integrity: sha512-TudjLjaD5Ib619XIEXS6kSjRsURClw0lb05w2dhQ5O5UBg6x0Fy5heBMy7Sf16XDWlXykjgHyWfwnIZN1dYxJQ==}
+  /guy/12.6.2:
+    resolution: {integrity: sha512-uW4Y0OewRiRzh8a9qTd9P1K07oL0/VYqfUvoHylHqgu702wRQz69lxgShozNoNx7O9O9C22730FnUXi3aKEfKw==}
     peerDependencies:
       acorn: ^8.7.1
       acorn-loose: ^8.3.0
@@ -974,7 +974,7 @@ packages:
     hasBin: true
     dependencies:
       error-callsites: 2.0.4
-      guy: 12.6.0
+      guy: 12.6.2
       intertype: 0.111.0
       load-source-map: 3.0.1
       stacktracey: 2.1.8

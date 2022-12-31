@@ -9,7 +9,7 @@
     "datom": "^10.0.1",
     "dbay": "16.0.0",
     "dbay-tabulator": "^0.2.0",
-    "guy": "^12.6.0",
+    "guy": "^12.6.2",
     "hdml": "^3.0.0",
     "http": "0.0.1-security",
     "intertype": "^0.111.0",
