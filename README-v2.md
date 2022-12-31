@@ -89,4 +89,5 @@ update config set value = $project_name where name = "project-name";
 * **[–]** allow live-reloading on server
 * **[–]** allow auto-reloading on client
 * **[–]** allow to open document w/out specific location; use random / temporary directory (as with DBay)
+* **[–]** validate regions created by loc markers (stop must not come before end &c)
    
