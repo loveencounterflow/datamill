@@ -150,6 +150,15 @@ class Document
           where doc_file_id = $doc_file_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""select * from #{prefix}raw_lines"""
     @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
+    @_last_line_ps      = @db.prepare SQL"""
+      select * from #{prefix}raw_lines
+        where true
+          and doc_file_id = $doc_file_id
+          and doc_line_nr = (
+            select max( doc_line_nr )
+              from #{prefix}raw_lines
+              where true
+              and doc_file_id = $doc_file_id );"""
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -199,10 +208,20 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   _walk_locs_of_file: ( file ) ->
-    { doc_file_id, } = file
+    { doc_file_id, }  = file
+    #.......................................................................................................
+    { doc_line_nr
+      stop        } = @_get_last_position_in_file doc_file_id
+    yield {
+      doc_file_id, doc_line_nr: 1, doc_loc_name: '*', doc_loc_kind: 'start',
+      doc_loc_start: 0, doc_loc_stop: 0, doc_loc_mark: 0, }
+    yield {
+      doc_file_id, doc_line_nr: doc_line_nr, doc_loc_name: '*', doc_loc_kind: 'stop',
+      doc_loc_start: stop, doc_loc_stop: stop, doc_loc_mark: stop, }
+    #.......................................................................................................
     for line from @walk_raw_lines [ doc_file_id, ]
       { doc_line_nr } = line
-      for match from line.doc_line_txt.matchAll @cfg.loc_marker_re
+      for match from line.doc_line_txt.matchAll @cfg._loc_marker_re
         { left_slash
           doc_loc_name
           right_slash           } = match.groups
@@ -224,15 +243,21 @@ class Document
           doc_loc_mark  = doc_loc_stop
           yield {
             doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
-              doc_loc_start, doc_loc_stop, doc_loc_mark, }
+            doc_loc_start, doc_loc_stop, doc_loc_mark, }
           doc_loc_kind  = 'stop'
         else
           ### TAINT use custom error class, proper source file location data ###
           throw new Error "^datamill/document@1^ illegal location marker: #{rpr text}"
         yield {
           doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
-            doc_loc_start, doc_loc_stop, doc_loc_mark, }
+          doc_loc_start, doc_loc_stop, doc_loc_mark, }
     return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _get_last_position_in_file: ( doc_file_id ) ->
+    { doc_line_nr
+      doc_line_txt  } = @db.first_row @_last_line_ps, { doc_file_id, }
+    return { doc_line_nr, stop: doc_line_txt.length, }
 
   #---------------------------------------------------------------------------------------------------------
   _delete_file: ( doc_file_id ) -> @db @_delete_file_ps, { doc_file_id, }
