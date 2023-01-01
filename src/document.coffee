@@ -87,7 +87,7 @@ class Document
     self = @
     @db.create_table_function
       name:         "read_file_lines"
-      parameters:   [ 'doc_file_id', ]
+      parameters:   [ 'doc_src_id', ]
       columns:      [ 'doc_line_nr', 'doc_line_txt', 'doc_par_nr', ]
       rows:         ( doc_file_abspath ) ->
         doc_line_nr   = 0
@@ -101,70 +101,70 @@ class Document
         return null
     #.......................................................................................................
     @db SQL"""
-      create table #{prefix}files (
-          doc_file_id           text not null,
+      create table #{prefix}sources (
+          doc_src_id            text not null,
           doc_file_path         text not null,
           doc_file_hash         text,
           doc_file_abspath      text not null generated always as ( abspath( doc_file_path ) ) virtual,
           -- doc_fad_id            text not null references #{prefix}fads,
           -- doc_file_parameters   json not null,
-        primary key ( doc_file_id ) );"""
+        primary key ( doc_src_id ) );"""
     #.......................................................................................................
     @db SQL"""
       create view #{prefix}live_raw_lines as select
-          F.doc_file_id               as doc_file_id,
+          F.doc_src_id                as doc_src_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
           L.doc_line_txt              as doc_line_txt
           -- is_blank( L.doc_line_txt )  as doc_line_is_blank
-        from #{prefix}files                   as F,
+        from #{prefix}sources                   as F,
         read_file_lines( F.doc_file_abspath ) as L
-        order by F.doc_file_id, doc_line_nr;"""
+        order by F.doc_src_id, doc_line_nr;"""
     #.......................................................................................................
     @db SQL"""
       create table #{prefix}raw_lines (
-          doc_file_id   text    not null references #{prefix}files on delete cascade,
+          doc_src_id    text    not null references #{prefix}sources on delete cascade,
           doc_line_nr   integer not null,
           doc_par_nr    integer not null,
           doc_line_txt  text    not null,
-        primary key ( doc_file_id, doc_line_nr ) );"""
+        primary key ( doc_src_id, doc_line_nr ) );"""
     #.......................................................................................................
     @db SQL"""
       create table #{prefix}locs (
-          doc_file_id   text    not null references #{prefix}files on delete cascade,
+          doc_src_id    text    not null references #{prefix}sources on delete cascade,
           doc_loc_id    text    not null,
           doc_loc_kind  text    not null,
           doc_line_nr   integer not null /* references #{prefix}raw_lines */,
           doc_loc_start integer not null,
           doc_loc_stop  integer not null,
           doc_loc_mark  integer not null,
-        primary key ( doc_file_id, doc_loc_id, doc_loc_kind ),
+        primary key ( doc_src_id, doc_loc_id, doc_loc_kind ),
         check ( doc_loc_kind in ( 'start', 'stop' ) ) );"""
     #.......................................................................................................
-    @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
-    @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', on_conflict: { update: true, }, }
-    @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}files where doc_file_id = $doc_file_id;"""
+    @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}sources", returning: '*', }
+    @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}sources", returning: '*', on_conflict: { update: true, }, }
+    @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}sources where doc_src_id = $doc_src_id;"""
     @_insert_lines_2ps  = @db.alt.prepare SQL"""
       insert into #{prefix}raw_lines
         select * from #{prefix}live_raw_lines
-          where doc_file_id = $doc_file_id;"""
+          where doc_src_id = $doc_src_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""
       select
           $doc_file_nr as doc_file_nr,
           *
         from #{prefix}raw_lines
-        where doc_file_id = $doc_file_id
+        where doc_src_id = $doc_src_id
         order by doc_line_nr;"""
     @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
     @_last_line_ps      = @db.prepare SQL"""
       select * from #{prefix}raw_lines
         where true
-          and doc_file_id = $doc_file_id
+          and doc_src_id = $doc_src_id
           and doc_line_nr = (
             select max( doc_line_nr )
               from #{prefix}raw_lines
               where true
-              and doc_file_id = $doc_file_id );"""
+              and doc_src_id = $doc_src_id );"""
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -172,50 +172,53 @@ class Document
   text_is_blank:        ( text          ) -> text is '' or /^\s*$/.test text
 
   #---------------------------------------------------------------------------------------------------------
-  get_doc_file_ids:   Decorators.get_all_first_values 'files',      'doc_file_id'
+  get_doc_src_ids:   Decorators.get_all_first_values 'sources',      'doc_src_id'
   # get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
   walk_raw_lines: ( region_ids... ) ->
     region_ids = region_ids.flat Infinity
     for region_id, idx in region_ids
-      { doc_file_id
+      { doc_src_id
         doc_loc_id } = @_split_region_id region_id
-      ### TAINT reject unknown doc_file_id, doc_loc_id ###
+      ### TAINT reject unknown doc_src_id, doc_loc_id ###
       doc_file_nr = idx + 1
-      for line from @db @_raw_lines_ps, { doc_file_nr, doc_file_id, }
+      for line from @db @_raw_lines_ps, { doc_file_nr, doc_src_id, }
         yield line
-      # yield from @db @_raw_lines_ps, { doc_file_nr, doc_file_id, }
+      # yield from @db @_raw_lines_ps, { doc_file_nr, doc_src_id, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _split_region_id: ( region_id ) ->
     @types.validate.nonempty.text region_id
-    match = region_id.match /^(?<doc_file_id>[^#]+)#(?<doc_loc_name>.+)$/
-    return { doc_file_id: region_id, doc_loc_name: '*', } unless match?
+    match = region_id.match /^(?<doc_src_id>[^#]+)#(?<doc_loc_id>.+)$/
+    return { doc_src_id: region_id, doc_loc_id: '*', } unless match?
     return match.groups
+
+  #---------------------------------------------------------------------------------------------------------
+  walk_loc_lines: ( cfg, P... ) ->
+    return @walk_xxx_lines [ arguments..., ] if ( P.length isnt 0 )
     cfg  ?= []
-    cfg   = @types.create.walk_raw_lines_cfg cfg
+    cfg   = @types.create.walk_xxx_lines_cfg cfg
     return [] if cfg.length is 0
     sql   = []
     { L } = @db.sql
-    ### TAINT can probably may simpler by using a join ###
-    for doc_file_id, idx in cfg
+    for doc_src_id, idx in cfg
       sql.push \
         SQL"select #{L idx + 1} as doc_file_nr, * " + \
-          SQL"from #{@cfg.prefix}raw_lines as R where R.doc_file_id = #{L doc_file_id}\n"
+          SQL"from #{@cfg.prefix}xxx_lines as R where R.doc_src_id = #{L doc_src_id}\n"
     return @db sql.join 'union all\n'
 
   #---------------------------------------------------------------------------------------------------------
   add_file: ( cfg ) ->
     cfg = @types.create.doc_add_file_cfg cfg
-    { doc_file_id
+    { doc_src_id
       doc_file_path
       doc_file_hash } = cfg
     doc_file_abspath  = @get_doc_file_abspath doc_file_path
     doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
-    file              = @db.first_row @_insert_file_ps, { doc_file_id, doc_file_path, doc_file_hash, }
-    @db.alt @_insert_lines_2ps, { doc_file_id, }
+    file              = @db.first_row @_insert_file_ps, { doc_src_id, doc_file_path, doc_file_hash, }
+    @db.alt @_insert_lines_2ps, { doc_src_id, }
     ### TAINT only when licensed by extension `*.dm.*` or settings ###
     @_add_locs_for_file file
     return file
@@ -230,18 +233,18 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   _walk_locs_of_file: ( file ) ->
-    { doc_file_id, }  = file
+    { doc_src_id, }  = file
     #.......................................................................................................
     { doc_line_nr
-      stop        } = @_get_last_position_in_file doc_file_id
+      stop        } = @_get_last_position_in_file doc_src_id
     yield {
-      doc_file_id, doc_line_nr: 1, doc_loc_id: '*', doc_loc_kind: 'start',
+      doc_src_id, doc_line_nr: 1, doc_loc_id: '*', doc_loc_kind: 'start',
       doc_loc_start: 0, doc_loc_stop: 0, doc_loc_mark: 0, }
     yield {
-      doc_file_id, doc_line_nr: doc_line_nr, doc_loc_id: '*', doc_loc_kind: 'stop',
+      doc_src_id, doc_line_nr: doc_line_nr, doc_loc_id: '*', doc_loc_kind: 'stop',
       doc_loc_start: stop, doc_loc_stop: stop, doc_loc_mark: stop, }
     #.......................................................................................................
-    for line from @walk_raw_lines [ doc_file_id, ]
+    for line from @walk_raw_lines [ doc_src_id, ]
       { doc_line_nr } = line
       for match from line.doc_line_txt.matchAll @cfg._loc_marker_re
         { left_slash
@@ -253,7 +256,7 @@ class Document
         doc_loc_stop              = doc_loc_start + length
         doc_loc_mark              = null
         doc_loc_kind              = null
-        # debug '^57-1^', line.doc_file_id, line.doc_line_nr, { doc_loc_start, length, left_slash, right_slash, name, }
+        # debug '^57-1^', line.doc_src_id, line.doc_line_nr, { doc_loc_start, length, left_slash, right_slash, name, }
         if ( left_slash is '' ) and ( right_slash is '' )
           doc_loc_kind  = 'start'
           doc_loc_mark  = doc_loc_stop
@@ -264,25 +267,25 @@ class Document
           doc_loc_kind  = 'start'
           doc_loc_mark  = doc_loc_stop
           yield {
-            doc_file_id, doc_line_nr, doc_loc_id, doc_loc_kind,
+            doc_src_id, doc_line_nr, doc_loc_id, doc_loc_kind,
             doc_loc_start, doc_loc_stop, doc_loc_mark, }
           doc_loc_kind  = 'stop'
         else
           ### TAINT use custom error class, proper source file location data ###
           throw new Error "^datamill/document@1^ illegal location marker: #{rpr text}"
         yield {
-          doc_file_id, doc_line_nr, doc_loc_id, doc_loc_kind,
+          doc_src_id, doc_line_nr, doc_loc_id, doc_loc_kind,
           doc_loc_start, doc_loc_stop, doc_loc_mark, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _get_last_position_in_file: ( doc_file_id ) ->
+  _get_last_position_in_file: ( doc_src_id ) ->
     { doc_line_nr
-      doc_line_txt  } = @db.first_row @_last_line_ps, { doc_file_id, }
+      doc_line_txt  } = @db.first_row @_last_line_ps, { doc_src_id, }
     return { doc_line_nr, stop: doc_line_txt.length, }
 
   #---------------------------------------------------------------------------------------------------------
-  _delete_file: ( doc_file_id ) -> @db @_delete_file_ps, { doc_file_id, }
+  _delete_file: ( doc_src_id ) -> @db @_delete_file_ps, { doc_src_id, }
 
   #---------------------------------------------------------------------------------------------------------
   update_file: ( cfg ) ->
@@ -293,7 +296,7 @@ class Document
   _add_layout: ( cfg ) ->
     ### TAINT put path to layout into cfg ###
     doc_file_path = PATH.resolve __dirname, '../assets/layout.dm.html'
-    @add_file { doc_file_id: 'layout', doc_file_path, }
+    @add_file { doc_src_id: 'layout', doc_file_path, }
 
 
   #=========================================================================================================
@@ -313,7 +316,7 @@ class Document
         * compare with registered content hash
         * if changed:
           * update DB content
-          * `XE.emit '^file-changed', { doc_file_id, doc_file_path, }`
+          * `XE.emit '^file-changed', { doc_src_id, doc_file_path, }`
       ###
       file            = @_file_from_abspath d.doc_file_abspath
       doc_file_hash   = GUY.fs.get_content_hash file.doc_file_abspath, { fallback: null, }
@@ -326,7 +329,7 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   _file_from_abspath: ( doc_file_abspath ) -> @db.first_row SQL"
-    select * from #{@cfg.prefix}files where doc_file_abspath = $doc_file_abspath", { doc_file_abspath, }
+    select * from #{@cfg.prefix}sources where doc_file_abspath = $doc_file_abspath", { doc_file_abspath, }
 
 
 # #===========================================================================================================

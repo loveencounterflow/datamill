@@ -94,7 +94,8 @@ get_document_types = ->
   #.........................................................................................................
   declare.doc_fad_id    'nonempty.text'     ### TAINT should check with DB whether known ###
   declare.doc_file_path 'nonempty.text'     ### TAINT should be more precise ###
-  declare.doc_file_id   'nonempty.text'     ### TAINT should be more precise ###
+  declare.doc_src_id    'nonempty.text'     ### TAINT should be more precise ###
+  declare.doc_region_id 'nonempty.text'     ### TAINT should be more precise ###
   declare.doc_home      'nonempty.text'     ### TAINT should be more precise ###
   declare.doc_file_hash ( x ) -> ( @isa.text x ) and ( /^[0-9a-f]{17}$/.test x )
   #.........................................................................................................
@@ -119,23 +120,23 @@ get_document_types = ->
   #...........................................................................................................
   declare.doc_add_file_cfg
     fields:
-      doc_file_id:        'doc_file_id'
+      doc_src_id:        'doc_src_id'
       doc_file_path:      'doc_file_path'
       doc_file_hash:      'optional.doc_file_hash'
       # doc_fad_id:         'doc_fad_id'
     default:
-      doc_file_id:        null
+      doc_src_id:        null
       doc_file_path:      null
       doc_file_hash:      null
       # doc_fad_id:         null
   #...........................................................................................................
   declare.doc_update_file_cfg
     fields:
-      doc_file_id:        'doc_file_id'
+      doc_src_id:        'doc_src_id'
       doc_file_path:      'doc_file_path'
       doc_file_hash:      'doc_file_hash'
     default:
-      doc_file_id:        null
+      doc_src_id:        null
       doc_file_path:      null
       doc_file_hash:      null
   #...........................................................................................................
@@ -156,12 +157,12 @@ get_document_types = ->
   # #...........................................................................................................
   # declare.new_external_text_file_cfg
   #   fields:
-  #     doc_file_id:        'doc_file_id'
+  #     doc_src_id:        'doc_src_id'
   #     doc_file_path:      'doc_file_path'
   #     ### TAINT implement lists as enumerations ###
-  #     # doc_fad_id:         'doc_file_id' # ( x ) -> x is 'xtxt'
+  #     # doc_fad_id:         'doc_src_id' # ( x ) -> x is 'xtxt'
   #   default:
-  #     doc_file_id:        null
+  #     doc_src_id:        null
   #     doc_file_path:      null
   #     # doc_fad_id:         'xtxt'
   #...........................................................................................................
