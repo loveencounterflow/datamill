@@ -90,4 +90,7 @@ update config set value = $project_name where name = "project-name";
 * **[–]** allow auto-reloading on client
 * **[–]** allow to open document w/out specific location; use random / temporary directory (as with DBay)
 * **[–]** validate regions created by loc markers (stop must not come before end &c)
+* **[–]** consider to rename loc markers so they include the relevant doc_file_id
+* **[–]** consider to insert `*` location marker; this would be helpful to find where an embedded document
+  appears; however, that would also clash with `<!DOCTYPE html>` which is required to appear first thing
    
