@@ -40,11 +40,11 @@ class Decorators
 
   #---------------------------------------------------------------------------------------------------------
   @get_all_first_values: ( table, field ) ->
-    -> @db.all_first_values SQL"select #{I field} from #{I @cfg.prefix+table} order by 1;"
+    -> @db.all_first_values SQL"select #{I field} from #{I table} order by 1;"
 
   #---------------------------------------------------------------------------------------------------------
   @get_all_rows: ( table ) ->
-    -> @db.all_rows SQL"select * from #{I @cfg.prefix+table} order by 1;"
+    -> @db.all_rows SQL"select * from #{I table} order by 1;"
 
 #===========================================================================================================
 class Document
@@ -66,10 +66,9 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   _procure_infrastructure: ->
     ### TAINT skip if tables found ###
-    { prefix } = @cfg
     @db.set_foreign_keys_state false
     @db SQL"""
-      drop table if exists #{prefix}file;"""
+      drop table if exists doc_file;"""
     @db.set_foreign_keys_state true
     #-------------------------------------------------------------------------------------------------------
     @db.create_function
@@ -101,68 +100,68 @@ class Document
         return null
     #.......................................................................................................
     @db SQL"""
-      create table #{prefix}sources (
+      create table doc_sources (
           doc_src_id            text not null,
           doc_src_path         text not null,
           doc_src_hash         text,
           doc_src_abspath      text not null generated always as ( abspath( doc_src_path ) ) virtual,
-          -- doc_fad_id            text not null references #{prefix}fads,
+          -- doc_fad_id            text not null references doc_fads,
           -- doc_src_parameters   json not null,
         primary key ( doc_src_id ) );"""
     #.......................................................................................................
     @db SQL"""
-      create view #{prefix}live_raw_lines as select
+      create view doc_live_raw_lines as select
           F.doc_src_id                as doc_src_id,
           L.doc_line_nr               as doc_line_nr,
           L.doc_par_nr                as doc_par_nr,
           L.doc_line_txt              as doc_line_txt
           -- is_blank( L.doc_line_txt )  as doc_line_is_blank
-        from #{prefix}sources                   as F,
+        from doc_sources                   as F,
         read_file_lines( F.doc_src_abspath ) as L
         order by F.doc_src_id, doc_line_nr;"""
     #.......................................................................................................
     @db SQL"""
-      create table #{prefix}raw_lines (
-          doc_src_id    text    not null references #{prefix}sources on delete cascade,
+      create table doc_raw_lines (
+          doc_src_id    text    not null references doc_sources on delete cascade,
           doc_line_nr   integer not null,
           doc_par_nr    integer not null,
           doc_line_txt  text    not null,
         primary key ( doc_src_id, doc_line_nr ) );"""
     #.......................................................................................................
     @db SQL"""
-      create table #{prefix}locs (
-          doc_src_id    text    not null references #{prefix}sources on delete cascade,
+      create table doc_locs (
+          doc_src_id    text    not null references doc_sources on delete cascade,
           doc_loc_id    text    not null,
           doc_loc_kind  text    not null,
-          doc_line_nr   integer not null /* references #{prefix}raw_lines */,
+          doc_line_nr   integer not null /* references doc_raw_lines */,
           doc_loc_start integer not null,
           doc_loc_stop  integer not null,
           doc_loc_mark  integer not null,
         primary key ( doc_src_id, doc_loc_id, doc_loc_kind ),
         check ( doc_loc_kind in ( 'start', 'stop' ) ) );"""
     #.......................................................................................................
-    @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}sources", returning: '*', }
-    @_upsert_file_ps    = @db.prepare_insert { into: "#{prefix}sources", returning: '*', on_conflict: { update: true, }, }
-    @_delete_file_ps    = @db.prepare SQL"""delete from #{prefix}sources where doc_src_id = $doc_src_id;"""
+    @_insert_file_ps    = @db.prepare_insert { into: "doc_sources", returning: '*', }
+    @_upsert_file_ps    = @db.prepare_insert { into: "doc_sources", returning: '*', on_conflict: { update: true, }, }
+    @_delete_file_ps    = @db.prepare SQL"""delete from doc_sources where doc_src_id = $doc_src_id;"""
     @_insert_lines_2ps  = @db.alt.prepare SQL"""
-      insert into #{prefix}raw_lines
-        select * from #{prefix}live_raw_lines
+      insert into doc_raw_lines
+        select * from doc_live_raw_lines
           where doc_src_id = $doc_src_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""
       select
           $doc_src_nr as doc_src_nr,
           *
-        from #{prefix}raw_lines
+        from doc_raw_lines
         where doc_src_id = $doc_src_id
         order by doc_line_nr;"""
-    @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
+    @_insert_loc_2ps    = @db.alt.prepare_insert { into: "doc_locs", }
     @_last_line_ps      = @db.prepare SQL"""
-      select * from #{prefix}raw_lines
+      select * from doc_raw_lines
         where true
           and doc_src_id = $doc_src_id
           and doc_line_nr = (
             select max( doc_line_nr )
-              from #{prefix}raw_lines
+              from doc_raw_lines
               where true
               and doc_src_id = $doc_src_id );"""
     return null
@@ -172,7 +171,7 @@ class Document
   text_is_blank:        ( text          ) -> text is '' or /^\s*$/.test text
 
   #---------------------------------------------------------------------------------------------------------
-  get_doc_src_ids:   Decorators.get_all_first_values 'sources',      'doc_src_id'
+  get_doc_src_ids:   Decorators.get_all_first_values 'doc_sources', 'doc_src_id'
   # get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
@@ -206,7 +205,7 @@ class Document
     for doc_src_id, idx in cfg
       sql.push \
         SQL"select #{L idx + 1} as doc_src_nr, * " + \
-          SQL"from #{@cfg.prefix}xxx_lines as R where R.doc_src_id = #{L doc_src_id}\n"
+          SQL"from doc_xxx_lines as R where R.doc_src_id = #{L doc_src_id}\n"
     return @db sql.join 'union all\n'
 
   #---------------------------------------------------------------------------------------------------------
@@ -329,7 +328,7 @@ class Document
 
   #---------------------------------------------------------------------------------------------------------
   _file_from_abspath: ( doc_src_abspath ) -> @db.first_row SQL"
-    select * from #{@cfg.prefix}sources where doc_src_abspath = $doc_src_abspath", { doc_src_abspath, }
+    select * from doc_sources where doc_src_abspath = $doc_src_abspath", { doc_src_abspath, }
 
 
 # #===========================================================================================================

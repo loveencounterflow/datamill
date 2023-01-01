@@ -36,8 +36,6 @@ get_base_types = ->
   { Document }              = require './document'
   #.........................................................................................................
   declare.dbay                  override: true, isa: ( x ) -> x?.constructor?.name is 'DBay'
-  ### TAINT should check whether collides with any other prefix ###
-  declare.dbay_prefix                           isa: ( x ) -> ( @isa.text x ) and ( x.endsWith '_' )
   declare.datamill_document     override: true, isa: ( x ) -> x instanceof Document
   #.........................................................................................................
   return base_types
@@ -102,12 +100,10 @@ get_document_types = ->
   declare.doc_document_cfg
     fields:
       db:                 'dbay'
-      prefix:             'dbay_prefix'
       home:               'doc_home'
       _loc_marker_re:     'regex'
     default:
       db:                 null
-      prefix:             'doc_'
       home:               null
       ### TAINT use more permissive identifier syntax ###
       _loc_marker_re:     /<(?<left_slash>\/?)dm:loc#(?<doc_loc_id>[-_a-zA-Z0-9]*)(?<right_slash>\/?)>/ug
