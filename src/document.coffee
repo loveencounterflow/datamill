@@ -148,7 +148,13 @@ class Document
       insert into #{prefix}raw_lines
         select * from #{prefix}live_raw_lines
           where doc_file_id = $doc_file_id;"""
-    @_raw_lines_ps      = @db.prepare SQL"""select * from #{prefix}raw_lines"""
+    @_raw_lines_ps      = @db.prepare SQL"""
+      select
+          $doc_file_nr as doc_file_nr,
+          *
+        from #{prefix}raw_lines
+        where doc_file_id = $doc_file_id
+        order by doc_line_nr;"""
     @_insert_loc_2ps    = @db.alt.prepare_insert { into: "#{prefix}locs", }
     @_last_line_ps      = @db.prepare SQL"""
       select * from #{prefix}raw_lines
@@ -170,8 +176,24 @@ class Document
   # get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
-  walk_raw_lines: ( cfg, P... ) ->
-    return @walk_raw_lines [ arguments..., ] if ( P.length isnt 0 )
+  walk_raw_lines: ( region_ids... ) ->
+    region_ids = region_ids.flat Infinity
+    for region_id, idx in region_ids
+      { doc_file_id
+        doc_loc_name } = @_split_region_id region_id
+      ### TAINT reject unknown doc_file_id, doc_loc_name ###
+      doc_file_nr = idx + 1
+      for line from @db @_raw_lines_ps, { doc_file_nr, doc_file_id, }
+        yield line
+      # yield from @db @_raw_lines_ps, { doc_file_nr, doc_file_id, }
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _split_region_id: ( region_id ) ->
+    @types.validate.nonempty.text region_id
+    match = region_id.match /^(?<doc_file_id>[^#]+)#(?<doc_loc_name>.+)$/
+    return { doc_file_id: region_id, doc_loc_name: '*', } unless match?
+    return match.groups
     cfg  ?= []
     cfg   = @types.create.walk_raw_lines_cfg cfg
     return [] if cfg.length is 0
