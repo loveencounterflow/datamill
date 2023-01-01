@@ -57,7 +57,6 @@ class Document
     GUY.props.hide @, 'types', get_document_types()
     @cfg        = @types.create.doc_document_cfg cfg
     GUY.props.hide @, 'db',             @cfg.db;            delete @cfg.db
-    GUY.props.hide @, 'file_adapters',  @cfg.file_adapters; delete @cfg.file_adapters
     @_procure_infrastructure()
     @_add_layout()
     @_listen_to_signals()
@@ -66,10 +65,10 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   _procure_infrastructure: ->
     ### TAINT skip if tables found ###
-    @db.set_foreign_keys_state false
-    @db SQL"""
-      drop table if exists doc_file;"""
-    @db.set_foreign_keys_state true
+    # @db.set_foreign_keys_state false
+    # @db SQL"""
+    #   drop table if exists doc_file;"""
+    # @db.set_foreign_keys_state true
     #-------------------------------------------------------------------------------------------------------
     @db.create_function
       name:           'abspath'
@@ -140,9 +139,9 @@ class Document
         primary key ( doc_src_id, doc_loc_id, doc_loc_kind ),
         check ( doc_loc_kind in ( 'start', 'stop' ) ) );"""
     #.......................................................................................................
-    @_insert_file_ps    = @db.prepare_insert { into: "doc_sources", returning: '*', }
-    @_upsert_file_ps    = @db.prepare_insert { into: "doc_sources", returning: '*', on_conflict: { update: true, }, }
-    @_delete_file_ps    = @db.prepare SQL"""delete from doc_sources where doc_src_id = $doc_src_id;"""
+    @_insert_source_ps  = @db.prepare_insert { into: "doc_sources", returning: '*', }
+    @_upsert_source_ps  = @db.prepare_insert { into: "doc_sources", returning: '*', on_conflict: { update: true, }, }
+    @_delete_source_ps  = @db.prepare SQL"""delete from doc_sources where doc_src_id = $doc_src_id;"""
     @_insert_lines_2ps  = @db.alt.prepare SQL"""
       insert into doc_raw_lines
         select * from doc_live_raw_lines
@@ -209,30 +208,30 @@ class Document
     return @db sql.join 'union all\n'
 
   #---------------------------------------------------------------------------------------------------------
-  add_file: ( cfg ) ->
-    cfg = @types.create.doc_add_file_cfg cfg
+  add_source: ( cfg ) ->
+    cfg = @types.create.doc_add_source_cfg cfg
     { doc_src_id
       doc_src_path
       doc_src_hash } = cfg
     doc_src_abspath  = @get_doc_src_abspath doc_src_path
     doc_src_hash    ?= GUY.fs.get_content_hash doc_src_abspath, { fallback: null, }
-    file              = @db.first_row @_insert_file_ps, { doc_src_id, doc_src_path, doc_src_hash, }
+    source           = @db.first_row @_insert_source_ps, { doc_src_id, doc_src_path, doc_src_hash, }
     @db.alt @_insert_lines_2ps, { doc_src_id, }
     ### TAINT only when licensed by extension `*.dm.*` or settings ###
-    @_add_locs_for_file file
-    return file
+    @_add_locs_for_source source
+    return source
 
   #---------------------------------------------------------------------------------------------------------
-  _add_locs_for_file: ( file ) ->
+  _add_locs_for_source: ( source ) ->
     @db.alt =>
-      for loc from @_walk_locs_of_file file
+      for loc from @_walk_locs_of_source source
         @db.alt @_insert_loc_2ps, loc
       return null
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _walk_locs_of_file: ( file ) ->
-    { doc_src_id, }  = file
+  _walk_locs_of_source: ( source ) ->
+    { doc_src_id, }  = source
     #.......................................................................................................
     { doc_line_nr
       stop        } = @_get_last_position_in_file doc_src_id
@@ -270,7 +269,7 @@ class Document
             doc_loc_start, doc_loc_stop, doc_loc_mark, }
           doc_loc_kind  = 'stop'
         else
-          ### TAINT use custom error class, proper source file location data ###
+          ### TAINT use custom error class, proper source location data ###
           throw new Error "^datamill/document@1^ illegal location marker: #{rpr text}"
         yield {
           doc_src_id, doc_line_nr, doc_loc_id, doc_loc_kind,
@@ -284,18 +283,18 @@ class Document
     return { doc_line_nr, stop: doc_line_txt.length, }
 
   #---------------------------------------------------------------------------------------------------------
-  _delete_file: ( doc_src_id ) -> @db @_delete_file_ps, { doc_src_id, }
+  _delete_source: ( doc_src_id ) -> @db @_delete_source_ps, { doc_src_id, }
 
   #---------------------------------------------------------------------------------------------------------
-  update_file: ( cfg ) ->
+  update_source: ( cfg ) ->
     cfg = @types.create.doc_update_file_cfg cfg
-    return @db.first_row @_upsert_file_ps, cfg
+    return @db.first_row @_upsert_source_ps, cfg
 
   #---------------------------------------------------------------------------------------------------------
   _add_layout: ( cfg ) ->
     ### TAINT put path to layout into cfg ###
     doc_src_path = PATH.resolve __dirname, '../assets/layout.dm.html'
-    @add_file { doc_src_id: 'layout', doc_src_path, }
+    @add_source { doc_src_id: 'layout', doc_src_path, }
 
 
   #=========================================================================================================
@@ -308,21 +307,21 @@ class Document
     XE.listen_to_all ( key, d ) -> whisper '^23-1^', GUY.trm.reverse "signal: #{rpr d}"
     XE.listen_to_unheard ( key, d ) -> warn GUY.trm.reverse "unheard signal: #{rpr d}"
     #.......................................................................................................
-    XE.listen_to '^maybe-file-changed', ( d ) =>
+    XE.listen_to '^maybe-source-changed', ( d ) =>
       ###
-        * test whether file is registered
+        * test whether source is registered
         * retrieve content hash
         * compare with registered content hash
         * if changed:
           * update DB content
-          * `XE.emit '^file-changed', { doc_src_id, doc_src_path, }`
+          * `XE.emit '^source-changed', { doc_src_id, doc_src_path, }`
       ###
-      file            = @_file_from_abspath d.doc_src_abspath
-      doc_src_hash   = GUY.fs.get_content_hash file.doc_src_abspath, { fallback: null, }
-      if file.doc_src_hash isnt doc_src_hash
-        file.doc_src_hash = doc_src_hash
-        @update_file file
-        XE.emit '^file-changed', file
+      source         = @_file_from_abspath d.doc_src_abspath
+      doc_src_hash   = GUY.fs.get_content_hash source.doc_src_abspath, { fallback: null, }
+      if source.doc_src_hash isnt doc_src_hash
+        source.doc_src_hash = doc_src_hash
+        @update_source source
+        XE.emit '^source-changed', source
       return null
     return null
 
@@ -331,59 +330,8 @@ class Document
     select * from doc_sources where doc_src_abspath = $doc_src_abspath", { doc_src_abspath, }
 
 
-# #===========================================================================================================
-# # FILE ADAPTERS (FADs)
-# #===========================================================================================================
-# class File_adapter_abc
-#   @comment: "abstract base class for files"
-
-#   #---------------------------------------------------------------------------------------------------------
-#   constructor: ->
-#     GUY.props.hide @, 'types', get_document_types()
-#     return undefined
-
-
-# #===========================================================================================================
-# class External_file_abc extends File_adapter_abc
-#   @comment: "abstract base class for external files"
-
-#   #---------------------------------------------------------------------------------------------------------
-#   constructor: ( cfg ) ->
-#     super cfg
-#     @cfg   = @types.create.new_external_file_cfg cfg
-#     return undefined
-
-#   #---------------------------------------------------------------------------------------------------------
-#   write:        null
-#   walk_chunks:  null
-#   walk_lines:   null
-
-# #===========================================================================================================
-# class External_text_file extends File_adapter_abc
-#   @comment: "adapter for external text files"
-
-#   #---------------------------------------------------------------------------------------------------------
-#   constructor: ( cfg ) ->
-#     super()
-#     debug '^354^', { cfg, }
-#     @cfg   = @types.create.new_external_text_file_cfg cfg
-#     return undefined
-
-#   #---------------------------------------------------------------------------------------------------------
-#   walk_lines: ->
-#     yield 'helo'
-#     yield 'world'
-#     return null
-
 
 ############################################################################################################
-### Abstract base classes use class name, instantiable classes short acronym with `x` meaning 'external',
-`txt` being most common file name extension for text files: ###
-# file_adapters   =
-#   File_adapter_abc:   File_adapter_abc
-#   External_file_abc:  External_file_abc
-#   xtxt:               External_text_file
-# module.exports  = { Document, File_adapter_abc, file_adapters, }
 module.exports  = { Document, }
 
 
