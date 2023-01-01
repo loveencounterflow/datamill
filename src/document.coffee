@@ -76,7 +76,7 @@ class Document
       name:           'abspath'
       deterministic:  true
       varargs:        false
-      call:           @get_doc_file_abspath.bind @
+      call:           @get_doc_src_abspath.bind @
     #.......................................................................................................
     @db.create_function
       name:           'is_blank'
@@ -89,11 +89,11 @@ class Document
       name:         "read_file_lines"
       parameters:   [ 'doc_src_id', ]
       columns:      [ 'doc_line_nr', 'doc_line_txt', 'doc_par_nr', ]
-      rows:         ( doc_file_abspath ) ->
+      rows:         ( doc_src_abspath ) ->
         doc_line_nr   = 0
         doc_par_nr    = 0
         prv_was_blank = true
-        for doc_line_txt from GUY.fs.walk_lines doc_file_abspath
+        for doc_line_txt from GUY.fs.walk_lines doc_src_abspath
           doc_par_nr++ if ( not ( is_blank = self.text_is_blank doc_line_txt ) ) and prv_was_blank
           prv_was_blank = is_blank
           doc_line_nr++
@@ -103,11 +103,11 @@ class Document
     @db SQL"""
       create table #{prefix}sources (
           doc_src_id            text not null,
-          doc_file_path         text not null,
-          doc_file_hash         text,
-          doc_file_abspath      text not null generated always as ( abspath( doc_file_path ) ) virtual,
+          doc_src_path         text not null,
+          doc_src_hash         text,
+          doc_src_abspath      text not null generated always as ( abspath( doc_src_path ) ) virtual,
           -- doc_fad_id            text not null references #{prefix}fads,
-          -- doc_file_parameters   json not null,
+          -- doc_src_parameters   json not null,
         primary key ( doc_src_id ) );"""
     #.......................................................................................................
     @db SQL"""
@@ -118,7 +118,7 @@ class Document
           L.doc_line_txt              as doc_line_txt
           -- is_blank( L.doc_line_txt )  as doc_line_is_blank
         from #{prefix}sources                   as F,
-        read_file_lines( F.doc_file_abspath ) as L
+        read_file_lines( F.doc_src_abspath ) as L
         order by F.doc_src_id, doc_line_nr;"""
     #.......................................................................................................
     @db SQL"""
@@ -150,7 +150,7 @@ class Document
           where doc_src_id = $doc_src_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""
       select
-          $doc_file_nr as doc_file_nr,
+          $doc_src_nr as doc_src_nr,
           *
         from #{prefix}raw_lines
         where doc_src_id = $doc_src_id
@@ -168,7 +168,7 @@ class Document
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  get_doc_file_abspath: ( doc_file_path ) -> PATH.resolve @cfg.home, doc_file_path
+  get_doc_src_abspath:  ( doc_src_path  ) -> PATH.resolve @cfg.home, doc_src_path
   text_is_blank:        ( text          ) -> text is '' or /^\s*$/.test text
 
   #---------------------------------------------------------------------------------------------------------
@@ -182,10 +182,10 @@ class Document
       { doc_src_id
         doc_loc_id } = @_split_region_id region_id
       ### TAINT reject unknown doc_src_id, doc_loc_id ###
-      doc_file_nr = idx + 1
-      for line from @db @_raw_lines_ps, { doc_file_nr, doc_src_id, }
+      doc_src_nr = idx + 1
+      for line from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
         yield line
-      # yield from @db @_raw_lines_ps, { doc_file_nr, doc_src_id, }
+      # yield from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -205,7 +205,7 @@ class Document
     { L } = @db.sql
     for doc_src_id, idx in cfg
       sql.push \
-        SQL"select #{L idx + 1} as doc_file_nr, * " + \
+        SQL"select #{L idx + 1} as doc_src_nr, * " + \
           SQL"from #{@cfg.prefix}xxx_lines as R where R.doc_src_id = #{L doc_src_id}\n"
     return @db sql.join 'union all\n'
 
@@ -213,11 +213,11 @@ class Document
   add_file: ( cfg ) ->
     cfg = @types.create.doc_add_file_cfg cfg
     { doc_src_id
-      doc_file_path
-      doc_file_hash } = cfg
-    doc_file_abspath  = @get_doc_file_abspath doc_file_path
-    doc_file_hash    ?= GUY.fs.get_content_hash doc_file_abspath, { fallback: null, }
-    file              = @db.first_row @_insert_file_ps, { doc_src_id, doc_file_path, doc_file_hash, }
+      doc_src_path
+      doc_src_hash } = cfg
+    doc_src_abspath  = @get_doc_src_abspath doc_src_path
+    doc_src_hash    ?= GUY.fs.get_content_hash doc_src_abspath, { fallback: null, }
+    file              = @db.first_row @_insert_file_ps, { doc_src_id, doc_src_path, doc_src_hash, }
     @db.alt @_insert_lines_2ps, { doc_src_id, }
     ### TAINT only when licensed by extension `*.dm.*` or settings ###
     @_add_locs_for_file file
@@ -295,8 +295,8 @@ class Document
   #---------------------------------------------------------------------------------------------------------
   _add_layout: ( cfg ) ->
     ### TAINT put path to layout into cfg ###
-    doc_file_path = PATH.resolve __dirname, '../assets/layout.dm.html'
-    @add_file { doc_src_id: 'layout', doc_file_path, }
+    doc_src_path = PATH.resolve __dirname, '../assets/layout.dm.html'
+    @add_file { doc_src_id: 'layout', doc_src_path, }
 
 
   #=========================================================================================================
@@ -316,20 +316,20 @@ class Document
         * compare with registered content hash
         * if changed:
           * update DB content
-          * `XE.emit '^file-changed', { doc_src_id, doc_file_path, }`
+          * `XE.emit '^file-changed', { doc_src_id, doc_src_path, }`
       ###
-      file            = @_file_from_abspath d.doc_file_abspath
-      doc_file_hash   = GUY.fs.get_content_hash file.doc_file_abspath, { fallback: null, }
-      if file.doc_file_hash isnt doc_file_hash
-        file.doc_file_hash = doc_file_hash
+      file            = @_file_from_abspath d.doc_src_abspath
+      doc_src_hash   = GUY.fs.get_content_hash file.doc_src_abspath, { fallback: null, }
+      if file.doc_src_hash isnt doc_src_hash
+        file.doc_src_hash = doc_src_hash
         @update_file file
         XE.emit '^file-changed', file
       return null
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _file_from_abspath: ( doc_file_abspath ) -> @db.first_row SQL"
-    select * from #{@cfg.prefix}sources where doc_file_abspath = $doc_file_abspath", { doc_file_abspath, }
+  _file_from_abspath: ( doc_src_abspath ) -> @db.first_row SQL"
+    select * from #{@cfg.prefix}sources where doc_src_abspath = $doc_src_abspath", { doc_src_abspath, }
 
 
 # #===========================================================================================================
