@@ -63,6 +63,7 @@ class Datamill_server_base
   #---------------------------------------------------------------------------------------------------------
   with_layouted_html_stream: ( ctx, f ) ->
     @with_html_stream ctx, ( stream ) =>
+      stream.write '<!DOCTYPE html>'
       stream.write row.doc_line_txt for row from @doc.walk_raw_lines [ 'layout', ]
       f.call @, stream
       stream.write row.doc_line_txt for row from @doc.walk_raw_lines [ 'layout', ]
