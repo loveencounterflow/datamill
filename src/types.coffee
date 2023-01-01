@@ -109,7 +109,7 @@ get_document_types = ->
       prefix:             'doc_'
       home:               null
       ### TAINT use more permissive identifier syntax ###
-      _loc_marker_re:     /<(?<left_slash>\/?)dm:loc#(?<doc_loc_name>[-_a-zA-Z0-9]*)(?<right_slash>\/?)>/ug
+      _loc_marker_re:     /<(?<left_slash>\/?)dm:loc#(?<doc_loc_id>[-_a-zA-Z0-9]*)(?<right_slash>\/?)>/ug
     create: ( x ) ->
       return x unless ( not x? ) or ( @isa.object x )
       R     = { @registry.doc_document_cfg.default..., x..., }
@@ -140,6 +140,12 @@ get_document_types = ->
       doc_file_hash:      null
   #...........................................................................................................
   declare.walk_raw_lines_cfg
+    isa:        'optional.list.of.nonempty.text'
+    create:     ( x ) ->
+      return [] unless x
+      return x
+  #...........................................................................................................
+  declare.walk_xxx_lines_cfg
     isa:        'optional.list.of.nonempty.text'
     create:     ( x ) ->
       return [] unless x

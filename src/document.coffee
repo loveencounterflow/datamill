@@ -132,13 +132,13 @@ class Document
     @db SQL"""
       create table #{prefix}locs (
           doc_file_id   text    not null references #{prefix}files on delete cascade,
-          doc_loc_name  text    not null,
+          doc_loc_id    text    not null,
           doc_loc_kind  text    not null,
           doc_line_nr   integer not null /* references #{prefix}raw_lines */,
           doc_loc_start integer not null,
           doc_loc_stop  integer not null,
           doc_loc_mark  integer not null,
-        primary key ( doc_file_id, doc_loc_name, doc_loc_kind ),
+        primary key ( doc_file_id, doc_loc_id, doc_loc_kind ),
         check ( doc_loc_kind in ( 'start', 'stop' ) ) );"""
     #.......................................................................................................
     @_insert_file_ps    = @db.prepare_insert { into: "#{prefix}files", returning: '*', }
@@ -180,8 +180,8 @@ class Document
     region_ids = region_ids.flat Infinity
     for region_id, idx in region_ids
       { doc_file_id
-        doc_loc_name } = @_split_region_id region_id
-      ### TAINT reject unknown doc_file_id, doc_loc_name ###
+        doc_loc_id } = @_split_region_id region_id
+      ### TAINT reject unknown doc_file_id, doc_loc_id ###
       doc_file_nr = idx + 1
       for line from @db @_raw_lines_ps, { doc_file_nr, doc_file_id, }
         yield line
@@ -235,17 +235,17 @@ class Document
     { doc_line_nr
       stop        } = @_get_last_position_in_file doc_file_id
     yield {
-      doc_file_id, doc_line_nr: 1, doc_loc_name: '*', doc_loc_kind: 'start',
+      doc_file_id, doc_line_nr: 1, doc_loc_id: '*', doc_loc_kind: 'start',
       doc_loc_start: 0, doc_loc_stop: 0, doc_loc_mark: 0, }
     yield {
-      doc_file_id, doc_line_nr: doc_line_nr, doc_loc_name: '*', doc_loc_kind: 'stop',
+      doc_file_id, doc_line_nr: doc_line_nr, doc_loc_id: '*', doc_loc_kind: 'stop',
       doc_loc_start: stop, doc_loc_stop: stop, doc_loc_mark: stop, }
     #.......................................................................................................
     for line from @walk_raw_lines [ doc_file_id, ]
       { doc_line_nr } = line
       for match from line.doc_line_txt.matchAll @cfg._loc_marker_re
         { left_slash
-          doc_loc_name
+          doc_loc_id
           right_slash           } = match.groups
         [ text ]                  = match
         length                    = text.length
@@ -264,14 +264,14 @@ class Document
           doc_loc_kind  = 'start'
           doc_loc_mark  = doc_loc_stop
           yield {
-            doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
+            doc_file_id, doc_line_nr, doc_loc_id, doc_loc_kind,
             doc_loc_start, doc_loc_stop, doc_loc_mark, }
           doc_loc_kind  = 'stop'
         else
           ### TAINT use custom error class, proper source file location data ###
           throw new Error "^datamill/document@1^ illegal location marker: #{rpr text}"
         yield {
-          doc_file_id, doc_line_nr, doc_loc_name, doc_loc_kind,
+          doc_file_id, doc_line_nr, doc_loc_id, doc_loc_kind,
           doc_loc_start, doc_loc_stop, doc_loc_mark, }
     return null
 
