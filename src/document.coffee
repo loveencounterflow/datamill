@@ -181,9 +181,43 @@ class Document
         doc_loc_id } = @_split_region_id region_id
       ### TAINT reject unknown doc_src_id, doc_loc_id ###
       doc_src_nr = idx + 1
-      for line from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
+      yield from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  walk_raw_lines_2: ( region_ids... ) ->
+    region_ids = region_ids.flat Infinity
+    for region_id, idx in region_ids
+      { doc_src_id
+        doc_loc_id } = @_split_region_id region_id
+      ### TAINT reject unknown doc_src_id, doc_loc_id ###
+      doc_src_nr = idx + 1
+      [ start, stop, ] = @db.all_rows SQL"""
+        select * from doc_locs
+        where true
+          and doc_src_id = $doc_src_id
+          and doc_loc_id = $doc_loc_id
+          order by doc_line_nr, doc_loc_start;""", { doc_src_id, doc_loc_id, }
+      first_line_nr = start.doc_line_nr
+      last_line_nr  = stop.doc_line_nr
+      for line from @db SQL"""
+        select
+            *
+          from doc_raw_lines
+          where true
+            and doc_src_id = $doc_src_id
+            and doc_line_nr between $first_line_nr and $last_line_nr
+            order by doc_line_nr;""", { doc_src_id, first_line_nr, last_line_nr, }
+        ### truncate first and last lines ###
+        ### add indicator whether newlines are needed at ends ###
+        if ( line.doc_line_nr is first_line_nr ) and ( line.doc_line_nr is last_line_nr )
+          line.doc_line_txt = line.doc_line_txt[ start.doc_loc_start .. stop.doc_loc_stop ]
+        else if ( line.doc_line_nr is first_line_nr )
+          line.doc_line_txt = line.doc_line_txt[ start.doc_loc_start .. ]
+        else if ( line.doc_line_nr is last_line_nr )
+          line.doc_line_txt = line.doc_line_txt[ .. stop.doc_loc_stop ]
+        line.doc_line_txt = @_loc_markers_as_html_comments doc_src_id, line.doc_line_txt
         yield line
-      # yield from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -192,20 +226,6 @@ class Document
     match = region_id.match /^(?<doc_src_id>[^#]+)#(?<doc_loc_id>.+)$/
     return { doc_src_id: region_id, doc_loc_id: '*', } unless match?
     return match.groups
-
-  #---------------------------------------------------------------------------------------------------------
-  walk_loc_lines: ( cfg, P... ) ->
-    return @walk_xxx_lines [ arguments..., ] if ( P.length isnt 0 )
-    cfg  ?= []
-    cfg   = @types.create.walk_xxx_lines_cfg cfg
-    return [] if cfg.length is 0
-    sql   = []
-    { L } = @db.sql
-    for doc_src_id, idx in cfg
-      sql.push \
-        SQL"select #{L idx + 1} as doc_src_nr, * " + \
-          SQL"from doc_xxx_lines as R where R.doc_src_id = #{L doc_src_id}\n"
-    return @db sql.join 'union all\n'
 
   #---------------------------------------------------------------------------------------------------------
   add_source: ( cfg ) ->
@@ -230,6 +250,18 @@ class Document
     return null
 
   #---------------------------------------------------------------------------------------------------------
+  _loc_markers_as_html_comments: ( doc_src_id, doc_line_txt ) ->
+    doc_line_txt = doc_line_txt.replace @cfg._loc_marker_re, ( $0, ..._, groups ) =>
+      { left_slash
+        doc_loc_id
+        right_slash           } = groups
+      return  if ( left_slash is ''  ) and ( right_slash is ''  ) then "<!--(loc '#{doc_loc_id}'-->"
+      else    if ( left_slash is '/' ) and ( right_slash is ''  ) then "<!--loc '#{doc_loc_id}')-->"
+      else    if ( left_slash is ''  ) and ( right_slash is '/' ) then "<!--(loc '#{doc_loc_id}')-->"
+      return "<!--???-->"
+    return doc_line_txt
+
+  #---------------------------------------------------------------------------------------------------------
   _walk_locs_of_source: ( source ) ->
     { doc_src_id, }  = source
     #.......................................................................................................
@@ -251,7 +283,7 @@ class Document
         [ text ]                  = match
         length                    = text.length
         { index: doc_loc_start, } = match
-        doc_loc_stop              = doc_loc_start + length
+        doc_loc_stop              = doc_loc_start + length - 1
         doc_loc_mark              = null
         doc_loc_kind              = null
         # debug '^57-1^', line.doc_src_id, line.doc_line_nr, { doc_loc_start, length, left_slash, right_slash, name, }
