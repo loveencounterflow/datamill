@@ -92,7 +92,16 @@ update config set value = $project_name where name = "project-name";
 * **[–]** validate regions created by loc markers (stop must not come before end &c)
 * **[–]** rename `doc_file_id` -> `doc_src_id`? (source doesn't have to be a file)
 * **[–]** `doc_file_id#doc_loc_id` == `region_id`
-* **[–]** consider to rename loc markers so they include the relevant doc_file_id
+* **[–]**
+  * consider to rename loc markers so they include the relevant doc_file_id
+  * but probably better to turn all loc markers into HTML comments as they are not required to conform with
+    an HTML's document DOM structure as they can intersect with HTML tags. This is also a reason to not
+    replace loc markers with regular HTML tags.
+  * could still use empty `<div>`s to mark two isolated points and even use those to construct visible
+    indicators on the HTML rendering to indicate extent of regions; this will broken if crosscutting occurs
+    but so what
+  * maybe then just stick with regular tags and they will likely generate incorrect content if they choose
+    to use crosscutting location markers and not opt to delete them before rendering documents
 * **[–]** consider to insert `*` location marker; this would be helpful to find where an embedded document
   appears; however, that would also clash with `<!DOCTYPE html>` which is required to appear first thing
    
