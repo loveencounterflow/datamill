@@ -100,8 +100,14 @@ update config set value = $project_name where name = "project-name";
   * could still use empty `<div>`s to mark two isolated points and even use those to construct visible
     indicators on the HTML rendering to indicate extent of regions; this will broken if crosscutting occurs
     but so what
-  * maybe then just stick with regular tags and they will likely generate incorrect content if they choose
-    to use crosscutting location markers and not opt to delete them before rendering documents
+  * maybe then just stick with regular tags and tell users that those will likely generate incorrect content
+    if they choose to use crosscutting location markers and not opt to delete them before rendering
+    documents
+  * in any event, let users choose between
+    * deleting loc markers
+    * leaving loc markers as-is
+    * turning loc markers into comments
+    * turning loc markers into regular tags
 * **[–]** consider to insert `*` location marker; this would be helpful to find where an embedded document
   appears; however, that would also clash with `<!DOCTYPE html>` which is required to appear first thing
    
