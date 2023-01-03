@@ -148,7 +148,6 @@ class Document
           where doc_src_id = $doc_src_id;"""
     @_raw_lines_ps      = @db.prepare SQL"""
       select
-          $doc_src_nr as doc_src_nr,
           *
         from doc_raw_lines
         where doc_src_id = $doc_src_id
@@ -174,22 +173,12 @@ class Document
   # get_doc_fads:       Decorators.get_all_rows         'fads'
 
   #---------------------------------------------------------------------------------------------------------
-  walk_raw_lines: ( region_ids... ) ->
+  walk_region_lines: ( region_ids... ) ->
     region_ids = region_ids.flat Infinity
     for region_id, idx in region_ids
+      doc_region_nr   = idx + 1
       { doc_src_id
-        doc_loc_id } = @_split_region_id region_id
-      ### TAINT reject unknown doc_src_id, doc_loc_id ###
-      doc_src_nr = idx + 1
-      yield from @db @_raw_lines_ps, { doc_src_nr, doc_src_id, }
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  walk_raw_lines_2: ( region_ids... ) ->
-    region_ids = region_ids.flat Infinity
-    for region_id, idx in region_ids
-      { doc_src_id
-        doc_loc_id } = @_split_region_id region_id
+        doc_loc_id  } = @_split_region_id region_id
       ### TAINT reject unknown doc_src_id, doc_loc_id ###
       doc_src_nr = idx + 1
       [ start, stop, ] = @db.all_rows SQL"""
@@ -202,12 +191,13 @@ class Document
       last_line_nr  = stop.doc_line_nr
       for line from @db SQL"""
         select
+            $doc_region_nr as doc_region_nr,
             *
           from doc_raw_lines
           where true
             and doc_src_id = $doc_src_id
             and doc_line_nr between $first_line_nr and $last_line_nr
-            order by doc_line_nr;""", { doc_src_id, first_line_nr, last_line_nr, }
+            order by doc_line_nr;""", { doc_region_nr, doc_src_id, first_line_nr, last_line_nr, }
         ### truncate first and last lines ###
         ### add indicator whether newlines are needed at ends ###
         if ( line.doc_line_nr is first_line_nr ) and ( line.doc_line_nr is last_line_nr )
@@ -274,7 +264,7 @@ class Document
       doc_src_id, doc_line_nr: doc_line_nr, doc_loc_id: '*', doc_loc_kind: 'stop',
       doc_loc_start: stop, doc_loc_stop: stop, doc_loc_mark: stop, }
     #.......................................................................................................
-    for line from @walk_raw_lines [ doc_src_id, ]
+    for line from @db @_raw_lines_ps, { doc_src_id, }
       { doc_line_nr } = line
       for match from line.doc_line_txt.matchAll @cfg._loc_marker_re
         { left_slash
