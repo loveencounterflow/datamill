@@ -16,11 +16,14 @@
     "koa": "^2.14.1",
     "koa-files": "^2.3.1",
     "koa-mount": "^4.0.0",
+    "markdown-it": "^13.0.1",
     "moonriver": "^3.0.0",
     "node-notifier": "^10.0.1",
     "nodexh": "^2.2.0",
+    "paragate": "^4.0.0",
     "path": "^0.12.7",
-    "socket.io": "^4.5.4"
+    "socket.io": "^4.5.4",
+    "timetunnel": "^2.0.0"
   },
   "scripts": {
     "test": "see https://github.com/loveencounterflow/hengist/tree/master/dev/datamill"
