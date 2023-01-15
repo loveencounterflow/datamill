@@ -110,4 +110,7 @@ update config set value = $project_name where name = "project-name";
     * turning loc markers into regular tags
 * **[–]** consider to insert `*` location marker; this would be helpful to find where an embedded document
   appears; however, that would also clash with `<!DOCTYPE html>` which is required to appear first thing
+* **[–]** allow to configure DMHtmlish namespace configuration such that namespaces are ordered for tag name
+  resolution
+* **[–]** add test for backslash-escaping of loc markers
    
