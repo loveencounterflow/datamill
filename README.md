@@ -169,7 +169,7 @@ TeX output for a PDF version from the same source, we would have to either base 
 HTML output or else recompute the entire input up to a certain stage anew. Using realms, one can essentially
 freeze the result of one set of transforms in realm `A`, copy whatever data is needed to a new realm `B`,
 and then apply a new set of transforms exclusively on rows belonging to `B`. Later, a derivation from the
-unaltered realm `A` may be applied to obtain another reansformation, `C`.
+unaltered realm `A` may be applied to obtain another transformation, `C`.
 
 # Parts of Documents
 
