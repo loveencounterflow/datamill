@@ -12,6 +12,7 @@
     "guy": "^12.6.2",
     "hdml": "^3.0.0",
     "http": "0.0.1-security",
+    "intertext-lexer": "^0.0.1",
     "intertype": "^0.111.0",
     "koa": "^2.14.1",
     "koa-files": "^2.3.1",

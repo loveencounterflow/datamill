@@ -9,6 +9,7 @@ specifiers:
   guy: ^12.6.2
   hdml: ^3.0.0
   http: 0.0.1-security
+  intertext-lexer: ^0.0.1
   intertype: ^0.111.0
   koa: ^2.14.1
   koa-files: ^2.3.1
@@ -31,6 +32,7 @@ dependencies:
   guy: 12.6.2
   hdml: 3.0.0
   http: 0.0.1-security
+  intertext-lexer: 0.0.1
   intertype: 0.111.0
   koa: 2.14.1
   koa-files: 2.3.1_koa@2.14.1
@@ -247,6 +249,10 @@ packages:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: false
 
+  /compose-regexp-commonjs/0.6.24:
+    resolution: {integrity: sha512-aPHoQ7VsPGg57+qQPJaLHkd5us32kFZimKNdJS25GWGnwrbAhf7cSJ4u1PUowBEEGpaEMzRc6Lr9SOI1JlvpKQ==}
+    dev: false
+
   /content-disposition/0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
     engines: {node: '>= 0.6'}
@@ -306,6 +312,21 @@ packages:
       intertype: 7.7.0
       letsfreezethat: 3.1.0
       multimix: 5.0.0
+    dev: false
+
+  /datom/11.0.0:
+    resolution: {integrity: sha512-ACvExvSaRDDCxs4D6+uu83SSak5LHk4lnZmQKdHZlkKiVkH6U5FuQ0dlCcr2BzHj5EWpkzoBRBiWDfYY7zbdEw==}
+    dependencies:
+      guy: 12.7.0
+      intertype: 0.111.0
+      letsfreezethat: 3.1.0
+    transitivePeerDependencies:
+      - acorn
+      - acorn-loose
+      - acorn-walk
+      - astring
+      - dayjs
+      - tmp
     dev: false
 
   /datom/8.0.3:
@@ -629,6 +650,20 @@ packages:
       letsfreezethat: 3.1.0
     dev: false
 
+  /guy/12.7.0:
+    resolution: {integrity: sha512-kb0w28pklJWpkl3Otwnoqt6iwqEcmXm8T7QxMenqfSI/XHZr586TNdgTeh12DAjm+mRz8eDBXreextaOR8B5aw==}
+    peerDependencies:
+      acorn: ^8.7.1
+      acorn-loose: ^8.3.0
+      acorn-walk: ^8.2.0
+      astring: ^1.8.3
+      dayjs: ^1.11.7
+      tmp: ^0.2.1
+    dependencies:
+      intertype-legacy: 7.7.1
+      letsfreezethat: 3.1.0
+    dev: false
+
   /guy/3.1.0:
     resolution: {integrity: sha512-5bxlACi0FcjbF/hqDOs0nMyfPLQxzF9so8XJiTDv4g5xuWGOWMs7m/f2wIrstN6JsNlUJiGfxniHX9XoSfaZgg==}
     peerDependencies:
@@ -730,6 +765,22 @@ packages:
 
   /ini/1.3.8:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
+    dev: false
+
+  /intertext-lexer/0.0.1:
+    resolution: {integrity: sha512-SintG2I3Rnm3+nr/WANduM1HxWY9ZgK82ekcyEJkG8o6BKgAOWsVBjERCitQqKphXToFUywkZGRUzS32UJdjyw==}
+    dependencies:
+      compose-regexp-commonjs: 0.6.24
+      datom: 11.0.0
+      guy: 12.7.0
+      intertype: 0.111.0
+    transitivePeerDependencies:
+      - acorn
+      - acorn-loose
+      - acorn-walk
+      - astring
+      - dayjs
+      - tmp
     dev: false
 
   /intertext-splitlines/1.2.1:
